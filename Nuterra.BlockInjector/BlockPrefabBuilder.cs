@@ -93,12 +93,6 @@ namespace Nuterra.BlockInjector
             _finished = true;
         }
 
-        public BlockPrefabBuilder SetHP(int HP)
-        {
-            _block.damage.maxHealth = HP;
-            return this;
-        }
-
         public BlockPrefabBuilder SetGrade(int Grade = 0)
         {
             _customBlock.Grade = Grade;
