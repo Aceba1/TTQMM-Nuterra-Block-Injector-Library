@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockInjector Library", "Sylver.RecipedBlock\BlockInjector Library.csproj", "{D3728726-0F0F-4F6F-848B-17EEC5D946E2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockInjector Library", "Nuterra.BlockInjector\BlockInjector Library.csproj", "{D3728726-0F0F-4F6F-848B-17EEC5D946E2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +20,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {5E362047-9CB4-4028-AC77-65ED231B18AB}
+		SolutionGuid = {EF967FEB-5BC3-4874-8BAE-6F3C01EE5E4A}
 	EndGlobalSection
 EndGlobal
