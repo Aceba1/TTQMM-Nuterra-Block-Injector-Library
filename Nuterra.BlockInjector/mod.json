@@ -1,0 +1,10 @@
+﻿{
+  "Id": "nuterra.block.injector",
+  "DisplayName": "Block injector Library",
+  "Author": "Mixed",
+  "Version": "0.1.0",
+  "Enable": true,
+  "AssemblyName": "BlockInjector.dll",
+  "EntryMethod": "Nuterra.BlockInjector.BlockLoader.PostModsLoaded",
+  "Priority": "Last"
+}
