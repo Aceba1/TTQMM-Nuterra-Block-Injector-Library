@@ -1,7 +1,7 @@
 # TTQMM-Nuterra-BlockInjector
 Grab the `Nuterra.BlockInjector` folder from [here](https://github.com/Aceba1/TTQMM-Nuterra-Block-Injector-Library/tree/master/Nuterra.BlockInjector/bin/Debug), and put it in the QMods folder in your TerraTech install path.
 
-<h1>
+<hr>
 
 QMM can be found [here](https://github.com/QModManager/TerraTech).
 
