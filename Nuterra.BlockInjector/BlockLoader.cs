@@ -51,6 +51,15 @@ namespace Nuterra.BlockInjector
 
         internal class Patches
         {
+            [HarmonyPatch(typeof(ManSpawn), "IsBlockAvailableOnPlatform")]
+            private static class TableFix
+            {
+                private static void Postfix(ref bool __result, BlockTypes blockType)
+                {
+                    if (!Enum.IsDefined(typeof(BlockTypes), blockType)) __result = true;
+                }
+
+            }
             [HarmonyPatch(typeof(StringLookup), "GetString")]
             private static class OnStringLookup
             {
