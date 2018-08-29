@@ -71,7 +71,7 @@ namespace Nuterra.BlockInjector
             public void CallRecipeRegister(CustomRecipeStruct CustomBlock)
             {
                 customRecipe = CustomBlock;
-                Singleton.DoOnceAfterStart(FinishRecipe);
+                BlockLoader.DelayAfterSingleton(FinishRecipe);
             }
 
             private void FinishRecipe()

@@ -8,6 +8,31 @@ namespace Nuterra.BlockInjector
 {
     public static class BlockLoader
     {
+        internal class Timer : MonoBehaviour
+        {
+            void Start()
+            {
+                Singleton.DoOnceAfterStart(Wait);
+            }
+            void Wait()
+            {
+                Invoke("Doit", 5f);
+            }
+            void Doit()
+            {
+                string fabs = "Recipe Lists:";
+                foreach (var fab in Singleton.Manager<RecipeManager>.inst.recipeTable.m_RecipeLists)
+                {
+                    fabs += "\n" + fab.m_Name;
+                }
+                Debug.Log(fabs);
+
+                MakeReady();
+
+                UnityEngine.GameObject.DestroyImmediate(this.gameObject);
+            }
+        }
+
         private static readonly Dictionary<int, CustomBlock> CustomBlocks = new Dictionary<int, CustomBlock>();
         private static readonly Dictionary<int, CustomChunk> CustomChunks = new Dictionary<int, CustomChunk>();
 
@@ -31,6 +56,30 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        private static bool Ready = false;
+        private static event Action PostStartEvent;
+
+        public static void DelayAfterSingleton(Action ActionToDelay)
+        {
+            if (Ready)
+            {
+                ActionToDelay();
+            }
+            else
+            {
+                PostStartEvent += ActionToDelay;
+            }
+        }
+
+        internal static void MakeReady()
+        {
+            Ready = true;
+            if (PostStartEvent != null)
+            {
+                PostStartEvent();
+            }
+        }
+
         public static void Register(CustomChunk chunk)
         {
             Console.WriteLine($"Registering chunk: {chunk.GetType()} #{chunk.ChunkID} '{chunk.Name}'");
@@ -45,12 +94,37 @@ namespace Nuterra.BlockInjector
         {
             var harmony = HarmonyInstance.Create("nuterra.block.injector");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
-            BaconBlock.Load();
-            UnityEngine.Debug.Log("Created Example Block");
+            new GameObject().AddComponent<Timer>();
+            BlockExamples.Load();
         }
 
         internal class Patches
         {
+            static bool Catching = false;
+            [HarmonyPatch(typeof(TTNetworkManager), "AddSpawnableType")]
+            private static class CatchHexRepeat
+            {
+                private static bool Prefix(ref TTNetworkManager __instance, Transform prefab)
+                {
+                    if (!Catching)
+                    {
+                        Catching = true;
+                        try
+                        {
+                            typeof(TTNetworkManager).GetMethod("AddSpawnableType").Invoke(__instance, new object[] { prefab });
+                        }
+                        catch(Exception E)
+                        {
+                            Debug.LogException(E);
+                            Debug.Log("Hex code: " + prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString());
+                        }
+                        Catching = false;
+                        return false;
+                    }
+                    return true;
+                }
+            }
+
             [HarmonyPatch(typeof(ManSpawn), "IsBlockAvailableOnPlatform")]
             private static class TableFix
             {
@@ -58,7 +132,6 @@ namespace Nuterra.BlockInjector
                 {
                     if (!Enum.IsDefined(typeof(BlockTypes), blockType)) __result = true;
                 }
-
             }
             [HarmonyPatch(typeof(StringLookup), "GetString")]
             private static class OnStringLookup
@@ -103,7 +176,7 @@ namespace Nuterra.BlockInjector
 
 
             object corpData = blockList.GetValue((int)block.Faction);
-            BlockUnlockTable.UnlockData[] unlocked = GradeData.GetField("m_BlockList").GetValue(((CorpBlockData.GetField("m_GradeList").GetValue(corpData)) as Array).GetValue(block.Grade)) as BlockUnlockTable.UnlockData[];
+            BlockUnlockTable.UnlockData[] unlocked = GradeData.GetField("m_BlockList").GetValue((CorpBlockData.GetField("m_GradeList").GetValue(corpData) as Array).GetValue(block.Grade)) as BlockUnlockTable.UnlockData[];
             Array.Resize(ref unlocked, unlocked.Length + 1);
             unlocked[unlocked.Length - 1] = new BlockUnlockTable.UnlockData
             {
@@ -111,7 +184,16 @@ namespace Nuterra.BlockInjector
                 m_BasicBlock = true,
                 m_DontRewardOnLevelUp = true
             };
-            GradeData.GetField("m_BlockList").SetValue(((CorpBlockData.GetField("m_GradeList").GetValue(corpData)) as Array).GetValue(block.Grade), unlocked);
+            GradeData.GetField("m_BlockList")
+                .SetValue(
+                (CorpBlockData.GetField("m_GradeList").GetValue(corpData) as Array).GetValue(block.Grade), 
+                unlocked);
+
+            ((T_BlockUnlockTable.GetField("m_CorpBlockLevelLookup", bind)
+                .GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array)
+                .GetValue((int)block.Faction) as Dictionary<BlockTypes, int>)
+                .Add((BlockTypes)block.BlockID, block.Grade);
+            ManLicenses.inst.DiscoverBlock((BlockTypes)block.BlockID);
         }
 
         private static bool ResourceLookup_OnSpriteLookup(ObjectTypes objectType, int itemType, ref UnityEngine.Sprite result)

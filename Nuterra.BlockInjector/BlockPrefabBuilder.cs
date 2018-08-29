@@ -1,36 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Reflection;
 
 namespace Nuterra.BlockInjector
 {
-    internal class RegisterTimer : MonoBehaviour
-    {
-        public BlockPrefabBuilder prefabToRegister;
-        public CustomBlock customBlock;
-        public void CallBlockPrefabBuilder(float time, BlockPrefabBuilder PrefabToRegister, CustomBlock CustomBlock)
-        {
-            prefabToRegister = PrefabToRegister;
-            customBlock = CustomBlock;
-            Invoke("RunBlock", time);
-        }
-
-        private void RunBlock()
-        {
-            BlockLoader.Register(customBlock);
-            Singleton.DoOnceAfterStart(FinishBlock);
-        }
-
-        private void FinishBlock()
-        {
-            customBlock.Prefab.SetActive(false);
-            BlockLoader.FixBlockUnlockTable(customBlock);
-            UnityEngine.GameObject.Destroy(this.gameObject);
-        }
-    }
-
     public sealed class BlockPrefabBuilder
     {
+        internal class RegisterTimer : MonoBehaviour
+        {
+            public BlockPrefabBuilder prefabToRegister;
+            public CustomBlock customBlock;
+            public void CallBlockPrefabBuilder(float time, BlockPrefabBuilder PrefabToRegister, CustomBlock CustomBlock)
+            {
+                prefabToRegister = PrefabToRegister;
+                customBlock = CustomBlock;
+                Invoke("RunBlock", time);
+            }
+
+            private void RunBlock()
+            {
+                BlockLoader.Register(customBlock);
+                Singleton.DoOnceAfterStart(FinishBlock);
+            }
+
+            private void FinishBlock()
+            {
+                customBlock.Prefab.SetActive(false);
+                BlockLoader.FixBlockUnlockTable(customBlock);
+                UnityEngine.GameObject.Destroy(this.gameObject);
+            }
+        }
+
         private bool _finished = false;
         private TankBlock _block;
         private Visible _visible;
@@ -39,10 +40,11 @@ namespace Nuterra.BlockInjector
         private AutoSpriteRenderer _spriteRenderer;
         private GameObject _renderObject;
         private CustomBlock _customBlock;
+        private UnityEngine.Networking.NetworkIdentity _netid;
 
         public BlockPrefabBuilder()
         {
-            Initialize(new GameObject(), true);
+            Initialize(new GameObject("newBlock"), true);
         }
 
         public BlockPrefabBuilder(GameObject prefab, bool MakeCopy = false)
@@ -53,11 +55,26 @@ namespace Nuterra.BlockInjector
                 Initialize(prefab, true);
         }
 
-        public BlockPrefabBuilder(BlockTypes originalBlock)
+        public BlockPrefabBuilder(string PrefabFromResource, bool RemovePrefabRenderers = true)
         {
-            var original = ManSpawn.inst.GetBlockPrefab(originalBlock);
-            var copy = GameObject.Instantiate(original.gameObject);
-            Initialize(copy, clearGridInfo: false);
+            GameObject original = null;
+            var gos = Resources.FindObjectsOfTypeAll<GameObject>();
+            foreach (var go in gos)
+            {
+                if (go.name.StartsWith(PrefabFromResource))
+                {
+                    original = go;
+                    break;
+                }
+            }
+            if (original == null)
+            {
+                throw new Exception("Nothing starting with \"" + PrefabFromResource + "\" could be found. Decompile the resources asset to see what there is");
+            }
+            var copy = GameObject.Instantiate(original);
+            Initialize(copy, false);
+            if (RemovePrefabRenderers)
+                RemoveChildrenWithComponent<MeshRenderer>();
         }
 
         private void Initialize(GameObject prefab, bool clearGridInfo)
@@ -76,21 +93,46 @@ namespace Nuterra.BlockInjector
             _spriteRenderer = _customBlock.Prefab.EnsureComponent<AutoSpriteRenderer>();
 
             _block = _customBlock.Prefab.EnsureComponent<TankBlock>();
-            Harmony.Traverse.Create(_block).Property("Visible").SetValue(_visible);
-            Harmony.Traverse.Create(_visible).Field("m_VisibleComponent").SetValue(_block as Component);
-
+            
+            _netid = _customBlock.Prefab.EnsureComponent<UnityEngine.Networking.NetworkIdentity>();
+            BindingFlags b = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
+            typeof(TankBlock).GetProperty("visible", b).SetValue(_block, _visible, null);
+            typeof(Visible).GetField("m_VisibleComponent", b).SetValue(_visible, _block as Component);
             if (clearGridInfo)
             {
                 _block.attachPoints = new Vector3[] { };
                 _block.filledCells = new IntVector3[] { new Vector3(0, 0, 0) };
             }
         }
-
-        public void RegisterLater(float Time = 5f)
+        public BlockPrefabBuilder RegisterLater(float Time = 5f)
         {
             ThrowIfFinished();
+            _customBlock.Prefab.transform.position = Vector3.down * 1000f;
             new GameObject().AddComponent<RegisterTimer>().CallBlockPrefabBuilder(Time, this, _customBlock);
             _finished = true;
+            return this;
+        }
+
+        public BlockPrefabBuilder RemoveChildrenWithComponent<T>(Transform SearchIn = null) where T : Component
+        {
+            Transform _search = _block.transform;
+            if (SearchIn != null)
+            {
+                _search = SearchIn;
+            }
+            for(int i = _search.transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = _search.transform.GetChild(i);
+                if (child.GetComponent<T>() == null)
+                {
+                    RemoveChildrenWithComponent<T>(_search);
+                }
+                else
+                {
+                    GameObject.DestroyImmediate(child.gameObject);
+                }
+            }
+            return this;
         }
 
         public BlockPrefabBuilder SetGrade(int Grade = 0)
@@ -105,6 +147,15 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        public BlockPrefabBuilder SetHP(int HealthPoints)
+        {
+            _moduleDamage.maxHealth = HealthPoints;
+            return this;
+        }
+        public TankBlock TankBlock
+        {
+            get => _block;
+        }
         public BlockPrefabBuilder SetName(string blockName)
         {
             ThrowIfFinished();
@@ -113,11 +164,12 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
-        public BlockPrefabBuilder SetBlockID(int id)
+        public BlockPrefabBuilder SetBlockID(int id, string Net128HashHex)
         {
             ThrowIfFinished();
             _customBlock.BlockID = id;
             _visible.m_ItemType = new ItemTypeInfo(ObjectTypes.Block, id);
+            typeof(UnityEngine.Networking.NetworkIdentity).GetField("m_AssetId", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(_netid, UnityEngine.Networking.NetworkHash128.Parse(Net128HashHex));
             return this;
         }
 
