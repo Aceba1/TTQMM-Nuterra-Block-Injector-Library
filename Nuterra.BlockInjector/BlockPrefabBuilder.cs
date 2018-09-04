@@ -301,6 +301,7 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             GameObject model = new GameObject("");
+            model.SetActive(false);
             model.AddComponent<MeshFilter>().sharedMesh = Mesh;
             Material _Material = Material;
             if (_Material == null) _Material = GameObjectJSON.MaterialFromShader();
@@ -334,15 +335,17 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
-        public BlockPrefabBuilder SetModel(GameObject renderObject)
+        public BlockPrefabBuilder SetModel(GameObject renderObject, bool MakeCopy = false)
         {
             ThrowIfFinished();
             if (_renderObject)
             {
                 GameObject.DestroyImmediate(_renderObject);
             }
-
-            _renderObject = GameObject.Instantiate(renderObject);
+            if (MakeCopy)
+                _renderObject = GameObject.Instantiate(renderObject);
+            else
+                _renderObject = renderObject;
             _renderObject.transform.parent = _customBlock.Prefab.transform;
             _renderObject.name = $"RenderObject";
             _renderObject.layer = Globals.inst.layerTank;

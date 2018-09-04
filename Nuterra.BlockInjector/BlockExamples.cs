@@ -55,15 +55,17 @@ namespace Nuterra.BlockInjector
                     .SetModel(GameObjectJSON.MeshFromFile("bacon.obj"), true, mat)
                     .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("bacon_icon.png")))
                     .RegisterLater();
-                Debug.Log("Made Bacon Block");
             
+
+
                 var banagun = new BlockPrefabBuilder("GSOMGunFixed(111)", false);
-                banagun.SetBlockID(9999, "daed1d86d809998a")
+                banagun.SetBlockID(10001, "daed1d86d809998a")
                     .SetName("GSO Banana gun")
                     .SetDescription("A very special banana. But not as special as you are, your banana friend tells us.")
                     .SetPrice(297)
-                    .SetHP(200)
-                    .SetFaction(FactionSubTypes.GSO);
+                    .SetFaction(FactionSubTypes.GSO)
+                    .SetCategory(BlockCategories.Weapons)
+                    .SetHP(200);
 
                 MeshFilter[] componentsInChildren2 = banagun.TankBlock.GetComponentsInChildren<MeshFilter>(true);
 
@@ -103,9 +105,6 @@ namespace Nuterra.BlockInjector
                 }
                 banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("banana_icon.png")))
                     .RegisterLater();
-                Debug.Log("Made BananaGun Block");
-
-
             }
             catch (Exception E)
             {
