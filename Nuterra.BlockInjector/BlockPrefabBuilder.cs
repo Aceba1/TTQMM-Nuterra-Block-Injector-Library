@@ -33,8 +33,8 @@ namespace Nuterra.BlockInjector
         }
 
         private bool _finished = false;
-        private TankBlock _block;
         private Visible _visible;
+        public TankBlock TankBlock { get; private set; }
         private Damageable _damageable;
         private ModuleDamage _moduleDamage;
         private AutoSpriteRenderer _spriteRenderer;
@@ -55,7 +55,7 @@ namespace Nuterra.BlockInjector
                 Initialize(prefab, true);
         }
 
-        public BlockPrefabBuilder(string PrefabFromResource, bool RemovePrefabRenderers = true)
+        public BlockPrefabBuilder(string PrefabFromResource, bool RemoveRenderers = true)
         {
             GameObject original = null;
             var gos = Resources.FindObjectsOfTypeAll<GameObject>();
@@ -73,8 +73,10 @@ namespace Nuterra.BlockInjector
             }
             var copy = GameObject.Instantiate(original);
             Initialize(copy, false);
-            if (RemovePrefabRenderers)
-                RemoveChildrenWithComponent<MeshRenderer>();
+            if (RemoveRenderers)
+            {
+                RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshCollider));
+            }
         }
 
         private void Initialize(GameObject prefab, bool clearGridInfo)
@@ -92,16 +94,16 @@ namespace Nuterra.BlockInjector
             _moduleDamage = _customBlock.Prefab.EnsureComponent<ModuleDamage>();
             _spriteRenderer = _customBlock.Prefab.EnsureComponent<AutoSpriteRenderer>();
 
-            _block = _customBlock.Prefab.EnsureComponent<TankBlock>();
+            TankBlock = _customBlock.Prefab.EnsureComponent<TankBlock>();
             
             _netid = _customBlock.Prefab.EnsureComponent<UnityEngine.Networking.NetworkIdentity>();
             BindingFlags b = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
-            typeof(TankBlock).GetProperty("visible", b).SetValue(_block, _visible, null);
-            typeof(Visible).GetField("m_VisibleComponent", b).SetValue(_visible, _block as Component);
+            typeof(TankBlock).GetProperty("visible", b).SetValue(TankBlock, _visible, null);
+            typeof(Visible).GetField("m_VisibleComponent", b).SetValue(_visible, TankBlock as Component);
             if (clearGridInfo)
             {
-                _block.attachPoints = new Vector3[] { };
-                _block.filledCells = new IntVector3[] { new Vector3(0, 0, 0) };
+                TankBlock.attachPoints = new Vector3[] { };
+                TankBlock.filledCells = new IntVector3[] { new Vector3(0, 0, 0) };
             }
         }
         public BlockPrefabBuilder RegisterLater(float Time = 5f)
@@ -113,9 +115,41 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
-        public BlockPrefabBuilder RemoveChildrenWithComponent<T>(Transform SearchIn = null) where T : Component
+        public BlockPrefabBuilder RemoveChildrenWithComponent(bool RemoveJustComponent = false, Transform SearchIn = null, params Type[] typesToRemove)
         {
-            Transform _search = _block.transform;
+            Transform _search = TankBlock.transform;
+            if (SearchIn != null)
+            {
+                _search = SearchIn;
+            }
+            for (int i = _search.transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = _search.transform.GetChild(i);
+                for (int i1 = 0; i1 < typesToRemove.Length; i1++)
+                {
+                    Component c = child.GetComponent(typesToRemove[i1]);
+                    if (c == null)
+                    {
+                        RemoveChildrenWithComponent(RemoveJustComponent, child);
+                    }
+                    else
+                    {
+                        if (RemoveJustComponent)
+                        {
+                            RemoveChildrenWithComponent(RemoveJustComponent, child, typesToRemove);
+                            Component.DestroyImmediate(c);
+                        }
+                        else
+                            GameObject.DestroyImmediate(child.gameObject);
+                    }
+                }
+            }
+            return this;
+        }
+
+        public BlockPrefabBuilder RemoveChildrenWithComponent<T>(bool RemoveJustComponent = false, Transform SearchIn = null) where T : Component
+        {
+            Transform _search = TankBlock.transform;
             if (SearchIn != null)
             {
                 _search = SearchIn;
@@ -123,13 +157,20 @@ namespace Nuterra.BlockInjector
             for(int i = _search.transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = _search.transform.GetChild(i);
-                if (child.GetComponent<T>() == null)
+                Component c = child.GetComponent<T>();
+                if (c == null)
                 {
-                    RemoveChildrenWithComponent<T>(_search);
+                    RemoveChildrenWithComponent<T>(RemoveJustComponent, child);
                 }
                 else
                 {
-                    GameObject.DestroyImmediate(child.gameObject);
+                    if (RemoveJustComponent)
+                    {
+                        RemoveChildrenWithComponent<T>(RemoveJustComponent, child);
+                        Component.DestroyImmediate(c);
+                    }
+                    else
+                        GameObject.DestroyImmediate(child.gameObject);
                 }
             }
             return this;
@@ -143,7 +184,7 @@ namespace Nuterra.BlockInjector
 
         public BlockPrefabBuilder SetWeight(float Weight)
         {
-            _block.m_DefaultMass = Weight;
+            TankBlock.m_DefaultMass = Weight;
             return this;
         }
 
@@ -152,10 +193,7 @@ namespace Nuterra.BlockInjector
             _moduleDamage.maxHealth = HealthPoints;
             return this;
         }
-        public TankBlock TankBlock
-        {
-            get => _block;
-        }
+
         public BlockPrefabBuilder SetName(string blockName)
         {
             ThrowIfFinished();
@@ -198,7 +236,7 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             _customBlock.Category = category;
-            typeof(TankBlock).GetField("m_BlockCategory", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(_block, category);
+            typeof(TankBlock).GetField("m_BlockCategory", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(TankBlock, category);
             //_block.m_BlockCategory = category;
             return this;
         }
@@ -231,12 +269,12 @@ namespace Nuterra.BlockInjector
                     }
                 }
             }
-            _block.filledCells = cells;
-            _block.attachPoints = aps;
+            TankBlock.filledCells = cells;
+            TankBlock.attachPoints = aps;
             return this;
         }
 
-        public BlockPrefabBuilder SetSize(Vector3I size, AttachmentPoints points = AttachmentPoints.Bottom)
+        public BlockPrefabBuilder SetSize(IntVector3 size, AttachmentPoints points = AttachmentPoints.Bottom)
         {
             ThrowIfFinished();
             List<IntVector3> cells = new List<IntVector3>();
@@ -278,8 +316,8 @@ namespace Nuterra.BlockInjector
                     }
                 }
             }
-            _block.filledCells = cells.ToArray();
-            _block.attachPoints = aps.ToArray();
+            TankBlock.filledCells = cells.ToArray();
+            TankBlock.attachPoints = aps.ToArray();
             return this;
         }
 
@@ -293,7 +331,7 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             if (mass <= 0f) throw new ArgumentOutOfRangeException(nameof(mass), "Cannot be lower or equal to zero");
-            _block.m_DefaultMass = mass;
+            TankBlock.m_DefaultMass = mass;
             return this;
         }
 
@@ -301,7 +339,6 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             GameObject model = new GameObject("");
-            model.SetActive(false);
             model.AddComponent<MeshFilter>().sharedMesh = Mesh;
             Material _Material = Material;
             if (_Material == null) _Material = GameObjectJSON.MaterialFromShader();
@@ -331,7 +368,8 @@ namespace Nuterra.BlockInjector
                 mc.convex = ConvexCollider;
                 mc.sharedMesh = ColliderMesh;
             }
-            SetModel(model);
+            SetModel(model, true);
+            GameObject.DestroyImmediate(model);
             return this;
         }
 

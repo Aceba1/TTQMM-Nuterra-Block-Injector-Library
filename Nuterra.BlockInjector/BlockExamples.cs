@@ -55,7 +55,7 @@ namespace Nuterra.BlockInjector
                     .SetModel(GameObjectJSON.MeshFromFile("bacon.obj"), true, mat)
                     .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("bacon_icon.png")))
                     .RegisterLater();
-            
+
 
 
                 var banagun = new BlockPrefabBuilder("GSOMGunFixed(111)", false);
@@ -105,6 +105,19 @@ namespace Nuterra.BlockInjector
                 }
                 banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("banana_icon.png")))
                     .RegisterLater();
+
+                new CustomChunk()
+                {
+                    BasePrefab = GameObjectJSON.GetObjectFromGameResources<Transform>("Ore_Wood"),
+                    ChunkID = 5854,
+                    Description = "but I wanna dIE",
+                    Name = "dank w00d",
+                    Mass = 2,
+                    SaleValue = 420,
+                    Restitution = 0f,
+                    FrictionDynamic = 0f,
+                    FrictionStatic = 0f
+                }.Register();
             }
             catch (Exception E)
             {
@@ -113,22 +126,33 @@ namespace Nuterra.BlockInjector
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
-                    new CustomRecipe.RecipeInput((int)ChunkTypes.OleiteJelly, 4),
-                    new CustomRecipe.RecipeInput((int)ChunkTypes.Wood, 4)
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RubberBrick)
                     },
                     new CustomRecipe.RecipeOutput[]
                     {
-                    new CustomRecipe.RecipeOutput(10000)
+                        new CustomRecipe.RecipeOutput(5854,1,ObjectTypes.Chunk)
+                    },
+                    RecipeTable.Recipe.OutputType.Items,
+                    "gsorefinery");
+            CustomRecipe.RegisterRecipe(
+                    new CustomRecipe.RecipeInput[]
+                    {
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.OleiteJelly, 4),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.Wood, 4)
+                    },
+                    new CustomRecipe.RecipeOutput[]
+                    {
+                        new CustomRecipe.RecipeOutput(10000)
                     });
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
-                    new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 3),
-                    new CustomRecipe.RecipeInput((int)ChunkTypes.LuxiteShard, 3)
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 3),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.LuxiteShard, 3)
                     },
                     new CustomRecipe.RecipeOutput[]
                     {
-                    new CustomRecipe.RecipeOutput(9999)
+                        new CustomRecipe.RecipeOutput(9999)
                     });
             // Site used for Hash: https://www.random.org/bytes/
         }
