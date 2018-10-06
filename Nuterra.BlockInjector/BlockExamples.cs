@@ -106,7 +106,7 @@ namespace Nuterra.BlockInjector
                 banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("banana_icon.png")))
                     .RegisterLater();
 
-                new CustomChunk()
+                BlockLoader.DelayAfterSingleton(new CustomChunk()
                 {
                     BasePrefab = GameObjectJSON.GetObjectFromGameResources<Transform>("Ore_Wood"),
                     ChunkID = 5854,
@@ -117,7 +117,7 @@ namespace Nuterra.BlockInjector
                     Restitution = 0f,
                     FrictionDynamic = 0f,
                     FrictionStatic = 0f
-                }.Register();
+                }.Register);
             }
             catch (Exception E)
             {
