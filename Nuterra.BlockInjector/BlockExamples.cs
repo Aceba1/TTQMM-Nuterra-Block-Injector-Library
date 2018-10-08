@@ -118,6 +118,8 @@ namespace Nuterra.BlockInjector
                     FrictionDynamic = 0f,
                     FrictionStatic = 0f
                 }.Register);
+
+                new GameObject().AddComponent<ModuleFirstPersonCamera>();
             }
             catch (Exception E)
             {
