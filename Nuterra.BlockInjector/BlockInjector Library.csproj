@@ -311,6 +311,8 @@
     <Content Include="banana_icon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="cockpit_small_icon.png" />
+    <Content Include="cockpit_large_icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
