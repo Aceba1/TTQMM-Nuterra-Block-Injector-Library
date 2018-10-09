@@ -34,7 +34,7 @@ namespace Nuterra.BlockInjector
             _Tank = Tank;
             if (_Tank != null)
                 _Tank.GetComponentsInChildren<ModuleFirstPerson>(false, Module);
-            return Module.Count != 0 && Module.Count > CurrentModule && Module[CurrentModule].FirstPersonAnchor != null;
+            return Module.Count != 0 && Module.Count > CurrentModule;
         }
 
         public void Manual_Awake()
@@ -62,6 +62,7 @@ namespace Nuterra.BlockInjector
         {
             if (Input.GetKeyDown(key))
             {
+                bool flag = GetModule();
                 CurrentModule += Input.GetKey(KeyCode.LeftShift) ? -1 : 1;
                 if (IsActive && CurrentModule >= Module.Count || CurrentModule == -1)
                 {
@@ -71,7 +72,7 @@ namespace Nuterra.BlockInjector
                     CurrentModule = -1;
                     return;
                 }
-                if (GetModule())
+                if (flag)
                 {
                     IsActive = true;
                     Awake();
@@ -86,6 +87,7 @@ namespace Nuterra.BlockInjector
                 else
                 {
                     Console.WriteLine("Could not find camera module");
+                    TankCamera.inst.enabled = true;
                     CurrentModule = -1;
                 }
             }
@@ -99,6 +101,7 @@ namespace Nuterra.BlockInjector
                 if (!IsActive)
                 {
                     CurrentModule = -1;
+                    TankCamera.inst.enabled = true;
                     return;
                 }
             }
