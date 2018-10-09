@@ -93,7 +93,7 @@ namespace Nuterra.BlockInjector
             if (!IsActive)
                 return;
 
-            if (Module.Count != 0 || !Module[CurrentModule] || Tank != _Tank)
+            if (Module.Count != 0 || !Module[CurrentModule] || Tank != _Tank || Module[CurrentModule].thisBlock != _Tank)
             {
                 IsActive = GetModule();
                 if (!IsActive)
@@ -152,6 +152,12 @@ namespace Nuterra.BlockInjector
         {
             private GameObject _anchor;
             public bool AdaptToMainRot = false;
+            public TankBlock thisBlock;
+
+            public void Awake()
+            {
+                thisBlock = gameObject.GetComponent<TankBlock>();
+            }
 
             public GameObject FirstPersonAnchor
             {
