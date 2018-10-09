@@ -34,7 +34,7 @@ namespace Nuterra.BlockInjector
             _Tank = Tank;
             if (_Tank != null)
                 _Tank.GetComponentsInChildren<ModuleFirstPerson>(false, Module);
-            return Module.Count != 0 && Module[CurrentModule].FirstPersonAnchor != null;
+            return Module.Count != 0 && Module.Count > CurrentModule && Module[CurrentModule].FirstPersonAnchor != null;
         }
 
         public void Manual_Awake()

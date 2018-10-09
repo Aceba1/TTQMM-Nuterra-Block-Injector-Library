@@ -33,7 +33,7 @@ namespace Nuterra.BlockInjector
                     "credit me\n" +
                     "\n" +
                     " ~HeX, 8/22/2018")
-                    .SetPrice(5000)
+                    .SetPrice(500)
                     .SetFaction(FactionSubTypes.GSO)
                     .SetCategory(BlockCategories.Standard)
                     .SetSizeManual(
