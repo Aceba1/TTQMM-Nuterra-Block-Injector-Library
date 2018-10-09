@@ -106,20 +106,62 @@ namespace Nuterra.BlockInjector
                 banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("banana_icon.png")))
                     .RegisterLater();
 
-                BlockLoader.DelayAfterSingleton(new CustomChunk()
-                {
-                    BasePrefab = GameObjectJSON.GetObjectFromGameResources<Transform>("Ore_Wood"),
-                    ChunkID = 5854,
-                    Description = "but I wanna dIE",
-                    Name = "dank w00d",
-                    Mass = 2,
-                    SaleValue = 420,
-                    Restitution = 0f,
-                    FrictionDynamic = 0f,
-                    FrictionStatic = 0f
-                }.Register);
 
-                new GameObject().AddComponent<ModuleFirstPersonCamera>();
+
+
+                var cockpit_s = new BlockPrefabBuilder("GSOBlock(111)", true)
+                    .SetBlockID(9000, "66a82861496cfa13")
+                .SetName("GSO Top Cockpit")
+                .SetDescription("Pop in here and have a first-person look at the world from this block! (The side with the diamond is the viewing direction)\n\nRight click and drag to look and Cycle views with R")
+                .SetPrice(300)
+                .SetFaction(FactionSubTypes.GSO)
+                .SetCategory(BlockCategories.Accessories)
+                .SetModel(GameObjectJSON.MeshFromFile("cockpit_small.obj"), false)
+                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_small_icon.png")))
+                .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
+
+                var view = new GameObject("FirstPersonAnchor");
+                view.AddComponent<FirstPersonCamera.ModuleFirstPerson>();
+                view.transform.parent = cockpit_s.TankBlock.transform;
+
+                cockpit_s.RegisterLater();
+
+
+                var cockpit_s2 = new BlockPrefabBuilder("GSOBlock(111)", true)
+                    .SetBlockID(9005, "9a6b06c93f545c61")
+                .SetName("GSO Sided \"Swerve\" Cockpit")
+                .SetDescription("Just like the other cockpit, but can be mounted on the sides of things for a better look at your surroundings! (Make sure that none of the 3 arrows point down)\n\nRight click and drag to look and Cycle views with R")
+                .SetPrice(300)
+                .SetFaction(FactionSubTypes.GSO)
+                .SetCategory(BlockCategories.Accessories)
+                .SetModel(GameObjectJSON.MeshFromFile("cockpit_small_2.obj"), false)
+                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_small_2_icon.png")))
+                .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
+
+                var view1 = new GameObject("FirstPersonAnchor");
+                view1.AddComponent<FirstPersonCamera.ModuleFirstPerson>();
+                view1.transform.parent = cockpit_s2.TankBlock.transform;
+                view1.transform.rotation = Quaternion.Euler(-90, 0, 0);
+
+                cockpit_s2.RegisterLater();
+
+                var cockpit_l = new BlockPrefabBuilder("GSOBlock(111)", true)
+                    .SetBlockID(9001, "6a9262c04f45a53c")
+                .SetName("GSO Observatory")
+                .SetDescription("Mount this gigantic hamsterball to your tech to be right in the action!\n\nRight click and drag to look and Cycle views with R")
+                .SetPrice(500)
+                .SetFaction(FactionSubTypes.GSO)
+                .SetCategory(BlockCategories.Accessories)
+                .SetModel(GameObjectJSON.MeshFromFile("cockpit_large.obj"), true)
+                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_large_icon.png")))
+                .SetSize(IntVector3.one * 2, BlockPrefabBuilder.AttachmentPoints.Bottom);
+
+                var view2 = new GameObject("FirstPersonAnchor");
+                view2.AddComponent<FirstPersonCamera.ModuleFirstPerson>();
+                view2.transform.parent = cockpit_l.TankBlock.transform;
+                view2.transform.localPosition = Vector3.one * 0.5f;
+
+                cockpit_l.RegisterLater();
             }
             catch (Exception E)
             {
@@ -156,7 +198,26 @@ namespace Nuterra.BlockInjector
                     {
                         new CustomRecipe.RecipeOutput(9999)
                     });
+
+            BlockLoader.DelayAfterSingleton(new CustomChunk()
+            {
+                BasePrefab = GameObjectJSON.GetObjectFromGameResources<Transform>("Ore_Wood"),
+                ChunkID = 5854,
+                Description = "but I wanna dIE",
+                Name = "dank w00d",
+                Mass = 2,
+                SaleValue = 420,
+                Restitution = 0f,
+                FrictionDynamic = 0f,
+                FrictionStatic = 0f
+            }.Register);
+
+            var thng = new GameObject();
+            var thnng = thng.AddComponent<FirstPersonCamera>();
+            BlockLoader.DelayAfterSingleton(thnng.Manual_Awake);
+
             // Site used for Hash: https://www.random.org/bytes/
         }
+
     }
 }
