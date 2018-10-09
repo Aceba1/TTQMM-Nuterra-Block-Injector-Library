@@ -13,6 +13,7 @@ namespace Nuterra.BlockInjector
             {
                 Material mat = GameObjectJSON.MaterialFromShader();
                 mat.mainTexture = GameObjectJSON.ImageFromFile("bacon_material.png");
+                Material GSOMain = GameObjectJSON.GetObjectFromGameResources<Material>("GSO_Main");
 
                 new BlockPrefabBuilder("GSOBlock(111)", true)
                     .SetBlockID(10000, "95f04b12b0e9537c")
@@ -116,7 +117,7 @@ namespace Nuterra.BlockInjector
                 .SetPrice(300)
                 .SetFaction(FactionSubTypes.GSO)
                 .SetCategory(BlockCategories.Accessories)
-                .SetModel(GameObjectJSON.MeshFromFile("cockpit_small.obj"), false)
+                .SetModel(GameObjectJSON.MeshFromFile("cockpit_small.obj"), false, GSOMain)
                 .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_small_icon.png")))
                 .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
@@ -134,9 +135,9 @@ namespace Nuterra.BlockInjector
                 .SetPrice(300)
                 .SetFaction(FactionSubTypes.GSO)
                 .SetCategory(BlockCategories.Accessories)
-                .SetModel(GameObjectJSON.MeshFromFile("cockpit_small_2.obj"), false)
+                .SetModel(GameObjectJSON.MeshFromFile("cockpit_small_2.obj"), false, GSOMain)
                 .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_small_2_icon.png")))
-                .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
+                .SetSizeManual(new IntVector3[] { IntVector3.zero }, new Vector3[] { Vector3.down * 0.5f, Vector3.back * 0.5f });
 
                 var view1 = new GameObject("FirstPersonAnchor");
                 view1.AddComponent<FirstPersonCamera.ModuleFirstPerson>();
@@ -152,12 +153,12 @@ namespace Nuterra.BlockInjector
                 .SetPrice(500)
                 .SetFaction(FactionSubTypes.GSO)
                 .SetCategory(BlockCategories.Accessories)
-                .SetModel(GameObjectJSON.MeshFromFile("cockpit_large.obj"), true)
+                .SetModel(GameObjectJSON.MeshFromFile("cockpit_large.obj"), true, GSOMain)
                 .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_large_icon.png")))
                 .SetSize(IntVector3.one * 2, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
                 var view2 = new GameObject("FirstPersonAnchor");
-                view2.AddComponent<FirstPersonCamera.ModuleFirstPerson>();
+                view2.AddComponent<FirstPersonCamera.ModuleFirstPerson>().AdaptToMainRot = true;
                 view2.transform.parent = cockpit_l.TankBlock.transform;
                 view2.transform.localPosition = Vector3.one * 0.5f;
 

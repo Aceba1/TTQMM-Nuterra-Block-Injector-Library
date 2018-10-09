@@ -45,7 +45,12 @@ namespace Nuterra.BlockInjector
 
         private static void OnGameModeChange()
         {
-                FirstPersonCamera.inst.IsActive = false;
+            FirstPersonCamera.inst.IsActive = false;
+            FirstPersonCamera.inst.CurrentModule = -1;
+            if (FirstPersonCamera.inst.camera != null)
+            {
+                TankCamera.inst.enabled = true;
+            }
         }
 
         public void Awake()
@@ -57,11 +62,12 @@ namespace Nuterra.BlockInjector
         {
             if (Input.GetKeyDown(key))
             {
-                CurrentModule++;
-                if (IsActive && CurrentModule >= Module.Count)
+                CurrentModule += Input.GetKey(KeyCode.LeftShift) ? -1 : 1;
+                if (IsActive && CurrentModule >= Module.Count || CurrentModule == -1)
                 {
                     IsActive = false;
                     Console.WriteLine("Camera: Switched to TankCamera");
+                    TankCamera.inst.enabled = true;
                     CurrentModule = -1;
                     return;
                 }
@@ -70,6 +76,11 @@ namespace Nuterra.BlockInjector
                     IsActive = true;
                     Awake();
                     camera = Camera.main;
+                    TankCamera.inst.enabled = false;
+                    if (CurrentModule <= -2)
+                    {
+                        CurrentModule = Module.Count - 1;
+                    }
                     Console.WriteLine("Camera: Switched to FirstPersonCamera " + CurrentModule.ToString());
                 }
                 else
@@ -94,7 +105,7 @@ namespace Nuterra.BlockInjector
 
             if (_mouseStartDragging)
                 BeginSpinControl();
-            
+
             UpdateLocalRotation();
             UpdateCamera();
         }
@@ -126,8 +137,9 @@ namespace Nuterra.BlockInjector
 
         private void UpdateCamera()
         {
-            Singleton.cameraTrans.position = Module[CurrentModule].FirstPersonAnchor.transform.position;
-            Singleton.cameraTrans.rotation = Module[CurrentModule].transform.rotation * _rotation;
+            var module = Module[CurrentModule];
+            Singleton.cameraTrans.position = module.FirstPersonAnchor.transform.position;
+            Singleton.cameraTrans.rotation = (module.AdaptToMainRot ? Tank.control.FirstController.block.transform.rotation : module.transform.rotation) * _rotation;
         }
 
         internal void BeginSpinControl()
@@ -139,6 +151,7 @@ namespace Nuterra.BlockInjector
         public class ModuleFirstPerson : MonoBehaviour
         {
             private GameObject _anchor;
+            public bool AdaptToMainRot = false;
 
             public GameObject FirstPersonAnchor
             {
@@ -151,7 +164,7 @@ namespace Nuterra.BlockInjector
                         {
                             if (t.gameObject.name == "FirstPersonAnchor")
                             {
-                               _anchor = t.gameObject;
+                                _anchor = t.gameObject;
                                 return _anchor;
                             }
                         }
