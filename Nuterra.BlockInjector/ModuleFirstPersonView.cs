@@ -14,6 +14,8 @@ namespace Nuterra.BlockInjector
         
         private bool IsActive;
         private Camera camera;
+        private const float FOV = 85f;
+        private float originalFOV = 0f;
         private Vector3 _mouseStart = Vector3.zero;
         private bool _mouseDragging => Input.GetMouseButton(1);
         private bool _mouseStartDragging => Input.GetMouseButtonDown(1);
@@ -61,7 +63,10 @@ namespace Nuterra.BlockInjector
         {
             IsActive = false;
             if (camera)
+            {
                 camera.transform.parent = null;
+                camera.fieldOfView = originalFOV;
+            }
             Console.WriteLine("Camera: Switched to TankCamera");
             TankCamera.inst.enabled = true;
             CurrentModule = -1;
@@ -72,6 +77,9 @@ namespace Nuterra.BlockInjector
             IsActive = true;
             Awake();
             camera = Camera.main;
+            if (originalFOV == 0f)
+                originalFOV = camera.fieldOfView;
+            camera.fieldOfView = FOV;
             TankCamera.inst.enabled = false;
             if (CurrentModule <= -2)
             {

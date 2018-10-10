@@ -115,6 +115,7 @@ namespace Nuterra.BlockInjector
                 .SetName("GSO Top Cockpit")
                 .SetDescription("Pop in here and have a first-person look at the world from this block! (The side with the diamond is the viewing direction)\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
                 .SetPrice(300)
+                .SetHP(500)
                 .SetFaction(FactionSubTypes.GSO)
                 .SetCategory(BlockCategories.Accessories)
                 .SetModel(GameObjectJSON.MeshFromFile("cockpit_small.obj"), false, GSOMain)
@@ -133,6 +134,7 @@ namespace Nuterra.BlockInjector
                 .SetName("GSO Sided \"Swerve\" Cockpit")
                 .SetDescription("Just like the other cockpit, but can be mounted on the sides of things for a better look at your surroundings!\nNOTICE: Make sure the red AP is facing up!\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
                 .SetPrice(300)
+                .SetHP(2500)
                 .SetFaction(FactionSubTypes.GSO)
                 .SetCategory(BlockCategories.Accessories)
                 .SetModel(GameObjectJSON.MeshFromFile("cockpit_small_2.obj"), false, GSOMain)
@@ -151,6 +153,7 @@ namespace Nuterra.BlockInjector
                 .SetName("GSO Observatory")
                 .SetDescription("Mount this gigantic hamsterball to your tech to be right in the action!\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
                 .SetPrice(500)
+                .SetHP(500)
                 .SetFaction(FactionSubTypes.GSO)
                 .SetCategory(BlockCategories.Accessories)
                 .SetModel(GameObjectJSON.MeshFromFile("cockpit_large.obj"), true, GSOMain)
@@ -179,6 +182,7 @@ namespace Nuterra.BlockInjector
                     },
                     RecipeTable.Recipe.OutputType.Items,
                     "gsorefinery");
+
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
@@ -189,6 +193,7 @@ namespace Nuterra.BlockInjector
                     {
                         new CustomRecipe.RecipeOutput(10000)
                     });
+
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
@@ -198,6 +203,42 @@ namespace Nuterra.BlockInjector
                     new CustomRecipe.RecipeOutput[]
                     {
                         new CustomRecipe.RecipeOutput(9999)
+                    });
+
+            CustomRecipe.RegisterRecipe(
+                    new CustomRecipe.RecipeInput[]
+                    {
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 2),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RoditeOre, 1),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 2)
+                    },
+                    new CustomRecipe.RecipeOutput[]
+                    {
+                        new CustomRecipe.RecipeOutput(9000)
+                    });
+
+            CustomRecipe.RegisterRecipe(
+                    new CustomRecipe.RecipeInput[]
+                    {
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiaIngot, 6),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RodiusCapsule, 3),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 2)
+                    },
+                    new CustomRecipe.RecipeOutput[]
+                    {
+                        new CustomRecipe.RecipeOutput(9001)
+                    });
+
+            CustomRecipe.RegisterRecipe(
+                    new CustomRecipe.RecipeInput[]
+                    {
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 4),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RoditeOre, 1),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 2)
+                    },
+                    new CustomRecipe.RecipeOutput[]
+                    {
+                        new CustomRecipe.RecipeOutput(9005)
                     });
 
             BlockLoader.DelayAfterSingleton(new CustomChunk()
