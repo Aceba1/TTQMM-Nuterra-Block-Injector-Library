@@ -11,8 +11,7 @@ namespace Nuterra.BlockInjector
         public static KeyCode key = KeyCode.R;
 
         public static FirstPersonCamera inst { get; private set; }
-
-
+        
         private bool IsActive;
         private Camera camera;
         private Vector3 _mouseStart = Vector3.zero;
@@ -58,37 +57,57 @@ namespace Nuterra.BlockInjector
             _rotation = Quaternion.identity;
         }
 
+        public void DisableFPVState()
+        {
+            IsActive = false;
+            if (camera)
+                camera.transform.parent = null;
+            Console.WriteLine("Camera: Switched to TankCamera");
+            TankCamera.inst.enabled = true;
+            CurrentModule = -1;
+        }
+
+        public void EnableFPVState()
+        {
+            IsActive = true;
+            Awake();
+            camera = Camera.main;
+            TankCamera.inst.enabled = false;
+            if (CurrentModule <= -2)
+            {
+                CurrentModule = Module.Count - 1;
+            }
+            camera.transform.parent = Module[CurrentModule].transform;
+            Singleton.cameraTrans.localPosition = Vector3.zero;
+            Console.WriteLine("Camera: Switched to FirstPersonCamera " + CurrentModule.ToString());
+        }
+
         private void Update()
         {
             if (Input.GetKeyDown(key))
             {
-                bool flag = GetModule();
-                CurrentModule += Input.GetKey(KeyCode.LeftShift) ? -1 : 1;
-                if (IsActive && CurrentModule >= Module.Count || CurrentModule == -1)
+                if (Input.GetKey(KeyCode.LeftControl))
                 {
-                    IsActive = false;
-                    Console.WriteLine("Camera: Switched to TankCamera");
-                    TankCamera.inst.enabled = true;
-                    CurrentModule = -1;
-                    return;
-                }
-                if (flag)
-                {
-                    IsActive = true;
                     Awake();
-                    camera = Camera.main;
-                    TankCamera.inst.enabled = false;
-                    if (CurrentModule <= -2)
-                    {
-                        CurrentModule = Module.Count - 1;
-                    }
-                    Console.WriteLine("Camera: Switched to FirstPersonCamera " + CurrentModule.ToString());
                 }
                 else
                 {
-                    Console.WriteLine("Could not find camera module");
-                    TankCamera.inst.enabled = true;
-                    CurrentModule = -1;
+                    bool flag = GetModule();
+                    CurrentModule += Input.GetKey(KeyCode.LeftShift) ? -1 : 1;
+                    if (IsActive && CurrentModule >= Module.Count || CurrentModule == -1)
+                    {
+                        DisableFPVState();
+                        return;
+                    }
+                    if (flag)
+                    {
+                        EnableFPVState();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Could not find camera module");
+                        DisableFPVState();
+                    }
                 }
             }
 
@@ -100,8 +119,7 @@ namespace Nuterra.BlockInjector
                 IsActive = GetModule();
                 if (!IsActive)
                 {
-                    CurrentModule = -1;
-                    TankCamera.inst.enabled = true;
+                    DisableFPVState();
                     return;
                 }
             }
@@ -141,7 +159,6 @@ namespace Nuterra.BlockInjector
         private void UpdateCamera()
         {
             var module = Module[CurrentModule];
-            Singleton.cameraTrans.position = module.FirstPersonAnchor.transform.position;
             Singleton.cameraTrans.rotation = (module.AdaptToMainRot ? Tank.control.FirstController.block.transform.rotation : module.transform.rotation) * _rotation;
         }
 
