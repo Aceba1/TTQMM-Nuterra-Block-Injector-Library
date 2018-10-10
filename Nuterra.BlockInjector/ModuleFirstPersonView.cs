@@ -14,7 +14,7 @@ namespace Nuterra.BlockInjector
         
         private bool IsActive;
         private Camera camera;
-        private const float FOV = 85f;
+        private const float FOV = 75f;
         private float originalFOV = 0f;
         private Vector3 _mouseStart = Vector3.zero;
         private bool _mouseDragging => Input.GetMouseButton(1);
