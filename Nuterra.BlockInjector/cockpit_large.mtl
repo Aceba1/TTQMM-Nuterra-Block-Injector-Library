@@ -1,51 +1,7 @@
 # Blender MTL File: 'None'
 # Material Count: 7
 
-newmtl Material.008
-Ns 96.078431
-Ka 1.000000 1.000000 1.000000
-Kd 0.640000 0.640000 0.640000
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
-Ni 1.000000
-d 1.000000
-illum 2
-map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
-
-newmtl Material.009
-Ns 96.078431
-Ka 1.000000 1.000000 1.000000
-Kd 0.640000 0.640000 0.640000
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
-Ni 1.000000
-d 1.000000
-illum 2
-map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
-
-newmtl Material.010
-Ns 96.078431
-Ka 1.000000 1.000000 1.000000
-Kd 0.640000 0.640000 0.640000
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
-Ni 1.000000
-d 1.000000
-illum 2
-map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
-
-newmtl Material.011
-Ns 96.078431
-Ka 1.000000 1.000000 1.000000
-Kd 0.640000 0.640000 0.640000
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
-Ni 1.000000
-d 1.000000
-illum 2
-map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
-
-newmtl Material.Base
+newmtl Material.012
 Ns 94.117647
 Ka 1.000000 1.000000 1.000000
 Kd 0.640000 0.640000 0.640000
@@ -56,7 +12,7 @@ d 1.000000
 illum 2
 map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
 
-newmtl Material.Ring
+newmtl Material.013
 Ns 94.117647
 Ka 1.000000 1.000000 1.000000
 Kd 0.640000 0.640000 0.640000
@@ -67,8 +23,52 @@ d 1.000000
 illum 2
 map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
 
-newmtl Material.Sphere
+newmtl Material.014
 Ns 94.117647
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
+
+newmtl Material.015
+Ns 94.117647
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
+
+newmtl Material.Base.001
+Ns 92.156863
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
+
+newmtl Material.Ring.001
+Ns 92.156863
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd C:\Users\arnceb20\Documents\GitHub\TTQMM-Nuterra-Block-Injector-Library\t_GSO_01_c-sharedassets0.assets-999.png
+
+newmtl Material.Sphere.001
+Ns 92.156863
 Ka 1.000000 1.000000 1.000000
 Kd 0.640000 0.640000 0.640000
 Ks 0.500000 0.500000 0.500000
