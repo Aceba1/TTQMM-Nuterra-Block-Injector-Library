@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Nuterra.BlockInjector
 {
-    public class BlockExamples
+    class BlockExamples
     {
         public static void Load()
         {
