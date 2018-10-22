@@ -1,7 +1,14 @@
 # TTQMM-Nuterra-BlockInjector
-Grab the `Nuterra.BlockInjector` folder from [here](https://github.com/Aceba1/TTQMM-Nuterra-Block-Injector-Library/tree/master/Nuterra.BlockInjector/bin/Debug), and put it in the QMods folder in your TerraTech install path.
+Load custom blocks right in to TerraTech!
+
+## Creating your own
+A file named `Example.json` can be found in the new Custom Blocks folder at the root of TT. Make a copy of that and change its values to your new desired block. Add files such as images and meshes to bring it to life!
+
+Better explained guidance can be found on the TerraTech Forum or Discord
 
 <hr>
+
+**You can use the [TerraTech Mod Manager](https://github.com/Aceba1/TerraTech-Mod-Manager) to use this mod, or set it manually with QMM.**
 
 QMM can be found [here](https://github.com/QModManager/TerraTech).
 
