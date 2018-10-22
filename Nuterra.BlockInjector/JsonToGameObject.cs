@@ -19,7 +19,17 @@ namespace Nuterra.BlockInjector
             return new Material(shader);
         }
 
-        public static T GetObjectFromGameResources<T>(string targetName) where T : UnityEngine.Object
+        public static T GetObjectFromUserResources<T>(string targetName) where T : UnityEngine.Object
+        {
+            Type t = typeof(T);
+            if (LoadedResources.ContainsKey(t) && LoadedResources[t].ContainsKey(targetName))
+            {
+                return LoadedResources[t][targetName] as T;
+            }
+            return null;
+        }
+
+        public static T GetObjectFromGameResources<T>(string targetName, bool Log = false) where T : UnityEngine.Object
         {
             T searchresult = null;
             T[] search = Resources.FindObjectsOfTypeAll<T>();
@@ -33,7 +43,7 @@ namespace Nuterra.BlockInjector
                 }
                 failedsearch += search[i].name + "; ";
             }
-            if (searchresult == null)
+            if (searchresult == null && Log)
             {
                 Debug.Log("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
             }

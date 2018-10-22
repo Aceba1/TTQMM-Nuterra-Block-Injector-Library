@@ -46,11 +46,9 @@ namespace Nuterra.BlockInjector
 
         private static void OnGameModeChange()
         {
-            FirstPersonCamera.inst.IsActive = false;
-            FirstPersonCamera.inst.CurrentModule = -1;
-            if (FirstPersonCamera.inst.camera != null)
+            if (inst.camera != null)
             {
-                TankCamera.inst.enabled = true;
+                inst.DisableFPVState();
             }
         }
 
@@ -64,11 +62,22 @@ namespace Nuterra.BlockInjector
             IsActive = false;
             if (camera)
             {
-                camera.transform.parent = null;
+                Singleton.cameraTrans.parent = null;
                 camera.fieldOfView = originalFOV;
+                camera = null;
             }
             Console.WriteLine("Camera: Switched to TankCamera");
-            TankCamera.inst.enabled = true;
+            TankCamera.inst.LockCamera(false);
+            TankCamera.inst.Enable();
+            //var TCType = typeof(TankCamera);
+            //TCType.GetField("currentDistance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            //    .SetValue(TankCamera.inst, 0f);
+            //TCType.GetField("prevCameraDistance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            //    .SetValue(null, 0f);
+            //TCType.GetField("m_AdjustedDistanceCurrent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            //    .SetValue(TankCamera.inst, 0f);
+            //TCType.GetField("m_AdjustedDistancePrev", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            //    .SetValue(TankCamera.inst, 0f);
             CurrentModule = -1;
         }
 
@@ -76,16 +85,16 @@ namespace Nuterra.BlockInjector
         {
             IsActive = true;
             Awake();
-            camera = Camera.main;
+            camera = Camera.current;
             if (originalFOV == 0f)
                 originalFOV = camera.fieldOfView;
             camera.fieldOfView = FOV;
-            TankCamera.inst.enabled = false;
+            TankCamera.inst.LockCamera(true);
             if (CurrentModule <= -2)
             {
                 CurrentModule = Module.Count - 1;
             }
-            camera.transform.parent = Module[CurrentModule].transform;
+            Singleton.cameraTrans.parent = Module[CurrentModule].transform;
             Singleton.cameraTrans.localPosition = Vector3.zero;
             Console.WriteLine("Camera: Switched to FirstPersonCamera " + CurrentModule.ToString());
         }
@@ -167,6 +176,8 @@ namespace Nuterra.BlockInjector
         private void UpdateCamera()
         {
             var module = Module[CurrentModule];
+            Singleton.cameraTrans.parent = module.transform;
+            Singleton.cameraTrans.localPosition = Vector3.zero;
             Singleton.cameraTrans.rotation = (module.AdaptToMainRot ? Tank.control.FirstController.block.transform.rotation : module.transform.rotation) * _rotation;
         }
 

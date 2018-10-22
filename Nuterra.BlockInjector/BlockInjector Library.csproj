@@ -269,11 +269,17 @@
     <Compile Include="CustomBlock.cs" />
     <Compile Include="CustomRecipe.cs" />
     <Compile Include="GameObjectExtensions.cs" />
+    <Compile Include="DirectoryBlockLoader.cs" />
     <Compile Include="JsonToGameObject.cs" />
     <Compile Include="ModuleFirstPersonView.cs" />
     <Compile Include="ObjImporter.cs" />
     <Compile Include="BlockExamples.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="bacon.obj">
@@ -297,6 +303,7 @@
     <None Include="cockpit_small_2.obj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <Resource Include="Example.json" />
     <None Include="mod.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -329,6 +336,12 @@
     <Content Include="cockpit_large_icon.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

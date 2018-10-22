@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Nuterra.BlockInjector
 {
-    class BlockExamples
+    public class BlockExamples
     {
         public static void Load()
         {
@@ -108,7 +108,7 @@ namespace Nuterra.BlockInjector
 
 
 
-            var cockpit_s = new BlockPrefabBuilder("GSOBlock(111)", true)
+            var cockpit_s = new BlockPrefabBuilder("GSOLightStud(111)", true)
                 .SetBlockID(9000, "66a82861496cfa13")
             .SetName("GSO Top Cockpit")
             .SetDescription("Pop in here and have a first-person look at the world from this block! (The side with the diamond is the viewing direction)\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
@@ -116,7 +116,7 @@ namespace Nuterra.BlockInjector
             .SetHP(500)
             .SetFaction(FactionSubTypes.GSO)
             .SetCategory(BlockCategories.Accessories)
-            .SetModel(GameObjectJSON.MeshFromFile("cockpit_small.obj"), false, GSOMain)
+            .SetModel(GameObjectJSON.MeshFromFile("cockpit_small.obj"), true, GSOMain)
             .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_small_icon.png")))
             .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
@@ -127,15 +127,15 @@ namespace Nuterra.BlockInjector
             cockpit_s.RegisterLater();
 
 
-            var cockpit_s2 = new BlockPrefabBuilder("GSOBlock(111)", true)
+            var cockpit_s2 = new BlockPrefabBuilder("GSOLightStud(111)", true)
                 .SetBlockID(9005, "9a6b06c93f545c61")
             .SetName("GSO Sided \"Swerve\" Cockpit")
             .SetDescription("Just like the other cockpit, but can be mounted on the sides of things for a better look at your surroundings!\nNOTICE: Make sure the red AP is facing up!\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
             .SetPrice(300)
-            .SetHP(2500)
+            .SetHP(500)
             .SetFaction(FactionSubTypes.GSO)
             .SetCategory(BlockCategories.Accessories)
-            .SetModel(GameObjectJSON.MeshFromFile("cockpit_small_2.obj"), false, GSOMain)
+            .SetModel(GameObjectJSON.MeshFromFile("cockpit_small_2.obj"), true, GSOMain)
             .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_small_2_icon.png")))
             .SetSizeManual(new IntVector3[] { IntVector3.zero }, new Vector3[] { Vector3.down * 0.5f, Vector3.back * 0.5f });
 
@@ -146,12 +146,12 @@ namespace Nuterra.BlockInjector
 
             cockpit_s2.RegisterLater();
 
-            var cockpit_l = new BlockPrefabBuilder("GSOBlock(111)", true)
+            var cockpit_l = new BlockPrefabBuilder("GSOLightStud(111)", Vector3.one * 0.5f, true)
                 .SetBlockID(9001, "6a9262c04f45a53c")
             .SetName("GSO Observatory")
             .SetDescription("Mount this gigantic hamsterball to your tech to be right in the action!\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
             .SetPrice(500)
-            .SetHP(500)
+            .SetHP(2500)
             .SetFaction(FactionSubTypes.GSO)
             .SetCategory(BlockCategories.Accessories)
             .SetModel(GameObjectJSON.MeshFromFile("cockpit_large.obj"), true, GSOMain)
@@ -242,6 +242,5 @@ namespace Nuterra.BlockInjector
 
             // Site used for Hash: https://www.random.org/bytes/
         }
-
     }
 }

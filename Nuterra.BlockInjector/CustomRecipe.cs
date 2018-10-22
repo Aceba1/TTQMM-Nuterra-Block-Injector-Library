@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Nuterra.BlockInjector
 {
-    public static class CustomRecipe
+    static class CustomRecipe
     {
         public static void RegisterRecipe(RecipeInput[] Inputs, RecipeOutput[] Outputs, RecipeTable.Recipe.OutputType OutputType = RecipeTable.Recipe.OutputType.Items, string NameOfFabricator = "gsofab", float BuildTime = 1f)
         {

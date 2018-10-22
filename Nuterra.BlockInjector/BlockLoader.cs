@@ -20,12 +20,7 @@ namespace Nuterra.BlockInjector
             }
             void Doit()
             {
-                string fabs = "Recipe Lists:";
-                foreach (var fab in Singleton.Manager<RecipeManager>.inst.recipeTable.m_RecipeLists)
-                {
-                    fabs += "\n" + fab.m_Name;
-                }
-                Debug.Log(fabs);
+                Console.WriteLine("The block injector is ready!");
 
                 MakeReady();
 
@@ -33,8 +28,8 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        private static readonly Dictionary<int, CustomBlock> CustomBlocks = new Dictionary<int, CustomBlock>();
-        private static readonly Dictionary<int, CustomChunk> CustomChunks = new Dictionary<int, CustomChunk>();
+        public static readonly Dictionary<int, CustomBlock> CustomBlocks = new Dictionary<int, CustomBlock>();
+        public static readonly Dictionary<int, CustomChunk> CustomChunks = new Dictionary<int, CustomChunk>();
 
         public static void Register(CustomBlock block)
         {
@@ -96,6 +91,7 @@ namespace Nuterra.BlockInjector
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             new GameObject().AddComponent<Timer>();
             BlockExamples.Load();
+            DirectoryBlockLoader.LoadBlocks();
         }
 
         internal class Patches
