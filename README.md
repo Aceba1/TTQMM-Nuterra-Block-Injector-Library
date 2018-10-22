@@ -4,6 +4,8 @@ Load custom blocks right in to TerraTech!
 ## Creating your own
 A file named `Example.json` can be found in the new Custom Blocks folder at the root of TT. Make a copy of that and change its values to your new desired block. Add files such as images and meshes to bring it to life!
 
+If you find any custom blocks, you can also put it in that folder for it to be loaded.
+
 Better explained guidance can be found on the TerraTech Forum or Discord
 
 <hr>
