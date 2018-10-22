@@ -1,6 +1,6 @@
 {
 	"Name": "Magical Block",
-	"Description": "A very nice block, loaded from the file system\nThis one is magical!", //Make multiple lines with \n
+	"Description": "A very nice block, loaded from the file system\nThis one is magical!", //You can make multiple lines with \n
 	"ID": 534968, //A random ID that must be unique		
 	"IDNetHex": "4ff30da9fd33fff4", //Get a random hex from https://www.random.org/bytes/ (8 bytes work)
 
