@@ -118,6 +118,54 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="bacon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\bacon.obj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="bacon_icon_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\bacon_icon_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="bacon_material_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\bacon_material_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="banana_barrel" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\banana_barrel.obj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="banana_base" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\banana_base.obj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="banana_blast_material_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\banana_blast_material_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="banana_body" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\banana_body.obj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="banana_gloss_material_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\banana_gloss_material_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="banana_icon_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\banana_icon_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="banana_material_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\banana_material_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cockpit_large" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\cockpit_large.obj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="cockpit_large_icon_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\cockpit_large_icon_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cockpit_small" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\cockpit_small.obj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="cockpit_small_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\cockpit_small_2.obj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="cockpit_small_2_icon_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\cockpit_small_2_icon_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cockpit_small_icon_png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\cockpit_small_icon_png;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="ExampleJson" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Example.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>

@@ -10,7 +10,7 @@ namespace Nuterra.BlockInjector
         public static void Load()
         {
             Material mat = GameObjectJSON.MaterialFromShader();
-            mat.mainTexture = GameObjectJSON.ImageFromFile("bacon_material.png");
+            mat.mainTexture = GameObjectJSON.ImageFromFile(Properties.Resources.bacon_material_png);
             Material GSOMain = GameObjectJSON.GetObjectFromGameResources<Material>("GSO_Main");
 
             new BlockPrefabBuilder("GSOBlock(111)", true)
@@ -51,8 +51,8 @@ namespace Nuterra.BlockInjector
                 })
                 .SetMass(4)
                 .SetHP(3000)
-                .SetModel(GameObjectJSON.MeshFromFile("bacon.obj"), true, mat)
-                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("bacon_icon.png")))
+                .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.bacon, "bacon"), true, mat)
+                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.bacon_icon_png)))
                 .RegisterLater();
 
 
@@ -68,29 +68,29 @@ namespace Nuterra.BlockInjector
 
             MeshFilter[] componentsInChildren2 = banagun.TankBlock.GetComponentsInChildren<MeshFilter>(true);
 
-            Texture2D main = GameObjectJSON.ImageFromFile("banana_material.png");
-            Texture2D gloss = GameObjectJSON.ImageFromFile("banana_gloss_material.png");
+            Texture2D main = GameObjectJSON.ImageFromFile(Properties.Resources.banana_material_png);
+            Texture2D gloss = GameObjectJSON.ImageFromFile(Properties.Resources.banana_gloss_material_png);
 
             foreach (MeshFilter mes in componentsInChildren2)
             {
                 string name = mes.name;
                 if (name == "m_MuzzleFlash_01")
                 {
-                    mes.GetComponent<MeshRenderer>().material.SetTexture("_MainTex", GameObjectJSON.ImageFromFile("banana_blast_material.png"));
+                    mes.GetComponent<MeshRenderer>().material.SetTexture("_MainTex", GameObjectJSON.ImageFromFile(Properties.Resources.banana_blast_material_png));
                 }
                 else
                 {
                     if (name == "m_GSO_MgunFixed_111_Barrel")
                     {
-                        mes.mesh = GameObjectJSON.MeshFromFile("banana_barrel.obj");
+                        mes.mesh = GameObjectJSON.MeshFromFile(Properties.Resources.banana_barrel, "banana_barrel");
                     }
                     else if (name == "m_GSO_MgunFixed_111_Body")
                     {
-                        mes.mesh = GameObjectJSON.MeshFromFile("banana_body.obj");
+                        mes.mesh = GameObjectJSON.MeshFromFile(Properties.Resources.banana_body, "banana_body");
                     }
                     else if (name == "m_GSO_MgunFixed_111_Base")
                     {
-                        mes.mesh = GameObjectJSON.MeshFromFile("banana_base.obj");
+                        mes.mesh = GameObjectJSON.MeshFromFile(Properties.Resources.banana_base, "banana_base");
                     }
                     else
                     {
@@ -102,7 +102,7 @@ namespace Nuterra.BlockInjector
                     changemat2.SetTexture("_MetallicGlossMap", gloss);
                 }
             }
-            banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("banana_icon.png")))
+            banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.banana_icon_png)))
                 .RegisterLater();
 
 
@@ -116,8 +116,8 @@ namespace Nuterra.BlockInjector
             .SetHP(500)
             .SetFaction(FactionSubTypes.GSO)
             .SetCategory(BlockCategories.Accessories)
-            .SetModel(GameObjectJSON.MeshFromFile("cockpit_small.obj"), true, GSOMain)
-            .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_small_icon.png")))
+            .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_small, "cockpit_small"), true, GSOMain)
+            .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_small_icon_png)))
             .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
             var view = new GameObject("FirstPersonAnchor");
@@ -135,8 +135,8 @@ namespace Nuterra.BlockInjector
             .SetHP(500)
             .SetFaction(FactionSubTypes.GSO)
             .SetCategory(BlockCategories.Accessories)
-            .SetModel(GameObjectJSON.MeshFromFile("cockpit_small_2.obj"), true, GSOMain)
-            .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_small_2_icon.png")))
+            .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_small_2, "cockpit_small_2"), true, GSOMain)
+            .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_small_2_icon_png)))
             .SetSizeManual(new IntVector3[] { IntVector3.zero }, new Vector3[] { Vector3.down * 0.5f, Vector3.back * 0.5f });
 
             var view1 = new GameObject("FirstPersonAnchor");
@@ -154,8 +154,8 @@ namespace Nuterra.BlockInjector
             .SetHP(2500)
             .SetFaction(FactionSubTypes.GSO)
             .SetCategory(BlockCategories.Accessories)
-            .SetModel(GameObjectJSON.MeshFromFile("cockpit_large.obj"), true, GSOMain)
-            .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("cockpit_large_icon.png")))
+            .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_large, "cockpit_large"), true, GSOMain)
+            .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_large_icon_png)))
             .SetSize(IntVector3.one * 2, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
             var view2 = new GameObject("FirstPersonAnchor");

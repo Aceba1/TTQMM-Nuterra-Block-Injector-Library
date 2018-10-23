@@ -50,9 +50,15 @@ namespace Nuterra.BlockInjector
             return searchresult;
         }
 
-        public static Texture2D ImageFromFile(string localPath)
+        public static Texture2D ImageFromFile(byte[] DATA)
         {
             Texture2D texture;
+            texture = new Texture2D(2, 2);
+            texture.LoadImage(DATA);
+            return texture;
+        }
+        public static Texture2D ImageFromFile(string localPath)
+        {
             string _localPath = System.IO.Path.Combine(Assembly.GetCallingAssembly().Location, "../" + localPath);
             byte[] data;
             if (System.IO.File.Exists(_localPath))
@@ -60,14 +66,17 @@ namespace Nuterra.BlockInjector
             else if (System.IO.File.Exists(localPath))
                 data = System.IO.File.ReadAllBytes(localPath);
             else throw new NullReferenceException("The file specified could not be found in " + localPath + " or " + _localPath);
-            texture = new Texture2D(2, 2);
-            texture.LoadImage(data);
-            return texture;
+            return ImageFromFile(data);
         }
 
         public static Sprite SpriteFromImage(Texture2D texture, float Scale = 1f)
         {
             return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(texture.width * 0.5f, texture.height * 0.5f), Mathf.Max(texture.width, texture.height) * Scale);
+        }
+
+        public static Mesh MeshFromFile(string FILEDATA, string name)
+        {
+            return ObjImporter.ImportFile(FILEDATA, name);
         }
 
         public static Mesh MeshFromFile(string localPath)
@@ -112,7 +121,7 @@ namespace Nuterra.BlockInjector
             {
                 try
                 {
-                    if (property.Name.StartsWith("UnityEngine.GameObject"))
+                    if (property.Name.StartsWith("GameObject") || property.Name.StartsWith("UnityEngine.GameObject"))
                     {
                         string name = "Object Child";
                         int GetCustomName = property.Name.IndexOf('|');
@@ -120,7 +129,9 @@ namespace Nuterra.BlockInjector
                         {
                             name = property.Name.Substring(GetCustomName + 1);
                         }
-                        GameObject newGameObject = new GameObject(name);
+
+                        GameObject newGameObject = result.transform.Find(name)?.gameObject;
+                        if (!newGameObject) newGameObject = new GameObject(name);
                         newGameObject.transform.parent = result.transform;
                         CreateGameObject(property.Value as JObject, newGameObject);
                     }

@@ -25,12 +25,19 @@ public static class ObjImporter
         public string fileName;
     }
 
-    // Use this for initialization
-    public static Mesh ImportFile(string filePath)
+    public static Mesh ImportFile(string FilePath)
     {
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
-        meshStruct newMesh = createMeshStruct(filePath);
-        populateMeshStruct(ref newMesh);
+        string entireText = System.IO.File.ReadAllText(FilePath);
+        return ImportFile(entireText, FilePath);
+    }
+
+    public static Mesh ImportFile(string entireText, string name)
+    {
+        System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+
+        meshStruct newMesh = createMeshStruct(entireText, name);
+        populateMeshStruct(ref newMesh, entireText);
 
         Vector3[] newVerts = new Vector3[newMesh.faceData.Length];
         Vector2[] newUVs = new Vector2[newMesh.faceData.Length];
@@ -62,7 +69,9 @@ public static class ObjImporter
         return mesh;
     }
 
-    private static meshStruct createMeshStruct(string filename)
+
+
+    private static meshStruct createMeshStruct(string entireText, string filename)
     {
         int triangles = 0;
         int vertices = 0;
@@ -71,9 +80,6 @@ public static class ObjImporter
         int face = 0;
         meshStruct mesh = new meshStruct();
         mesh.fileName = filename;
-        StreamReader stream = File.OpenText(filename);
-        string entireText = stream.ReadToEnd();
-        stream.Close();
         using (StringReader reader = new StringReader(entireText))
         {
             string currentText = reader.ReadLine();
@@ -128,11 +134,8 @@ public static class ObjImporter
         return mesh;
     }
 
-    private static void populateMeshStruct(ref meshStruct mesh)
+    private static void populateMeshStruct(ref meshStruct mesh, string entireText)
     {
-        StreamReader stream = File.OpenText(mesh.fileName);
-        string entireText = stream.ReadToEnd();
-        stream.Close();
         using (StringReader reader = new StringReader(entireText))
         {
             string currentText = reader.ReadLine();

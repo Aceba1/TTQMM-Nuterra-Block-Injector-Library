@@ -46,6 +46,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -282,60 +283,28 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bacon.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="banana_barrel.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="banana_body.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="banana_base.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="cockpit_large.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="cockpit_small.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="cockpit_small_2.obj">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <Resource Include="bacon.obj" />
+    <Resource Include="banana_barrel.obj" />
+    <Resource Include="banana_body.obj" />
+    <Resource Include="banana_base.obj" />
+    <Resource Include="cockpit_large.obj" />
+    <Resource Include="cockpit_small.obj" />
+    <Resource Include="cockpit_small_2.obj" />
     <Resource Include="Example.json" />
     <None Include="mod.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="bacon_icon.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="bacon_material.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="banana_blast_material.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="banana_material.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="banana_gloss_material.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="banana_icon.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="cockpit_small_2_icon.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="cockpit_small_icon.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="cockpit_large_icon.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Resource Include="bacon_icon_png" />
+    <Resource Include="bacon_material_png" />
+    <Resource Include="banana_blast_material_png" />
+    <Resource Include="banana_material_png" />
+    <Resource Include="banana_gloss_material_png" />
+    <Resource Include="banana_icon_png" />
+    <Resource Include="cockpit_small_2_icon_png" />
+    <Resource Include="cockpit_small_icon_png" />
+    <Resource Include="cockpit_large_icon_png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -348,7 +317,8 @@
     <PostBuildEvent>del *.pdb
 @setlocal enableextensions enabledelayedexpansion
 
-set modpath="C:\Program Files (x86)\Steam\steamapps\common\TerraTech Beta\QMods\Nuterra.BlockInjector"
+set modpath="C:\Users\arnceb20\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech Beta\QMods\Nuterra.BlockInjector"
+ref set modpath="C:\Program Files (x86)\Steam\steamapps\common\TerraTech Beta\QMods\Nuterra.BlockInjector"
 
 if exist !modpath! (
 echo Copying to game
