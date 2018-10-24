@@ -348,6 +348,43 @@ namespace Nuterra.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to # Blender v2.79 (sub 0) OBJ File: &apos;&apos;
+        ///# www.blender.org
+        ///mtllib untitled.mtl
+        ///o Circle
+        ///v 0.000000 0.500000 -1.200000
+        ///v -0.133939 0.500000 -1.146716
+        ///v -0.247487 0.500000 -0.994975
+        ///v -0.323358 0.500000 -0.767878
+        ///v -0.350000 0.500000 -0.500000
+        ///v -0.323358 0.500000 -0.232122
+        ///v -0.247487 0.500000 -0.005025
+        ///v -0.133939 0.500000 0.146716
+        ///v -0.000000 0.500000 0.200000
+        ///v 0.133939 0.500000 0.146716
+        ///v 0.247487 0.500000 -0.005025
+        ///v 0.323358 0.500000 -0.232121
+        ///v 0.350000 0.500000 -0.500000
+        ///v 0.323358 0.500000 -0.767879
+        ///v 0 [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string cockpit_ven {
+            get {
+                return ResourceManager.GetString("cockpit_ven", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] cockpit_ven_icon_png {
+            get {
+                object obj = ResourceManager.GetObject("cockpit_ven_icon_png", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {
         ///	&quot;Name&quot;: &quot;Magical Block&quot;,
         ///	&quot;Description&quot;: &quot;A very nice block, loaded from the file system\nThis one is magical!&quot;, //You can make multiple lines with \n

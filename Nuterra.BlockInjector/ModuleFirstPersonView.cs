@@ -16,6 +16,8 @@ namespace Nuterra.BlockInjector
         private Camera camera;
         private const float FOV = 75f;
         private float originalFOV = 0f;
+        private float originalClip = 0f;
+        private const float Clip = 0.0001f;
         private Vector3 _mouseStart = Vector3.zero;
         private bool _mouseDragging => Input.GetMouseButton(1);
         private bool _mouseStartDragging => Input.GetMouseButtonDown(1);
@@ -63,21 +65,13 @@ namespace Nuterra.BlockInjector
             if (camera)
             {
                 Singleton.cameraTrans.parent = null;
+                camera.nearClipPlane = originalClip;
                 camera.fieldOfView = originalFOV;
                 camera = null;
             }
             Console.WriteLine("Camera: Switched to TankCamera");
             TankCamera.inst.LockCamera(false);
             TankCamera.inst.Enable();
-            //var TCType = typeof(TankCamera);
-            //TCType.GetField("currentDistance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-            //    .SetValue(TankCamera.inst, 0f);
-            //TCType.GetField("prevCameraDistance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-            //    .SetValue(null, 0f);
-            //TCType.GetField("m_AdjustedDistanceCurrent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-            //    .SetValue(TankCamera.inst, 0f);
-            //TCType.GetField("m_AdjustedDistancePrev", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-            //    .SetValue(TankCamera.inst, 0f);
             CurrentModule = -1;
         }
 
@@ -87,7 +81,11 @@ namespace Nuterra.BlockInjector
             Awake();
             camera = Camera.current;
             if (originalFOV == 0f)
+            {
+                originalClip = camera.nearClipPlane;
                 originalFOV = camera.fieldOfView;
+            }
+            camera.nearClipPlane = Clip;
             camera.fieldOfView = FOV;
             TankCamera.inst.LockCamera(true);
             if (CurrentModule <= -2)
@@ -144,8 +142,16 @@ namespace Nuterra.BlockInjector
             if (_mouseStartDragging)
                 BeginSpinControl();
 
-            UpdateLocalRotation();
-            UpdateCamera();
+            try
+            {
+                UpdateLocalRotation();
+                UpdateCamera();
+            }
+            catch
+            {
+                Console.WriteLine("Something bad happened while updating the fpv camera!");
+                DisableFPVState();
+            }
         }
 
         private void UpdateLocalRotation()

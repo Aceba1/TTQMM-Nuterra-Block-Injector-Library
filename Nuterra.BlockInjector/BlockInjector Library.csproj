@@ -283,6 +283,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="cockpit_ven.obj" />
     <Resource Include="bacon.obj" />
     <Resource Include="banana_barrel.obj" />
     <Resource Include="banana_body.obj" />
@@ -311,6 +312,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="cockpit_ven_icon_png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
