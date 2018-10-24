@@ -16,8 +16,6 @@ namespace Nuterra.BlockInjector
         private Camera camera;
         private const float FOV = 75f;
         private float originalFOV = 0f;
-        private float originalClip = 0f;
-        private const float Clip = 0.0001f;
         private Vector3 _mouseStart = Vector3.zero;
         private bool _mouseDragging => Input.GetMouseButton(1);
         private bool _mouseStartDragging => Input.GetMouseButtonDown(1);
@@ -65,7 +63,6 @@ namespace Nuterra.BlockInjector
             if (camera)
             {
                 Singleton.cameraTrans.parent = null;
-                camera.nearClipPlane = originalClip;
                 camera.fieldOfView = originalFOV;
                 camera = null;
             }
@@ -82,10 +79,8 @@ namespace Nuterra.BlockInjector
             camera = Camera.current;
             if (originalFOV == 0f)
             {
-                originalClip = camera.nearClipPlane;
                 originalFOV = camera.fieldOfView;
             }
-            camera.nearClipPlane = Clip;
             camera.fieldOfView = FOV;
             TankCamera.inst.LockCamera(true);
             if (CurrentModule <= -2)
