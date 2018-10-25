@@ -243,7 +243,8 @@ namespace Nuterra.BlockInjector
                     {
                         new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiaIngot, 6),
                         new CustomRecipe.RecipeInput((int)ChunkTypes.RodiusCapsule, 3),
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 2)
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.ErudianCrystal, 2),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 3)
                     },
                     new CustomRecipe.RecipeOutput[]
                     {
@@ -265,13 +266,14 @@ namespace Nuterra.BlockInjector
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 4),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiaIngot, 4),
                         new CustomRecipe.RecipeInput((int)ChunkTypes.RoditeOre, 1),
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 2)
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.IgnianCrystal, 2),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 3)
                     },
                     new CustomRecipe.RecipeOutput[]
                     {
-                        new CustomRecipe.RecipeOutput(9005)
+                        new CustomRecipe.RecipeOutput(9002)
                     });
 
             //BlockLoader.DelayAfterSingleton(new CustomChunk()
