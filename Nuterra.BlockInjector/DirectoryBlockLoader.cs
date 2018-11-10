@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace Nuterra.BlockInjector
 {
@@ -16,6 +14,7 @@ namespace Nuterra.BlockInjector
         {
             public string Name;
             public string Description;
+            public bool DestroyReferenceRenderers;
             public string GamePrefabReference;
             public int ID;
             public string IDNetHex;
@@ -35,7 +34,18 @@ namespace Nuterra.BlockInjector
             public IntVector3[] Cells;
             public Vector3[] APs;
             public Vector3 ReferenceOffset;
+            public string Recipe;
+            public Dictionary<string, SubObj> SubObjects;
+
+            public struct SubObj
+            {
+                public string MeshName;
+                public string ColliderMeshName;
+                public string MeshTextureName;
+                public string MeshMaterialName;
+            }
         }
+
         public static void LoadBlocks()
         {
             var dir = new DirectoryInfo(Path.Combine(System.Reflection.Assembly.GetExecutingAssembly().Location, "../../../"));
@@ -94,8 +104,13 @@ namespace Nuterra.BlockInjector
                     var buildablock = (BlockJSON ? jObject.First : jObject).ToObject<BlockBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
                     BlockPrefabBuilder blockbuilder;
 
+                    bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Count != 0;
+
                     //Prefab reference
-                    if (buildablock.GamePrefabReference == null || buildablock.GamePrefabReference == "") blockbuilder = new BlockPrefabBuilder();
+                    if (buildablock.GamePrefabReference == null || buildablock.GamePrefabReference == "")
+                    {
+                        blockbuilder = new BlockPrefabBuilder();
+                    }
                     else
                     {
                         if (buildablock.ReferenceOffset != null && buildablock.ReferenceOffset != Vector3.zero)
@@ -119,19 +134,37 @@ namespace Nuterra.BlockInjector
                     blockbuilder.SetBlockID(buildablock.ID, buildablock.IDNetHex);
 
                     //Set Category
-                    if (buildablock.Category != 0) blockbuilder.SetCategory((BlockCategories)buildablock.Category);
-                    else blockbuilder.SetCategory(BlockCategories.Standard);
+                    if (buildablock.Category != 0)
+                    {
+                        blockbuilder.SetCategory((BlockCategories)buildablock.Category);
+                    }
+                    else
+                    {
+                        blockbuilder.SetCategory(BlockCategories.Standard);
+                    }
 
                     //Set Faction (Corp)
-                    if (buildablock.Faction != 0) blockbuilder.SetFaction((FactionSubTypes)buildablock.Faction);
-                    else blockbuilder.SetFaction(FactionSubTypes.GSO);
+                    if (buildablock.Faction != 0)
+                    {
+                        blockbuilder.SetFaction((FactionSubTypes)buildablock.Faction);
+                    }
+                    else
+                    {
+                        blockbuilder.SetFaction(FactionSubTypes.GSO);
+                    }
 
                     //Set Block Grade
                     blockbuilder.SetGrade(buildablock.Grade);
 
                     //Set HP
-                    if (buildablock.HP != 0) blockbuilder.SetHP(buildablock.HP);
-                    else blockbuilder.SetHP(100);
+                    if (buildablock.HP != 0)
+                    {
+                        blockbuilder.SetHP(buildablock.HP);
+                    }
+                    else
+                    {
+                        blockbuilder.SetHP(100);
+                    }
 
                     //Set Icon
                     if (buildablock.IconName != null && buildablock.IconName != "")
@@ -143,15 +176,28 @@ namespace Nuterra.BlockInjector
                             if (Tex == null)
                             {
                                 var Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(buildablock.IconName);
-                                if (Spr == null) blockbuilder.SetIcon(NoSpriteBlock);
-                                else blockbuilder.SetIcon(Spr);
+                                if (Spr == null)
+                                {
+                                    blockbuilder.SetIcon(NoSpriteBlock);
+                                }
+                                else
+                                {
+                                    blockbuilder.SetIcon(Spr);
+                                }
                             }
-                            else blockbuilder.SetIcon(Tex);
+                            else
+                            {
+                                blockbuilder.SetIcon(Tex);
+                            }
                         }
-                        else blockbuilder.SetIcon(Tex);
+                        else
+                        {
+                            blockbuilder.SetIcon(Tex);
+                        }
                     }
 
                     //Set Model
+                    if (!HasSubObjs)
                     {
                         //-Get Material
                         Material mat = null;
@@ -205,8 +251,14 @@ namespace Nuterra.BlockInjector
                     blockbuilder.SetDescription(buildablock.Description);
 
                     //Set Price
-                    if (buildablock.Price != 0) blockbuilder.SetPrice(buildablock.Price);
-                    else blockbuilder.SetPrice(500);
+                    if (buildablock.Price != 0)
+                    {
+                        blockbuilder.SetPrice(buildablock.Price);
+                    }
+                    else
+                    {
+                        blockbuilder.SetPrice(500);
+                    }
 
                     //Set Size
                     if (buildablock.Cells != null)
@@ -217,15 +269,38 @@ namespace Nuterra.BlockInjector
                     {
                         IntVector3 extents = buildablock.BlockExtents;
                         if (extents != null)
+                        {
                             extents = IntVector3.one;
+                        }
+
                         blockbuilder.SetSize(extents, (buildablock.APsOnlyAtBottom ? BlockPrefabBuilder.AttachmentPoints.Bottom : BlockPrefabBuilder.AttachmentPoints.All));
                     }
 
                     //Set Mass
-                    if (buildablock.Mass != 0f) blockbuilder.SetMass(buildablock.Mass);
-                    else blockbuilder.SetMass(1f);
+                    if (buildablock.Mass != 0f)
+                    {
+                        blockbuilder.SetMass(buildablock.Mass);
+                    }
+                    else
+                    {
+                        blockbuilder.SetMass(1f);
+                    }
 
                     blockbuilder.RegisterLater(6);
+
+                    if (buildablock.Recipe != null && buildablock.Recipe != "")
+                    {
+                        string[] recipes = buildablock.Recipe.Replace(" ", "").Split(',');
+                        foreach (string recipe in recipes)
+                        {
+                            try
+                            {
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
                 }
                 catch (Exception E)
                 {
@@ -236,9 +311,9 @@ namespace Nuterra.BlockInjector
 
         public static string StripComments(string input)
         {
-            // JavaScriptSerializer doesn't accept commented-out JSON, 
+            // JavaScriptSerializer doesn't accept commented-out JSON,
             // so we'll strip them out ourselves;
-            // NOTE: for safety and simplicity, we only support comments on their own lines, 
+            // NOTE: for safety and simplicity, we only support comments on their own lines,
             // not sharing lines with real JSON
 
             input = Regex.Replace(input, @"^\s*//.*$", "", RegexOptions.Multiline);  // removes comments like this
