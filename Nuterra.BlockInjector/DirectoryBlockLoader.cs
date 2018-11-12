@@ -196,27 +196,27 @@ namespace Nuterra.BlockInjector
                         }
                     }
 
+                    Material localmat = null;
+                    //-Get Material
+                    if (buildablock.MeshMaterialName != null && buildablock.MeshMaterialName != "")
+                    {
+                        localmat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(buildablock.MeshMaterialName));
+                    }
+                    if (localmat == null)
+                    {
+                        localmat = GameObjectJSON.MaterialFromShader();
+                    }
+                    if (buildablock.MeshTextureName != null && buildablock.MeshTextureName != "")
+                    {
+                        Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(buildablock.MeshTextureName);
+                        if (tex != null)
+                        {
+                            localmat.mainTexture = tex;
+                        }
+                    }
                     //Set Model
                     if (!HasSubObjs)
                     {
-                        //-Get Material
-                        Material mat = null;
-                        if (buildablock.MeshMaterialName != null && buildablock.MeshMaterialName != "")
-                        {
-                            mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(buildablock.MeshMaterialName));
-                        }
-                        if (mat == null)
-                        {
-                            mat = GameObjectJSON.MaterialFromShader();
-                        }
-                        if (buildablock.MeshTextureName != null && buildablock.MeshTextureName != "")
-                        {
-                            Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(buildablock.MeshTextureName);
-                            if (tex != null)
-                            {
-                                mat.mainTexture = tex;
-                            }
-                        }
                         //-Get Mesh
                         Mesh mesh = null;
                         if (buildablock.MeshName != null && buildablock.MeshName != "")
@@ -236,11 +236,11 @@ namespace Nuterra.BlockInjector
                         //-Apply
                         if (colliderMesh == null)
                         {
-                            blockbuilder.SetModel(mesh, true, mat);
+                            blockbuilder.SetModel(mesh, true, localmat);
                         }
                         else
                         {
-                            blockbuilder.SetModel(mesh, colliderMesh, true, mat);
+                            blockbuilder.SetModel(mesh, colliderMesh, true, localmat);
                         }
                     }
 
@@ -288,18 +288,49 @@ namespace Nuterra.BlockInjector
 
                     blockbuilder.RegisterLater(6);
 
+                    //Recipe
                     if (buildablock.Recipe != null && buildablock.Recipe != "")
                     {
+                        Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
+                        Type cT = typeof(ChunkTypes);
                         string[] recipes = buildablock.Recipe.Replace(" ", "").Split(',');
                         foreach (string recipe in recipes)
                         {
+                            int chunk = (int)ChunkTypes.Null;
                             try
                             {
+                                chunk = (int)(ChunkTypes)Enum.Parse(cT, recipe, true);
                             }
                             catch
                             {
+                                if (int.TryParse(recipe, out int result))
+                                {
+                                    chunk = result;
+                                }
+                            }
+                            if (chunk != (int)ChunkTypes.Null)
+                            {
+                                if (!RecipeBuilder.ContainsKey(chunk))
+                                {
+                                    RecipeBuilder.Add(chunk, 1);
+                                }
+                                else
+                                {
+                                    RecipeBuilder[chunk]++;
+                                }
                             }
                         }
+
+                        CustomRecipe.RegisterRecipe(
+                            new CustomRecipe.RecipeInput[]
+                            {
+                                new CustomRecipe.RecipeInput((int)ChunkTypes.OleiteJelly, 4),
+                                new CustomRecipe.RecipeInput((int)ChunkTypes.Wood, 4)
+                            },
+                            new CustomRecipe.RecipeOutput[]
+                            {
+                                new CustomRecipe.RecipeOutput(buildablock.ID)
+                            });
                     }
                 }
                 catch (Exception E)
