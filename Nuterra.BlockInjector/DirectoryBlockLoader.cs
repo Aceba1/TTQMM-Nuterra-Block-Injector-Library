@@ -14,7 +14,7 @@ namespace Nuterra.BlockInjector
         {
             public string Name;
             public string Description;
-            public bool DestroyReferenceRenderers;
+            public bool KeepReferenceRenderers;
             public string GamePrefabReference;
             public int ID;
             public string IDNetHex;
@@ -35,7 +35,7 @@ namespace Nuterra.BlockInjector
             public Vector3[] APs;
             public Vector3 ReferenceOffset;
             public string Recipe;
-            public Dictionary<string, SubObj> SubObjects;
+            public SubObj[] SubObjects;
 
             public struct SubObj
             {
@@ -43,6 +43,8 @@ namespace Nuterra.BlockInjector
                 public string ColliderMeshName;
                 public string MeshTextureName;
                 public string MeshMaterialName;
+                public Vector3 SubOffset;
+                public bool DestroySubReferenceRenderer;
             }
         }
 
@@ -104,7 +106,7 @@ namespace Nuterra.BlockInjector
                     var buildablock = (BlockJSON ? jObject.First : jObject).ToObject<BlockBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
                     BlockPrefabBuilder blockbuilder;
 
-                    bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Count != 0;
+                    bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Length != 0;
 
                     //Prefab reference
                     if (buildablock.GamePrefabReference == null || buildablock.GamePrefabReference == "")
@@ -116,11 +118,11 @@ namespace Nuterra.BlockInjector
                         if (buildablock.ReferenceOffset != null && buildablock.ReferenceOffset != Vector3.zero)
                         {
                             //Offset Prefab
-                            blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, buildablock.ReferenceOffset, true);
+                            blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, buildablock.ReferenceOffset, !buildablock.KeepReferenceRenderers);
                         }
                         else
                         {
-                            blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, true);
+                            blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, !buildablock.KeepReferenceRenderers);
                         }
                     }
 
@@ -197,7 +199,7 @@ namespace Nuterra.BlockInjector
                     }
 
                     Material localmat = null;
-                    //-Get Material
+                    //Get Material
                     if (buildablock.MeshMaterialName != null && buildablock.MeshMaterialName != "")
                     {
                         localmat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(buildablock.MeshMaterialName));
@@ -241,6 +243,81 @@ namespace Nuterra.BlockInjector
                         else
                         {
                             blockbuilder.SetModel(mesh, colliderMesh, true, localmat);
+                        }
+                    }
+                    else //Set SUB MESHES
+                    {
+                        var tr = blockbuilder.Prefab.transform;
+                        int ch = 0;
+                        foreach (var sub in buildablock.SubObjects) //For each SUB
+                        {
+                            Transform childT = null;
+                            GameObject childG = null;
+                            bool childExisted = ch < tr.childCount;
+                            if (childExisted)
+                            {
+                                childT = tr.GetChild(ch);
+                                childG = childT.gameObject;
+                            }
+                            else
+                            {
+                                childG = new GameObject();
+                                childT = childG.transform;
+                                childT.parent = tr;
+                                childG.layer = Globals.inst.layerTank;
+                            }
+                            //-Offset
+                            if (sub.SubOffset != null)
+                            {
+                                childT.localPosition = sub.SubOffset;
+                            }
+
+                            //-Get Mesh
+                            Mesh mesh = null;
+                            if (sub.MeshName != null && sub.MeshName != "")
+                            {
+                                mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(sub.MeshName);
+                            }
+                            //-Get Collider
+                            Mesh colliderMesh = null;
+                            if (sub.ColliderMeshName != null && sub.ColliderMeshName != "")
+                            {
+                                colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(sub.ColliderMeshName);
+                            }
+                            //-Get Material
+                            Material mat = localmat;
+                            if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
+                            {
+                                mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(sub.MeshMaterialName));
+                            }
+                            if (sub.MeshTextureName != null && sub.MeshTextureName != "")
+                            {
+                                Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(sub.MeshTextureName);
+                                if (tex != null)
+                                {
+                                    mat = new Material(mat);
+                                    mat.mainTexture = tex;
+                                }
+                            }
+
+                            //-Apply
+                            if (mesh != null)
+                            {
+                                if (mesh != null)
+                                {
+                                    childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
+                                }
+
+                                childG.EnsureComponent<MeshRenderer>().material = mat;
+                            }
+                            if (colliderMesh != null)
+                            {
+                                var mc = childG.EnsureComponent<MeshCollider>();
+                                mc.convex = true;
+                                mc.sharedMesh = colliderMesh;
+                            }
+
+                            ch++;
                         }
                     }
 
@@ -319,16 +396,21 @@ namespace Nuterra.BlockInjector
                                     RecipeBuilder[chunk]++;
                                 }
                             }
+                            else
+                            {
+                                Console.WriteLine("No ChunkTypes found matching given name, nor could parse as ID (int): " + recipe);
+                            }
                         }
 
-                        CustomRecipe.RegisterRecipe(
-                            new CustomRecipe.RecipeInput[]
-                            {
-                                new CustomRecipe.RecipeInput((int)ChunkTypes.OleiteJelly, 4),
-                                new CustomRecipe.RecipeInput((int)ChunkTypes.Wood, 4)
-                            },
-                            new CustomRecipe.RecipeOutput[]
-                            {
+                        var Input = new CustomRecipe.RecipeInput[RecipeBuilder.Count];
+                        int ite = 0;
+                        foreach (var pair in RecipeBuilder)
+                        {
+                            Input[ite] = new CustomRecipe.RecipeInput(pair.Key, pair.Value);
+                            ite++;
+                        }
+
+                        CustomRecipe.RegisterRecipe(Input, new CustomRecipe.RecipeOutput[1] {
                                 new CustomRecipe.RecipeOutput(buildablock.ID)
                             });
                     }
