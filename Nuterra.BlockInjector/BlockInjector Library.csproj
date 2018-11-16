@@ -283,38 +283,36 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="cockpit_ven.obj" />
-    <Resource Include="bacon.obj" />
-    <Resource Include="banana_barrel.obj" />
-    <Resource Include="banana_body.obj" />
-    <Resource Include="banana_base.obj" />
-    <Resource Include="cockpit_large.obj" />
-    <Resource Include="cockpit_small.obj" />
-    <Resource Include="cockpit_small_2.obj" />
     <Resource Include="Example.json" />
+    <None Include="Block Resources\bacon.obj" />
+    <None Include="Block Resources\bacon_icon_png" />
+    <None Include="Block Resources\bacon_material_png" />
+    <None Include="Block Resources\banana_barrel.obj" />
+    <None Include="Block Resources\banana_base.obj" />
+    <None Include="Block Resources\banana_blast_material_png" />
+    <None Include="Block Resources\banana_body.obj" />
+    <None Include="Block Resources\banana_gloss_material_png" />
+    <None Include="Block Resources\banana_icon_png" />
+    <None Include="Block Resources\banana_material_png" />
+    <None Include="Block Resources\cockpit_large.obj" />
+    <None Include="Block Resources\cockpit_large_icon_png" />
+    <None Include="Block Resources\cockpit_small.obj" />
+    <None Include="Block Resources\cockpit_small_2.obj" />
+    <None Include="Block Resources\cockpit_small_2_icon_png" />
+    <None Include="Block Resources\cockpit_small_icon_png" />
+    <None Include="Block Resources\cockpit_ven.obj" />
+    <None Include="Block Resources\cockpit_ven_icon_png" />
+    <None Include="Example - SubObjects.json" />
     <None Include="mod.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="bacon_icon_png" />
-    <Resource Include="bacon_material_png" />
-    <Resource Include="banana_blast_material_png" />
-    <Resource Include="banana_material_png" />
-    <Resource Include="banana_gloss_material_png" />
-    <Resource Include="banana_icon_png" />
-    <Resource Include="cockpit_small_2_icon_png" />
-    <Resource Include="cockpit_small_icon_png" />
-    <Resource Include="cockpit_large_icon_png" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="cockpit_ven_icon_png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
@@ -322,7 +320,7 @@
 @setlocal enableextensions enabledelayedexpansion
 
 set modpath="C:\Users\arnceb20\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech Beta\QMods\Nuterra.BlockInjector"
-ref set modpath="C:\Program Files (x86)\Steam\steamapps\common\TerraTech Beta\QMods\Nuterra.BlockInjector"
+REM set modpath="C:\Program Files (x86)\Steam\steamapps\common\TerraTech Beta\QMods\Nuterra.BlockInjector"
 
 if exist !modpath! (
 echo Copying to game

@@ -11,22 +11,22 @@
 	"HP": 500,
 	"Mass": 10.0,
 
-	"IconName": null, //FILE Name of image, such as "icon.png"
+	"IconName": null, //Name of image, such as "icon.png"
 
-	"MeshName": null, //FILE Name of mesh, such as "mesh.obj"
+	"MeshName": null, //Name of mesh, such as "mesh.obj"
 
-  "Recipe": "PlumbiaIngot, 5, plumbiteoRe", // Separate chunk names or IDs with a comma. Not case sensitive.
+  "Recipe":  "PlumbiaIngot, 5, plumbiteoRe", // Separate chunk names or IDs with a comma. Not case sensitive.
 
 	//  !!! For the EITHER OR, delete or leave null whichever side are not using !!!
 
 
 	/*  EITHER  */
-	"MeshTextureName": null, //FILE Name of image for texture, such as "texture.png"
+	"MeshTextureName": null, //Name of image for texture, such as "texture.png"
 	/*  OR  */
 	"MeshMaterialName": null, //Name of an in-game material to use, such as "GSO_Main", "GeoCorp_Main", "Venture_Main", and "HE_Main". This material flashes and everything!
 
 
-	/*  OPTIONAL  */ "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh
+	/*  OPTIONAL  */ "ColliderMeshName": null, //Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh
 
 
 	/*  EITHER  */
@@ -42,17 +42,10 @@
 		{ "x": 0, "y": 0, "z": 0.5 }, 
 		{ "x": 0, "y": 1.5, "z": 0 }
 	],
-	/*  OR  */
-	"BlockExtents": { "x": 1, "y": 1, "z": 1 }, //Makes a grid box with these dimensions. Is ignored if "Cells" is not null
-	"APsOnlyAtBottom": false, //Make APs only on the bottom, or have all faces covered. Is ignored if "Cells" is not null
-
-
-	/*  OPTIONAL
 	"GamePrefabReference": null, //Use a block prefab from the Game's resources as a base. For example, "GSOBlock(111)"
   "KeepReferenceRenderers": true,
 	"ReferenceOffset": { "x": 0, "y": 0, "z": 0 }, //Shift the subobjects of the block prefab by x, y and z
   
-  // Sub Objects can modify existing sub gameobjects on a prefab reference
   "SubObjects": [ {
     "DestroySubReferenceRenderer": false,
     "MeshName": null,
@@ -67,5 +60,5 @@
     "MeshTextureName": null,
     "MeshMaterialName": null,
     "SubOffset": { "x": 0, "y": 0, "z": 0 }
-  } ] */
+  } ]
 }

@@ -338,14 +338,14 @@ namespace Nuterra.BlockInjector
                     }
 
                     //Set Size
-                    if (buildablock.Cells != null)
+                    if (buildablock.Cells != null && buildablock.Cells.Length != 0)
                     {
                         blockbuilder.SetSizeManual(buildablock.Cells, buildablock.APs);
                     }
                     else
                     {
                         IntVector3 extents = buildablock.BlockExtents;
-                        if (extents != null)
+                        if (extents == null)
                         {
                             extents = IntVector3.one;
                         }

@@ -253,9 +253,7 @@ namespace Nuterra.Properties {
         ///vn -0.6946 -0.7194 0.0005
         ///vn -0.0008 -0.7191 -0.6949
         ///vn 0.6946 -0.7194 -0.0011
-        ///usemtl Material.015
-        ///s off
-        ///f  [rest of string was truncated]&quot;;.
+        ///usemtl Mat [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string cockpit_large {
             get {
@@ -291,7 +289,7 @@ namespace Nuterra.Properties {
         ///v -0.220244 0.056513 -0.329618
         ///v -0.280317 0.056513 -0.280317
         ///v -0.200337 0.067098 0.299825
-        ///v -0.254980 0.067098 0.254980 [rest of string was truncated]&quot;;.
+        ///v -0.254980  [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string cockpit_small {
             get {
@@ -318,8 +316,7 @@ namespace Nuterra.Properties {
         ///vt 0.185307 0.617713
         ///vt 0.198494 0.649550
         ///vt 0.217144 0.630900
-        ///vt 0.198494 0.585876
-        ///vt 0 [rest of string was truncated]&quot;;.
+        ///vt 0.19 [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string cockpit_small_2 {
             get {
@@ -350,23 +347,22 @@ namespace Nuterra.Properties {
         /// <summary>
         ///   Looks up a localized string similar to # Blender v2.79 (sub 0) OBJ File: &apos;&apos;
         ///# www.blender.org
-        ///mtllib untitled.mtl
-        ///o Circle
-        ///v 0.000000 0.500000 -1.200000
-        ///v -0.133939 0.500000 -1.146716
-        ///v -0.247487 0.500000 -0.994975
-        ///v -0.323358 0.500000 -0.767878
-        ///v -0.350000 0.500000 -0.500000
-        ///v -0.323358 0.500000 -0.232122
-        ///v -0.247487 0.500000 -0.005025
-        ///v -0.133939 0.500000 0.146716
-        ///v -0.000000 0.500000 0.200000
-        ///v 0.133939 0.500000 0.146716
-        ///v 0.247487 0.500000 -0.005025
-        ///v 0.323358 0.500000 -0.232121
-        ///v 0.350000 0.500000 -0.500000
-        ///v 0.323358 0.500000 -0.767879
-        ///v 0 [rest of string was truncated]&quot;;.
+        ///mtllib cockpit_ven.mtl
+        ///o Phase_Dome_Plane.001
+        ///v 0.000000 -0.553659 0.196341
+        ///v 0.000000 -0.607066 0.261416
+        ///v 0.000000 -0.646750 0.335661
+        ///v 0.252484 -0.488584 0.247516
+        ///v 0.214720 -0.553659 0.285280
+        ///v 0.168704 -0.607066 0.331296
+        ///v 0.116205 -0.646750 0.383795
+        ///v 0.059241 -0.671188 0.440759
+        ///v 0.357066 -0.488584 0.500000
+        ///v 0.303659 -0.553659 0.500000
+        ///v 0.238584 -0.607066 0.500000
+        ///v 0.164339 -0.646750 0.500000
+        ///v 0.083779 -0.671188 0.500000
+        ///v 0. [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string cockpit_ven {
             get {
