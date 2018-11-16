@@ -10,6 +10,15 @@ namespace Nuterra.BlockInjector
     {
         internal class Timer : MonoBehaviour
         {
+            internal static string blocks = "";
+            void OnGUI()
+            {
+                if (blocks != "")
+                    GUILayout.Label(blocks);
+                if (Singleton.Manager<ManSplashScreen>.inst.HasExited)
+                    UnityEngine.GameObject.Destroy(this.gameObject);
+            }
+
             void Start()
             {
                 Singleton.DoOnceAfterStart(Wait);
@@ -21,10 +30,7 @@ namespace Nuterra.BlockInjector
             void Doit()
             {
                 Console.WriteLine("The block injector is ready!");
-
                 MakeReady();
-
-                UnityEngine.GameObject.DestroyImmediate(this.gameObject);
             }
         }
 
@@ -34,6 +40,7 @@ namespace Nuterra.BlockInjector
         public static void Register(CustomBlock block)
         {
             Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
+            Timer.blocks += $"\n #{block.BlockID} '{block.Name}' ({block.GetType().ToString()})";
             int blockID = block.BlockID;
             CustomBlocks.Add(blockID, block);
             int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
