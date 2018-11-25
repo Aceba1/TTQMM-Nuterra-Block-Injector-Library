@@ -455,6 +455,13 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        public BlockPrefabBuilder AddComponent<TBehaviour>(out TBehaviour NewComponent) where TBehaviour : MonoBehaviour
+        {
+            ThrowIfFinished();
+            NewComponent = _customBlock.Prefab.AddComponent<TBehaviour>();
+            return this;
+        }
+
         public BlockPrefabBuilder AddComponent<TBehaviour>() where TBehaviour : MonoBehaviour
         {
             return AddComponent<TBehaviour>(null);
