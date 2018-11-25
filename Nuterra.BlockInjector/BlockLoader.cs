@@ -39,22 +39,35 @@ namespace Nuterra.BlockInjector
 
         public static void Register(CustomBlock block)
         {
-            Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
-            Timer.blocks += $"\n #{block.BlockID} '{block.Name}' ({block.GetType().ToString()})";
-            int blockID = block.BlockID;
-            CustomBlocks.Add(blockID, block);
-            int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
-            ManSpawn spawnManager = ManSpawn.inst;
-            spawnManager.VisibleTypeInfo.SetDescriptor<FactionSubTypes>(hashCode, block.Faction);
-            spawnManager.VisibleTypeInfo.SetDescriptor<BlockCategories>(hashCode, block.Category);
             try
             {
-                typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(spawnManager, new object[] { block.Prefab });
-                (typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(RecipeManager.inst) as Dictionary<int, int>).Add(blockID, block.Price);
+                Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
+                Timer.blocks += $"\n #{block.BlockID} - \"{block.Name}\"";
+                int blockID = block.BlockID;
+                if (CustomBlocks.ContainsKey(blockID))
+                {
+                    Timer.blocks += " - FAILED: ID already exists!";
+                }
+                CustomBlocks.Add(blockID, block);
+                int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
+                ManSpawn spawnManager = ManSpawn.inst;
+                spawnManager.VisibleTypeInfo.SetDescriptor<FactionSubTypes>(hashCode, block.Faction);
+                spawnManager.VisibleTypeInfo.SetDescriptor<BlockCategories>(hashCode, block.Category);
+                try
+                {
+                    typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(spawnManager, new object[] { block.Prefab });
+                    (typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(RecipeManager.inst) as Dictionary<int, int>).Add(blockID, block.Price);
+                }
+                catch (Exception E)
+                {
+                    Console.WriteLine(E.Message + "\n" + E.StackTrace);
+                    Timer.blocks += " FAILED: " + E.InnerException?.Message;
+                }
             }
             catch(Exception E)
             {
-                UnityEngine.Debug.LogException(E);
+                Console.WriteLine(E.Message+"\n"+E.StackTrace+"\n"+E.InnerException?.Message);
+                Timer.blocks += " - FAILED: " + E.InnerException?.Message;
             }
         }
 
@@ -103,6 +116,7 @@ namespace Nuterra.BlockInjector
 
         internal class Patches
         {
+            /*
             static bool Catching = false;
             [HarmonyPatch(typeof(TTNetworkManager), "AddSpawnableType")]
             private static class CatchHexRepeat
@@ -127,6 +141,7 @@ namespace Nuterra.BlockInjector
                     return true;
                 }
             }
+            */
 
             [HarmonyPatch(typeof(ManSpawn), "IsBlockAvailableOnPlatform")]
             private static class TableFix
