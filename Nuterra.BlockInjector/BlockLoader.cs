@@ -14,7 +14,7 @@ namespace Nuterra.BlockInjector
             void OnGUI()
             {
                 if (blocks != "")
-                    GUILayout.Label(blocks);
+                    GUILayout.Label("Loaded Blocks: "+blocks);
                 if (Singleton.Manager<ManSplashScreen>.inst.HasExited)
                     UnityEngine.GameObject.Destroy(this.gameObject);
             }
@@ -42,7 +42,7 @@ namespace Nuterra.BlockInjector
             try
             {
                 Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
-                Timer.blocks += $"\n #{block.BlockID} - \"{block.Name}\"";
+                Timer.blocks += $"\n - #{block.BlockID} - \"{block.Name}\"";
                 int blockID = block.BlockID;
                 if (CustomBlocks.ContainsKey(blockID))
                 {
@@ -67,7 +67,14 @@ namespace Nuterra.BlockInjector
             catch(Exception E)
             {
                 Console.WriteLine(E.Message+"\n"+E.StackTrace+"\n"+E.InnerException?.Message);
-                Timer.blocks += " - FAILED: " + E.InnerException?.Message;
+                if (E.InnerException != null)
+                {
+                    Timer.blocks += " - FAILED: " + E.InnerException?.Message;
+                }
+                else
+                {
+                    Timer.blocks += " - FAILED: " + E.Message;
+                }
             }
         }
 
