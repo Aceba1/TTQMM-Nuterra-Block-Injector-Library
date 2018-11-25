@@ -1,15 +1,15 @@
 {
 	"Name": "Magical Block",
 	"Description": "A very nice block, loaded from the file system\nThis one is magical!", //You can make multiple lines with \n
-	"ID": 534968, //A random ID that must be unique		
+	"ID": 534968, //A random ID that MUST be unique		
 	"IDNetHex": "4ff30da9fd33fff4", //Get a random hex from https://www.random.org/bytes/ (8 bytes work)
 
-	"Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP = 3, Venture = 4, HawkEye = 5, Special = 6
+	"Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP = 3, Venture = 4, HawkEye = 5, Special = 6, BetterFuture = 7
 	"Category": 0, //Control = 1, Standard = 2|0, Wheels = 3, Weapons = 4, Accessories = 5, Power = 6, Base = 7, Flight = 8
-	"Grade": 4, //The grade minus one
+	"Grade": 0, //The desired grade minus one
 	"Price": 100,
 	"HP": 500,
-	"Mass": 10.0,
+	"Mass": 1.0,
 
 	"IconName": null, //FILE Name of image, such as "icon.png"
 
@@ -17,17 +17,16 @@
 
   "Recipe": "PlumbiaIngot, 5, plumbiteoRe", // Separate chunk names or IDs with a comma. Not case sensitive.
 
-	//  !!! For the EITHER OR, delete or leave null whichever side are not using !!!
-
 
 	/*  EITHER  */
 	"MeshTextureName": null, //FILE Name of image for texture, such as "texture.png"
 	/*  OR  */
-	"MeshMaterialName": null, //Name of an in-game material to use, such as "GSO_Main", "GeoCorp_Main", "Venture_Main", and "HE_Main". This material flashes and everything!
+	"MeshMaterialName": null, //Name of an in-game material to use, such as "Corp_Main", "GSO_Main", "GeoCorp_Main", "Venture_Main", and "HE_Main". This material flashes and everything!
 
 
 	/*  OPTIONAL  */ "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh
 
+  // X is right and left, Y is up and down, and Z is forward and backward
 
 	/*  EITHER  */
 	"Cells": [ //The grid space to be occupied
@@ -43,11 +42,21 @@
 		{ "x": 0, "y": 1.5, "z": 0 }
 	],
 	/*  OR  */
-	"BlockExtents": { "x": 1, "y": 1, "z": 1 }, //Makes a grid box with these dimensions. Is ignored if "Cells" is not null
-	"APsOnlyAtBottom": false, //Make APs only on the bottom, or have all faces covered. Is ignored if "Cells" is not null
+  "BlockExtents": //Makes a grid box with these dimensions. Is ignored if "Cells": is used
+  {
+    "x": 1,
+    "y": 1,
+    "z": 1
+  },  // A vector of (1, 1, 1) returns a one-celled block
+	"APsOnlyAtBottom": false, //Make APs only on the bottom, or have all faces covered. Only works with "BlockExtents":
 
+  
 
-	/*  OPTIONAL
+  // Delete /* */ if using
+
+	/*    
+  
+  //OPTIONAL
 	"GamePrefabReference": null, //Use a block prefab from the Game's resources as a base. For example, "GSOBlock(111)"
   "KeepReferenceRenderers": true,
 	"ReferenceOffset": { "x": 0, "y": 0, "z": 0 }, //Shift the subobjects of the block prefab by x, y and z
@@ -67,5 +76,7 @@
     "MeshTextureName": null,
     "MeshMaterialName": null,
     "SubOffset": { "x": 0, "y": 0, "z": 0 }
-  } ] */
+  } }
+	
+  */
 }
