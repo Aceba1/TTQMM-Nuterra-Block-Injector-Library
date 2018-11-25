@@ -228,6 +228,12 @@ namespace Nuterra.BlockInjector
                         if (mesh == null)
                         {
                             mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>("Cube");
+                            if (mesh == null)
+                            {
+                                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                                mesh = go.GetComponent<MeshFilter>().mesh;
+                                GameObject.Destroy(go);
+                            }
                         }
                         //-Get Collider
                         Mesh colliderMesh = null;
