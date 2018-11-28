@@ -126,7 +126,7 @@ namespace Nuterra.BlockInjector
                 .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
                 var view = new GameObject("FirstPersonAnchor");
-                view.AddComponent<FirstPersonCamera.ModuleFirstPerson>();
+                view.AddComponent<ModuleFirstPerson>();
                 view.transform.parent = cockpit_s.TankBlock.transform;
 
                 cockpit_s.RegisterLater();
@@ -148,7 +148,7 @@ namespace Nuterra.BlockInjector
                 .SetSizeManual(new IntVector3[] { IntVector3.zero }, new Vector3[] { Vector3.down * 0.5f, Vector3.back * 0.5f });
 
                 var view1 = new GameObject("FirstPersonAnchor");
-                view1.AddComponent<FirstPersonCamera.ModuleFirstPerson>();
+                view1.AddComponent<ModuleFirstPerson>();
                 view1.transform.parent = cockpit_s2.TankBlock.transform;
                 view1.transform.rotation = Quaternion.Euler(-90, 0, 0);
 
@@ -172,7 +172,7 @@ namespace Nuterra.BlockInjector
                 .SetSize(IntVector3.one * 2, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
                 var view2 = new GameObject("FirstPersonAnchor");
-                view2.AddComponent<FirstPersonCamera.ModuleFirstPerson>().AdaptToMainRot = true;
+                view2.AddComponent<ModuleFirstPerson>().AdaptToMainRot = true;
                 view2.transform.parent = cockpit_l.TankBlock.transform;
                 view2.transform.localPosition = Vector3.one * 0.5f;
 
@@ -196,7 +196,7 @@ namespace Nuterra.BlockInjector
                 .SetSize(new IntVector3(1, 1, 2), BlockPrefabBuilder.AttachmentPoints.Bottom);
 
                 var view3 = new GameObject("FirstPersonAnchor");
-                view3.AddComponent<FirstPersonCamera.ModuleFirstPerson>().AdaptToMainRot = true;
+                view3.AddComponent<ModuleFirstPerson>().AdaptToMainRot = true;
                 view3.transform.parent = cockpit_ven.TankBlock.transform;
                 view3.transform.localPosition = Vector3.forward * 0.5f + Vector3.down * 0.25f;
 

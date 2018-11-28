@@ -187,37 +187,37 @@ namespace Nuterra.BlockInjector
             _mouseStart = Input.mousePosition;
             _rotationStart = _rotation;
         }
+    }
 
-        public class ModuleFirstPerson : MonoBehaviour
+    public class ModuleFirstPerson : MonoBehaviour
+    {
+        private GameObject _anchor;
+        public bool AdaptToMainRot = false;
+        public TankBlock thisBlock;
+
+        public void Awake()
         {
-            private GameObject _anchor;
-            public bool AdaptToMainRot = false;
-            public TankBlock thisBlock;
+            thisBlock = gameObject.GetComponent<TankBlock>();
+        }
 
-            public void Awake()
+        public GameObject FirstPersonAnchor
+        {
+            get
             {
-                thisBlock = gameObject.GetComponent<TankBlock>();
-            }
-
-            public GameObject FirstPersonAnchor
-            {
-                get
+                if (!_anchor)
                 {
-                    if (!_anchor)
+                    Transform[] ts = transform.GetComponentsInChildren<Transform>();
+                    foreach (Transform t in ts)
                     {
-                        Transform[] ts = transform.GetComponentsInChildren<Transform>();
-                        foreach (Transform t in ts)
+                        if (t.gameObject.name == "FirstPersonAnchor")
                         {
-                            if (t.gameObject.name == "FirstPersonAnchor")
-                            {
-                                _anchor = t.gameObject;
-                                return _anchor;
-                            }
+                            _anchor = t.gameObject;
+                            return _anchor;
                         }
-                        _anchor = null;
                     }
-                    return _anchor;
+                    _anchor = null;
                 }
+                return _anchor;
             }
         }
     }
