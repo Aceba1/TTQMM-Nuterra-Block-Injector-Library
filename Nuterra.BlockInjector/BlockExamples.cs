@@ -15,7 +15,7 @@ namespace Nuterra.BlockInjector
 
             {
 
-                new BlockPrefabBuilder("GSOBlock(111)", true)
+                new BlockPrefabBuilder(/*"GSOBlock(111)", true*/)
                     .SetBlockID(10000, "95f04b12b0e9537c")
                     .SetName("GSO Bacon strip")
                     .SetDescription("A long strip of bacon with bullet absoring grease\n" +
@@ -137,7 +137,7 @@ namespace Nuterra.BlockInjector
 
                 var cockpit_s2 = new BlockPrefabBuilder("GSOLightStud(111)", true)
                     .SetBlockID(9005, "9a6b06c93f545c61")
-                .SetName("GSO Sided \"Swerve\" Cockpit")
+                .SetName("GSO Sided Swerve Cockpit")
                 .SetDescription("Just like the other cockpit, but can be mounted on the sides of things for a better look at your surroundings!\nNOTICE: Make sure the red AP is facing up!\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
                 .SetPrice(300)
                 .SetHP(500)
@@ -214,16 +214,15 @@ namespace Nuterra.BlockInjector
                     {
                         new CustomRecipe.RecipeOutput(10000)
                     });
-
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 3),
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.LuxiteShard, 3)
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 1),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.LuxiteShard, 2)
                     },
                     new CustomRecipe.RecipeOutput[]
                     {
-                        new CustomRecipe.RecipeOutput(9999)
+                        new CustomRecipe.RecipeOutput(10001)
                     });
 
             CustomRecipe.RegisterRecipe(
@@ -254,8 +253,8 @@ namespace Nuterra.BlockInjector
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 4),
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.RoditeOre, 1),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiteOre, 3),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RodiusCapsule, 1),
                         new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 2)
                     },
                     new CustomRecipe.RecipeOutput[]
@@ -266,15 +265,15 @@ namespace Nuterra.BlockInjector
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiaIngot, 4),
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.RoditeOre, 1),
-                        new CustomRecipe.RecipeInput((int)ChunkTypes.IgnianCrystal, 2),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.PlumbiaIngot, 2),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.RodiusCapsule, 1),
+                        new CustomRecipe.RecipeInput((int)ChunkTypes.TitaniaIngot, 1),
                         new CustomRecipe.RecipeInput((int)ChunkTypes.RubberJelly, 3)
                     },
                     new CustomRecipe.RecipeOutput[]
                     {
                         new CustomRecipe.RecipeOutput(9002)
-                    });
+                    }, RecipeTable.Recipe.OutputType.Items, "venfab");
 
             //BlockLoader.DelayAfterSingleton(new CustomChunk()
             //{

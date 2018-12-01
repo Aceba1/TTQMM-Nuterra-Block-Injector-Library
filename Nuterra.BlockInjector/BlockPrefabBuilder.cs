@@ -84,13 +84,12 @@ namespace Nuterra.BlockInjector
             }
             if (original == null)
             {
-                throw new Exception("Nothing starting with \"" + PrefabFromResource + "\" could be found. Decompile the resources asset to see what there is");
+                throw new Exception("No prefab starting with \"" + PrefabFromResource + "\" could be found...");
             }
-            var copy = GameObject.Instantiate(original);
+            var copy = UnityEngine.Object.Instantiate(original);
             Initialize(copy, false);
             if (RemoveRenderers)
             {
-                Console.WriteLine("\nComponents in " + PrefabFromResource + ":" + LogAllComponents());
                 RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter), typeof(Collider), typeof(ColliderSwapper), typeof(Visible), typeof(UnityEngine.Networking.NetworkIdentity), typeof(TTNetworkTransform), typeof(TankBlock));
             }
         }

@@ -1,10 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Nuterra.BlockInjector
 {
     public static class CustomRecipe
     {
+        /*public static void RegisterScrappableRecipe(RecipeInput[] Inputs, RecipeOutput[] Outputs, RecipeTable.Recipe.OutputType OutputType = RecipeTable.Recipe.OutputType.Items, string NameOfFabricator = "gsofab", float BuildTime = 1f)
+        {
+            new GameObject().AddComponent<RecipeTimer>().CallRecipeRegister(new CustomRecipeStruct(Inputs, Outputs, OutputType, NameOfFabricator, BuildTime));
+            new GameObject().AddComponent<RecipeTimer>().CallRecipeRegister(new CustomRecipeStruct(Inputs, Outputs, OutputType, NameOfFabricator + "_reverse", BuildTime));
+        }*/
+
         public static void RegisterRecipe(RecipeInput[] Inputs, RecipeOutput[] Outputs, RecipeTable.Recipe.OutputType OutputType = RecipeTable.Recipe.OutputType.Items, string NameOfFabricator = "gsofab", float BuildTime = 1f)
         {
             new GameObject().AddComponent<RecipeTimer>().CallRecipeRegister(new CustomRecipeStruct(Inputs, Outputs, OutputType, NameOfFabricator, BuildTime));
@@ -71,12 +78,19 @@ namespace Nuterra.BlockInjector
             public void CallRecipeRegister(CustomRecipeStruct CustomBlock)
             {
                 customRecipe = CustomBlock;
-                BlockLoader.DelayAfterSingleton(FinishRecipe);
+                Invoke("FinishRecipe",.5f);
             }
 
             private void FinishRecipe()
             {
-                RegisterRecipe(customRecipe);
+                try
+                {
+                    RegisterRecipe(customRecipe);
+                }
+                catch(Exception E)
+                {
+                    Console.WriteLine("Exception trying to register recipe! " + E.Message + "\n" + E.StackTrace);
+                }
                 UnityEngine.GameObject.Destroy(this.gameObject);
             }
         }
