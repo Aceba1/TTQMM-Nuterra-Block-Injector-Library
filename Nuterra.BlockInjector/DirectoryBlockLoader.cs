@@ -52,12 +52,23 @@ namespace Nuterra.BlockInjector
         {
             var dir = new DirectoryInfo(Path.Combine(System.Reflection.Assembly.GetExecutingAssembly().Location, "../../../"));
             string BlockPath = Path.Combine(dir.FullName, "Custom Blocks");
-            if (!Directory.Exists(BlockPath))
+            try
             {
-                Directory.CreateDirectory(BlockPath);
-                File.WriteAllText(BlockPath + "/Example.json", Properties.Resources.ExampleJson);
+                if (!Directory.Exists(BlockPath))
+                {
+                    Directory.CreateDirectory(BlockPath);
+                }
+                string path = BlockPath + "/Example.json";
+                if (!File.Exists(path))
+                {
+                    File.WriteAllText(path, Properties.Resources.ExampleJson);
+                }
             }
-
+            catch(Exception E)
+            {
+                Console.WriteLine("Could not access \"" + BlockPath + "\"!\n"+E.Message);
+                  
+            }
             Sprite NoSpriteBlock;
             try
             {
