@@ -7,6 +7,7 @@ namespace Nuterra.BlockInjector
 {
     public sealed class BlockPrefabBuilder
     {
+        private Dictionary<string, GameObject> PrefabList;
         internal class RegisterTimer : MonoBehaviour
         {
             public BlockPrefabBuilder prefabToRegister;
@@ -84,7 +85,8 @@ namespace Nuterra.BlockInjector
             }
             if (original == null)
             {
-                throw new Exception("No prefab starting with \"" + PrefabFromResource + "\" could be found...");
+                if (!PrefabList.TryGetValue(PrefabFromResource, out original))
+                    throw new Exception("No prefab starting with \"" + PrefabFromResource + "\" could be found... (If relying on modded block, try to delay creation)");
             }
             var copy = UnityEngine.Object.Instantiate(original);
             Initialize(copy, false);
@@ -130,6 +132,9 @@ namespace Nuterra.BlockInjector
         public BlockPrefabBuilder RegisterLater(float Time = 5f)
         {
             ThrowIfFinished();
+            string name = _customBlock.Name;
+            while (PrefabList.ContainsKey(name)) name += "+";
+            PrefabList.Add(name, _customBlock.Prefab);
             //_customBlock.Prefab.transform.position = Vector3.down * 1000f;
             new GameObject().AddComponent<RegisterTimer>().CallBlockPrefabBuilder(Time, this, _customBlock);
             _finished = true;
