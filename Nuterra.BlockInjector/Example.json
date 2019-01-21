@@ -24,7 +24,7 @@
   /*  EITHER  */
   "MeshTextureName": null, //FILE Name of image for texture, such as "texture.png". File can be anywhere and should be uniquely named
   /*  OR  */
-  "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GeoCorp_Main", "Venture_Main", and "HE_Main". This material flashes and everything!
+  "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GeoCorp_Main", "Venture_Main", "BF_Main", and "HE_Main",. This material flashes and everything!
 
 
   /*  OPTIONAL  */ "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh
@@ -66,6 +66,7 @@
   
   // Sub Objects can modify existing sub gameobjects on a prefab reference
   "SubObjects": [ {
+    "SubOverrideName":"name_of_sub_in_game",
     "DestroySubReferenceRenderer": false,
     "MeshName": null,
     "ColliderMeshName": null,
@@ -73,13 +74,14 @@
     "MeshMaterialName": null,
     "SubOffset": { "x": 0, "y": 0, "z": 0 },
   }, {
+    "SubOverrideName":"name_of_sub_in_game",
     "DestroySubReferenceRenderer": false,
     "MeshName": null,
     "ColliderMeshName": null,
     "MeshTextureName": null,
     "MeshMaterialName": null,
     "SubOffset": { "x": 0, "y": 0, "z": 0 }
-  } }
+  } ]
 	
   */
 }

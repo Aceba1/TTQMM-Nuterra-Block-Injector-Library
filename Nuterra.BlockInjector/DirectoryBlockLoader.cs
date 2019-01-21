@@ -39,12 +39,15 @@ namespace Nuterra.BlockInjector
 
             public struct SubObj
             {
+                public string SubOverrideName;
                 public string MeshName;
+                public bool DestroyExistingColliders;
+                public bool MakeBoxCollider;
                 public string ColliderMeshName;
                 public string MeshTextureName;
                 public string MeshMaterialName;
                 public Vector3 SubOffset;
-                public bool DestroySubReferenceRenderer;
+                public bool DestroyExistingRenderer;
             }
         }
 
@@ -70,14 +73,7 @@ namespace Nuterra.BlockInjector
                   
             }
             Sprite NoSpriteBlock;
-            try
-            {
-                NoSpriteBlock = GameObjectJSON.GetObjectFromGameResources<Sprite>("Icon_Plus");
-            }
-            catch
-            {
-                NoSpriteBlock = new Sprite();
-            }
+            NoSpriteBlock = GameObjectJSON.GetObjectFromGameResources<Sprite>("Icon_Dimensions");
             var CustomBlocks = new DirectoryInfo(BlockPath);
             var cbJson = CustomBlocks.GetFiles("*.json", SearchOption.AllDirectories);
             var cbObj = CustomBlocks.GetFiles("*.obj", SearchOption.AllDirectories);
@@ -142,7 +138,6 @@ namespace Nuterra.BlockInjector
                     {
                         GameObjectJSON.CreateGameObject(jObject.Last.ToObject<JObject>(), blockbuilder.Prefab);
                     }
-
                     //Set IP
                     blockbuilder.SetBlockID(buildablock.ID, buildablock.IDNetHex);
 
@@ -265,15 +260,12 @@ namespace Nuterra.BlockInjector
                     else //Set SUB MESHES
                     {
                         var tr = blockbuilder.Prefab.transform;
-                        int ch = 0;
                         foreach (var sub in buildablock.SubObjects) //For each SUB
                         {
-                            Transform childT = null;
+                            Transform childT = tr.Find(sub.SubOverrideName);
                             GameObject childG = null;
-                            bool childExisted = ch < tr.childCount;
-                            if (childExisted)
+                            if (childT != null)
                             {
-                                childT = tr.GetChild(ch);
                                 childG = childT.gameObject;
                             }
                             else
@@ -288,7 +280,26 @@ namespace Nuterra.BlockInjector
                             {
                                 childT.localPosition = sub.SubOffset;
                             }
-
+                            //-DestroyCollidersOnObj
+                            if (sub.DestroyExistingColliders)
+                            {
+                                foreach (var collider in childG.GetComponents<Collider>())
+                                {
+                                    Component.Destroy(collider);
+                                }
+                            }
+                            //-DestroyRendersOnObj
+                            if (sub.DestroyExistingRenderer)
+                            {
+                                foreach (var comp1 in childG.GetComponents<MeshRenderer>())
+                                {
+                                    Component.Destroy(comp1);
+                                }
+                                foreach (var comp2 in childG.GetComponents<MeshFilter>())
+                                {
+                                    Component.Destroy(comp2);
+                                }
+                            }
                             //-Get Mesh
                             Mesh mesh = null;
                             if (sub.MeshName != null && sub.MeshName != "")
@@ -303,6 +314,11 @@ namespace Nuterra.BlockInjector
                             }
                             //-Get Material
                             Material mat = localmat;
+                            var ren = childG.GetComponent<MeshRenderer>();
+                            if (ren != null)
+                            {
+                                mat = ren.material;
+                            }
                             if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
                             {
                                 mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(sub.MeshMaterialName));
@@ -312,18 +328,13 @@ namespace Nuterra.BlockInjector
                                 Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(sub.MeshTextureName);
                                 if (tex != null)
                                 {
-                                    mat = new Material(mat);
-                                    mat.mainTexture = tex;
+                                    mat = new Material(mat) { mainTexture = tex };
                                 }
                             }
-
                             //-Apply
                             if (mesh != null)
                             {
-                                if (mesh != null)
-                                {
-                                    childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
-                                }
+                                childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
 
                                 childG.EnsureComponent<MeshRenderer>().material = mat;
                             }
@@ -333,8 +344,13 @@ namespace Nuterra.BlockInjector
                                 mc.convex = true;
                                 mc.sharedMesh = colliderMesh;
                             }
-
-                            ch++;
+                            if (sub.MakeBoxCollider && mesh != null)
+                            {
+                                mesh.RecalculateBounds();
+                                var bc = childG.AddComponent<BoxCollider>();
+                                bc.size = mesh.bounds.size * 0.75f;
+                                bc.center = mesh.bounds.center;
+                            }
                         }
                     }
 

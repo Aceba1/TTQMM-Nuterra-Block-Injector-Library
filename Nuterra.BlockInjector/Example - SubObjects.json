@@ -47,14 +47,20 @@
 	"ReferenceOffset": { "x": 0, "y": 0, "z": 0 }, //Shift the subobjects of the block prefab by x, y and z
   
   "SubObjects": [ {
-    "DestroySubReferenceRenderer": false,
+    "SubOverrideName":"name_of_sub_in_game",
+    "DestroyExistingRenderer": false,
+    "DestroyExistingColliders": false,
+    "MakeBoxCollider": null,
     "MeshName": null,
     "ColliderMeshName": null,
     "MeshTextureName": null,
     "MeshMaterialName": null,
     "SubOffset": { "x": 0, "y": 0, "z": 0 },
   }, {
-    "DestroySubReferenceRenderer": false,
+    "SubOverrideName":"name_of_sub_in_game",
+    "DestroyExistingRenderer": false,
+    "DestroyExistingColliders": false,
+    "MakeBoxCollider": false,
     "MeshName": null,
     "ColliderMeshName": null,
     "MeshTextureName": null,
