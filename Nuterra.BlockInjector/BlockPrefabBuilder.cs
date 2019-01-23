@@ -7,7 +7,7 @@ namespace Nuterra.BlockInjector
 {
     public sealed class BlockPrefabBuilder
     {
-        private static Dictionary<string, GameObject> PrefabList = new Dictionary<string, GameObject>();
+        public static Dictionary<string, GameObject> PrefabList = new Dictionary<string, GameObject>();
         internal class RegisterTimer : MonoBehaviour
         {
             public BlockPrefabBuilder prefabToRegister;
