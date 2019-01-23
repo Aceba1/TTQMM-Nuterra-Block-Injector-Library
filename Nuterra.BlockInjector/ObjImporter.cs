@@ -63,7 +63,7 @@ public static class ObjImporter
         mesh.uv = newUVs;
         mesh.normals = newNormals;
         mesh.triangles = newMesh.triangles;
-
+        //mesh.name = name.Remove(0, System.Math.Max(name.LastIndexOf("\\"), name.LastIndexOf("/") + 1));
         mesh.RecalculateBounds();
 
         return mesh;

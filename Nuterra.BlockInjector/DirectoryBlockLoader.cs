@@ -402,6 +402,7 @@ namespace Nuterra.BlockInjector
                         blockbuilder.SetMass(1f);
                     }
 
+                    // REGISTER
                     blockbuilder.RegisterLater(6);
 
                     //Recipe
