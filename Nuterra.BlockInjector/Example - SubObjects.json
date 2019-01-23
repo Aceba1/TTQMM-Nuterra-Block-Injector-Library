@@ -55,7 +55,7 @@
     "ColliderMeshName": null,
     "MeshTextureName": null,
     "MeshMaterialName": null,
-    "SubOffset": { "x": 0, "y": 0, "z": 0 },
+    "SubPosition": { "x": 0, "y": 0, "z": 0 }
   }, {
     "SubOverrideName":"name_of_sub_in_game",
     "DestroyExistingRenderer": false,
@@ -65,6 +65,6 @@
     "ColliderMeshName": null,
     "MeshTextureName": null,
     "MeshMaterialName": null,
-    "SubOffset": { "x": 0, "y": 0, "z": 0 }
+    "SubPosition": { "x": 0, "y": 0, "z": 0 }
   } ]
 }

@@ -92,8 +92,9 @@ namespace Nuterra.BlockInjector
             Initialize(copy, false);
             if (RemoveRenderers)
             {
-                RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter), typeof(Collider), typeof(ColliderSwapper), typeof(Visible), typeof(UnityEngine.Networking.NetworkIdentity), typeof(TTNetworkTransform), typeof(TankBlock));
+                RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter), typeof(Collider));
             }
+            RemoveChildrenWithComponent(true, null, typeof(ColliderSwapper), typeof(TTNetworkTransform), typeof(UnityEngine.Networking.NetworkIdentity), typeof(ModuleDamage), typeof(TankBlock), typeof(Visible));
         }
 
         private void Initialize(GameObject prefab, bool clearGridInfo)
@@ -172,14 +173,17 @@ namespace Nuterra.BlockInjector
             for (int i1 = 0; i1 < typesToRemove.Length; i1++)
             {
                 Component c = _search.GetComponent(typesToRemove[i1]);
-                if (RemoveJustComponent)
+                if (c != null)
                 {
-                    Component.DestroyImmediate(c);
-                }
-                else
-                {
-                    GameObject.DestroyImmediate(_search.gameObject);
-                    return this;
+                    if (RemoveJustComponent)
+                    {
+                        Component.DestroyImmediate(c);
+                    }
+                    else
+                    {
+                        GameObject.DestroyImmediate(_search.gameObject);
+                        return this;
+                    }
                 }
             }
             for (int i = _search.transform.childCount - 1; i >= 0; i--)

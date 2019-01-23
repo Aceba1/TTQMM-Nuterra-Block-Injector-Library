@@ -100,7 +100,14 @@ namespace Nuterra.BlockInjector
             {
                 LoadedResources.Add(type, new Dictionary<string, UnityEngine.Object>());
             }
-            LoadedResources[type].Add(Name, Object);
+            if (LoadedResources[type].ContainsKey(Name))
+            {
+                LoadedResources[type][Name] = Object;
+            }
+            else
+            {
+                LoadedResources[type].Add(Name, Object);
+            }
         }
 
         public static GameObject CreateGameObject(string json)
