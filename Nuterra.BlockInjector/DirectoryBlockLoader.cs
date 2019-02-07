@@ -86,9 +86,9 @@ namespace Nuterra.BlockInjector
                     GameObjectJSON.AddObjectToUserResources(GameObjectJSON.ImageFromFile(Png.FullName), Png.Name);
                     Console.WriteLine("Added " + Png.Name + "\n from " + Png.FullName);
                 }
-                catch
+                catch (Exception E)
                 {
-                    Console.WriteLine("Could not read image " + Png.Name + "\n at " + Png.FullName);
+                    Console.WriteLine("Could not read image " + Png.Name + "\n at " + Png.FullName + "\n" + E.Message + "\n" + E.StackTrace);
                 }
             }
             foreach (FileInfo Obj in cbObj)
@@ -98,9 +98,9 @@ namespace Nuterra.BlockInjector
                     GameObjectJSON.AddObjectToUserResources(GameObjectJSON.MeshFromFile(Obj.FullName), Obj.Name);
                     Console.WriteLine("Added " + Obj.Name + "\n from " + Obj.FullName);
                 }
-                catch
+                catch (Exception E)
                 {
-                    Console.WriteLine("Could not read mesh " + Obj.Name + "\n at " + Obj.FullName);
+                    Console.WriteLine("Could not read mesh " + Obj.Name + "\n at " + Obj.FullName + "\n" + E.Message + "\n" + E.StackTrace);
                 }
             }
             foreach (FileInfo Json in cbJson)
@@ -115,21 +115,31 @@ namespace Nuterra.BlockInjector
 
                     bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Length != 0;
 
-                    //Prefab reference
-                    if (buildablock.GamePrefabReference == null || buildablock.GamePrefabReference == "")
-                    {
-                        blockbuilder = new BlockPrefabBuilder();
+                    bool BlockAlreadyExists = ManSpawn.inst.IsValidBlockToSpawn((BlockTypes)buildablock.ID);
+                    bool Prefabbed = buildablock.GamePrefabReference != null && buildablock.GamePrefabReference != "";
+                    if (BlockAlreadyExists)
+                    { // BLOCK ALREADY EXISTS
+                        blockbuilder = new BlockPrefabBuilder(GameObjectJSON.GetObjectFromGameResources<GameObject>(buildablock.GamePrefabReference), false);
                     }
                     else
                     {
-                        if (buildablock.ReferenceOffset != null && buildablock.ReferenceOffset != Vector3.zero)
+                        //Prefab reference
+                        if (!Prefabbed)
                         {
-                            //Offset Prefab
-                            blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, buildablock.ReferenceOffset, !buildablock.KeepReferenceRenderers);
+                            blockbuilder = new BlockPrefabBuilder();
                         }
                         else
                         {
-                            blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, !buildablock.KeepReferenceRenderers);
+                            Prefabbed = true;
+                            if (buildablock.ReferenceOffset != null && buildablock.ReferenceOffset != Vector3.zero)
+                            {
+                                //Offset Prefab
+                                blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, buildablock.ReferenceOffset, !buildablock.KeepReferenceRenderers);
+                            }
+                            else
+                            {
+                                blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, !buildablock.KeepReferenceRenderers);
+                            }
                         }
                     }
 
@@ -138,31 +148,36 @@ namespace Nuterra.BlockInjector
                     {
                         GameObjectJSON.CreateGameObject(jObject.Last.ToObject<JObject>(), blockbuilder.Prefab);
                     }
+
                     //Set IP
-                    blockbuilder.SetBlockID(buildablock.ID, buildablock.IDNetHex);
+                    if (!BlockAlreadyExists)
+                        blockbuilder.SetBlockID(buildablock.ID, buildablock.IDNetHex);
 
                     //Set Category
-                    if (buildablock.Category != 0)
-                    {
-                        blockbuilder.SetCategory((BlockCategories)buildablock.Category);
-                    }
-                    else
-                    {
-                        blockbuilder.SetCategory(BlockCategories.Standard);
-                    }
+                    if (!BlockAlreadyExists)
+                        if (buildablock.Category != 0)
+                        {
+                            blockbuilder.SetCategory((BlockCategories)buildablock.Category);
+                        }
+                        else
+                        {
+                            blockbuilder.SetCategory(BlockCategories.Standard);
+                        }
 
                     //Set Faction (Corp)
-                    if (buildablock.Faction != 0)
-                    {
-                        blockbuilder.SetFaction((FactionSubTypes)buildablock.Faction);
-                    }
-                    else
-                    {
-                        blockbuilder.SetFaction(FactionSubTypes.GSO);
-                    }
+                    if (!BlockAlreadyExists)
+                        if (buildablock.Faction != 0)
+                        {
+                            blockbuilder.SetFaction((FactionSubTypes)buildablock.Faction);
+                        }
+                        else
+                        {
+                            blockbuilder.SetFaction(FactionSubTypes.GSO);
+                        }
 
                     //Set Block Grade
-                    blockbuilder.SetGrade(buildablock.Grade);
+                    if (!BlockAlreadyExists)
+                        blockbuilder.SetGrade(buildablock.Grade);
 
                     //Set HP
                     if (buildablock.HP != 0)
@@ -171,7 +186,8 @@ namespace Nuterra.BlockInjector
                     }
                     else
                     {
-                        blockbuilder.SetHP(100);
+                        if (!BlockAlreadyExists)
+                            blockbuilder.SetHP(100);
                     }
 
                     //Set Icon
@@ -186,7 +202,7 @@ namespace Nuterra.BlockInjector
                                 var Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(buildablock.IconName);
                                 if (Spr == null)
                                 {
-                                    blockbuilder.SetIcon(NoSpriteBlock);
+                                    blockbuilder.SetIcon((Sprite)null);
                                 }
                                 else
                                 {
@@ -230,7 +246,7 @@ namespace Nuterra.BlockInjector
                         {
                             mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(buildablock.MeshName);
                         }
-                        if (mesh == null && !HasSubObjs)
+                        if (mesh == null && !HasSubObjs && !BlockAlreadyExists)
                         {
                             mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>("Cube");
                             if (mesh == null)
@@ -377,7 +393,8 @@ namespace Nuterra.BlockInjector
                     }
 
                     //Set Size
-                    if (buildablock.Cells != null && buildablock.Cells.Length != 0)
+                    if (!BlockAlreadyExists)
+                        if (buildablock.Cells != null && buildablock.Cells.Length != 0)
                     {
                         blockbuilder.SetSizeManual(buildablock.Cells, buildablock.APs);
                     }
@@ -406,7 +423,7 @@ namespace Nuterra.BlockInjector
                     blockbuilder.RegisterLater(6);
 
                     //Recipe
-                    if (buildablock.Recipe != null && buildablock.Recipe != "")
+                    if (!BlockAlreadyExists && buildablock.Recipe != null && buildablock.Recipe != "")
                     {
                         Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
                         Type cT = typeof(ChunkTypes);
@@ -450,9 +467,17 @@ namespace Nuterra.BlockInjector
                             ite++;
                         }
 
+                        string fab = "gsofab";
+                        switch ((FactionSubTypes)buildablock.Faction)
+                        {
+                            case FactionSubTypes.GC: fab = "gcfab"; break;
+                            case FactionSubTypes.VEN: fab = "venfab"; break;
+                            case FactionSubTypes.HE: fab = "hefab"; break;
+                        }
+
                         CustomRecipe.RegisterRecipe(Input, new CustomRecipe.RecipeOutput[1] {
                                 new CustomRecipe.RecipeOutput(buildablock.ID)
-                            });
+                            }, RecipeTable.Recipe.OutputType.Items, fab);
                     }
                 }
                 catch (Exception E)

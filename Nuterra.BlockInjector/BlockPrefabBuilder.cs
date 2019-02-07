@@ -8,6 +8,7 @@ namespace Nuterra.BlockInjector
     public sealed class BlockPrefabBuilder
     {
         public static Dictionary<string, GameObject> PrefabList = new Dictionary<string, GameObject>();
+        public static Dictionary<int, string> OverrideValidity = new Dictionary<int, string>();
         internal class RegisterTimer : MonoBehaviour
         {
             public BlockPrefabBuilder prefabToRegister;
@@ -52,9 +53,9 @@ namespace Nuterra.BlockInjector
         public BlockPrefabBuilder(GameObject prefab, bool MakeCopy = false)
         {
             if (MakeCopy)
-                Initialize(GameObject.Instantiate(prefab), true);
+                Initialize(GameObject.Instantiate(prefab), false);
             else
-                Initialize(prefab, true);
+                Initialize(prefab, false);
         }
 
         public BlockPrefabBuilder(string PrefabFromResource, bool RemoveRenderers = true)
@@ -136,6 +137,7 @@ namespace Nuterra.BlockInjector
             string name = _customBlock.Name;
             while (PrefabList.ContainsKey(name)) name += "+";
             PrefabList.Add(name, _customBlock.Prefab);
+            OverrideValidity.Add(_customBlock.BlockID, _customBlock.Prefab.name);
             //_customBlock.Prefab.transform.position = Vector3.down * 1000f;
             new GameObject().AddComponent<RegisterTimer>().CallBlockPrefabBuilder(Time, this, _customBlock);
             _finished = true;
@@ -201,7 +203,7 @@ namespace Nuterra.BlockInjector
             {
                 _search = SearchIn;
             }
-            for(int i = _search.transform.childCount - 1; i >= 0; i--)
+            for (int i = _search.transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = _search.transform.GetChild(i);
                 Component c = child.GetComponent<T>();
@@ -245,12 +247,18 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        public BlockPrefabBuilder SetBlockID(int id)
+        {
+            return SetBlockID(id, "");
+        }
+
         public BlockPrefabBuilder SetBlockID(int id, string Net128HashHex)
         {
             ThrowIfFinished();
             _customBlock.BlockID = id;
             _visible.m_ItemType = new ItemTypeInfo(ObjectTypes.Block, id);
-            typeof(UnityEngine.Networking.NetworkIdentity).GetField("m_AssetId", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(_netid, UnityEngine.Networking.NetworkHash128.Parse(Net128HashHex));
+            if (Net128HashHex != "")
+                typeof(UnityEngine.Networking.NetworkIdentity).GetField("m_AssetId", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(_netid, UnityEngine.Networking.NetworkHash128.Parse(Net128HashHex));
             return this;
         }
 

@@ -44,29 +44,48 @@ namespace Nuterra.BlockInjector
                 Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
                 Timer.blocks += $"\n - #{block.BlockID} - \"{block.Name}\"";
                 int blockID = block.BlockID;
+                ManSpawn spawnManager = ManSpawn.inst;
                 if (CustomBlocks.ContainsKey(blockID))
                 {
-                    Timer.blocks += " - FAILED: ID already exists!";
+                    Timer.blocks += " - FAILED: Custom Block already exists!";
+                    Console.WriteLine("Registering block failed: A block with the same ID already exists");
+                    return;
                 }
                 CustomBlocks.Add(blockID, block);
+                bool BlockExists = spawnManager.IsValidBlockToSpawn((BlockTypes)blockID);
+                if (BlockExists)
+                {
+                    Timer.blocks += " - ID already present within system";
+                    Console.WriteLine("Registering block failed: A block with the same ID already exists");
+                    return;
+                }
                 int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
-                ManSpawn spawnManager = ManSpawn.inst;
                 spawnManager.VisibleTypeInfo.SetDescriptor<FactionSubTypes>(hashCode, block.Faction);
                 spawnManager.VisibleTypeInfo.SetDescriptor<BlockCategories>(hashCode, block.Category);
                 try
                 {
-                    typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(spawnManager, new object[] { block.Prefab });
-                    (typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(RecipeManager.inst) as Dictionary<int, int>).Add(blockID, block.Price);
+                    //if (BlockExists)
+                    //{
+                    //    System.Collections.IDictionary dict = (System.Collections.IDictionary)typeof(ManSpawn).GetField("m_BlockPrefabs", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).GetValue(spawnManager);
+                    //    dict.Remove(blockID);
+                    //}
+                    Patches.Catching = true;
+                    typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance).Invoke(spawnManager, new object[] { block.Prefab });
+                    var m_BlockPriceLookup = (typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(RecipeManager.inst) as Dictionary<int, int>);
+                    if (m_BlockPriceLookup.ContainsKey(blockID)) m_BlockPriceLookup[blockID] = block.Price;
+                    else m_BlockPriceLookup.Add(blockID, block.Price);
                 }
                 catch (Exception E)
                 {
                     Console.WriteLine(E.Message + "\n" + E.StackTrace);
+                    if (E.InnerException != null)
+                        Console.WriteLine(E.InnerException.Message + "\n" + E.InnerException.StackTrace);
                     Timer.blocks += " FAILED: " + E.InnerException?.Message;
                 }
             }
-            catch(Exception E)
+            catch (Exception E)
             {
-                Console.WriteLine(E.Message+"\n"+E.StackTrace+"\n"+E.InnerException?.Message);
+                Console.WriteLine(E.Message + "\n" + E.StackTrace + "\n" + E.InnerException?.Message);
                 if (E.InnerException != null)
                 {
                     Timer.blocks += " - FAILED: " + E.InnerException?.Message;
@@ -123,32 +142,44 @@ namespace Nuterra.BlockInjector
 
         internal class Patches
         {
-            /*
-            static bool Catching = false;
+            //[HarmonyPatch(typeof(ManSpawn), "AddBlockToDictionary")]
+            //private static class DisallowGameBlockLoading
+            //{
+            //    private static bool Prefix(GameObject blockPrefab)
+            //    {
+            //        if (blockPrefab == null) return true;
+            //        var Visible = blockPrefab.GetComponent<Visible>();
+            //        if (Visible == null || Visible.m_ItemType.ObjectType != ObjectTypes.Block) return true;
+            //        if (BlockPrefabBuilder.OverrideValidity.TryGetValue(Visible.m_ItemType.ItemType, out string name) && name != blockPrefab.name) return false;
+            //        return true;
+            //    }
+            //}
+
+
+            public static bool Catching = false;
             [HarmonyPatch(typeof(TTNetworkManager), "AddSpawnableType")]
             private static class CatchHexRepeat
             {
                 private static bool Prefix(ref TTNetworkManager __instance, Transform prefab)
                 {
-                    if (!Catching)
+                    if (Catching)
                     {
-                        Catching = true;
+                        Catching = false;
                         try
                         {
                             typeof(TTNetworkManager).GetMethod("AddSpawnableType").Invoke(__instance, new object[] { prefab });
                         }
                         catch(Exception E)
                         {
-                            Debug.LogException(E);
-                            Debug.Log("Hex code: " + prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString());
+                            Console.WriteLine($"Hex code {prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString()} is unusable");
+                            if (Timer.blocks != "")
+                                Timer.blocks += " ! WARNING: Hex code is unusable!";
                         }
-                        Catching = false;
                         return false;
                     }
                     return true;
                 }
             }
-            */
 
             [HarmonyPatch(typeof(ManSpawn), "IsBlockAvailableOnPlatform")]
             private static class TableFix
@@ -229,7 +260,7 @@ namespace Nuterra.BlockInjector
                 if (CustomBlocks.TryGetValue(itemType, out block))
                 {
                     result = block.DisplaySprite;
-                    return true;
+                    return result != null;
                 }
             }
             else if (objectType == ObjectTypes.Chunk)
@@ -238,7 +269,7 @@ namespace Nuterra.BlockInjector
                 if (CustomBlocks.TryGetValue(itemType, out block))
                 {
                     result = block.DisplaySprite;
-                    return true;
+                    return result != null;
                 }
             }
             return false;
@@ -254,7 +285,7 @@ namespace Nuterra.BlockInjector
                     if (CustomBlocks.TryGetValue(EnumValue, out block))
                     {
                         Result = block.Name;
-                        return true;
+                        return Result != null && Result != "";
                     }
                     break;
 
@@ -262,14 +293,14 @@ namespace Nuterra.BlockInjector
                     if (CustomBlocks.TryGetValue(EnumValue, out block))
                     {
                         Result = block.Description;
-                        return true;
+                        return Result != null && Result != "";
                     }
                     break;
                 case LocalisationEnums.StringBanks.ChunkName:
                     if (CustomChunks.TryGetValue(EnumValue, out chunk))
                     {
                         Result = chunk.Name;
-                        return true;
+                        return Result != null && Result != "";
                     }
                     break;
 
@@ -277,7 +308,7 @@ namespace Nuterra.BlockInjector
                     if (CustomChunks.TryGetValue(EnumValue, out chunk))
                     {
                         Result = chunk.Description;
-                        return true;
+                        return Result != null && Result != "";
                     }
                     break;
             }

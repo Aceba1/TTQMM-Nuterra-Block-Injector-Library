@@ -29,6 +29,17 @@ namespace Nuterra.BlockInjector
             return null;
         }
 
+        public static GameObject GetBlockFromAssetTable(string NameOfBlock)
+        {
+            var allblocks = ((BlockTable)typeof(ManSpawn).GetField("m_BlockTable", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ManSpawn.inst)).m_Blocks;
+            foreach (var block in allblocks)
+            {
+                if (block.name.StartsWith(NameOfBlock))
+                    return block;
+            }
+            return null;
+        }
+
         public static T GetObjectFromGameResources<T>(string targetName, bool Log = false) where T : UnityEngine.Object
         {
             T searchresult = null;
@@ -36,7 +47,7 @@ namespace Nuterra.BlockInjector
             string failedsearch = "";
             for (int i = 0; i < search.Length; i++)
             {
-                if (search[i].name == targetName)
+                if (search[i].name.StartsWith(targetName))
                 {
                     searchresult = search[i];
                     break;

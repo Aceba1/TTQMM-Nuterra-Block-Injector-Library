@@ -115,15 +115,15 @@ namespace Nuterra.BlockInjector
 
                 var cockpit_s = new BlockPrefabBuilder("GSOLightStud(111)", true)
                     .SetBlockID(9000, "66a82861496cfa13")
-                .SetName("GSO Top Cockpit")
-                .SetDescription("Pop in here and have a first-person look at the world from this block! (The side with the diamond is the viewing direction)\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
-                .SetPrice(300)
-                .SetHP(500)
-                .SetFaction(FactionSubTypes.GSO)
-                .SetCategory(BlockCategories.Accessories)
-                .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_small, "cockpit_small"), true, GSOMain)
-                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_small_icon_png)))
-                .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
+                    .SetName("GSO Top Cockpit")
+                    .SetDescription("Pop in here and have a first-person look at the world from this block! (The side with the diamond is the viewing direction)\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
+                    .SetPrice(300)
+                    .SetHP(500)
+                    .SetFaction(FactionSubTypes.GSO)
+                    .SetCategory(BlockCategories.Accessories)
+                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_small, "cockpit_small"), true, GSOMain)
+                    .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_small_icon_png)))
+                    .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
                 var view = new GameObject("FirstPersonAnchor");
                 view.AddComponent<ModuleFirstPerson>();
@@ -137,15 +137,15 @@ namespace Nuterra.BlockInjector
 
                 var cockpit_s2 = new BlockPrefabBuilder("GSOLightStud(111)", true)
                     .SetBlockID(9005, "9a6b06c93f545c61")
-                .SetName("GSO Sided Swerve Cockpit")
-                .SetDescription("Just like the other cockpit, but can be mounted on the sides of things for a better look at your surroundings!\nNOTICE: Make sure the red AP is facing up!\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
-                .SetPrice(300)
-                .SetHP(500)
-                .SetFaction(FactionSubTypes.GSO)
-                .SetCategory(BlockCategories.Accessories)
-                .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_small_2, "cockpit_small_2"), true, GSOMain)
-                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_small_2_icon_png)))
-                .SetSizeManual(new IntVector3[] { IntVector3.zero }, new Vector3[] { Vector3.down * 0.5f, Vector3.back * 0.5f });
+                    .SetName("GSO Sided Swerve Cockpit")
+                    .SetDescription("Just like the other cockpit, but can be mounted on the sides of things for a better look at your surroundings!\nNOTICE: Make sure the red AP is facing up!\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
+                    .SetPrice(300)
+                    .SetHP(500)
+                    .SetFaction(FactionSubTypes.GSO)
+                    .SetCategory(BlockCategories.Accessories)
+                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_small_2, "cockpit_small_2"), true, GSOMain)
+                    .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_small_2_icon_png)))
+                    .SetSizeManual(new IntVector3[] { IntVector3.zero }, new Vector3[] { Vector3.down * 0.5f, Vector3.back * 0.5f });
 
                 var view1 = new GameObject("FirstPersonAnchor");
                 view1.AddComponent<ModuleFirstPerson>();
@@ -157,19 +157,27 @@ namespace Nuterra.BlockInjector
             }
 
             {
+                new BlockPrefabBuilder(GameObjectJSON.GetBlockFromAssetTable("SPEColourBlock11_Yellow (111)"), false)
+                    .SetBlockID((int)BlockTypes.SPEColourBlock11_Yellow_111)
+                    .SetName("Barry Bee Benson Block")
+                    .SetDescription("A colour block for making BEES!\n\n\"According to all known laws of aviation, there is no way that a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyways. Because bees don't care what humans think is impossible.\"")
+                    .RegisterLater();
+            }
+
+            {
 
                 var cockpit_l = new BlockPrefabBuilder("GSOLightStud(111)", Vector3.one * 0.5f, true)
                     .SetBlockID(9001, "6a9262c04f45a53c")
-                .SetName("GSO Observatory")
-                .SetDescription("Mount this gigantic hamsterball to your tech to be right in the action!\nThis reorients itself to the direction of the cab\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
-                .SetPrice(500)
-                .SetHP(2500)
-                .SetGrade(1)
-                .SetFaction(FactionSubTypes.GSO)
-                .SetCategory(BlockCategories.Accessories)
-                .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_large, "cockpit_large"), true, GSOMain)
-                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_large_icon_png)))
-                .SetSize(IntVector3.one * 2, BlockPrefabBuilder.AttachmentPoints.Bottom);
+                    .SetName("GSO Observatory")
+                    .SetDescription("Mount this gigantic hamsterball to your tech to be right in the action!\nThis reorients itself to the direction of the cab\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
+                    .SetPrice(500)
+                    .SetHP(2500)
+                    .SetGrade(1)
+                    .SetFaction(FactionSubTypes.GSO)
+                    .SetCategory(BlockCategories.Accessories)
+                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_large, "cockpit_large"), true, GSOMain)
+                    .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_large_icon_png)))
+                    .SetSize(IntVector3.one * 2, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
                 var view2 = new GameObject("FirstPersonAnchor");
                 view2.AddComponent<ModuleFirstPerson>().AdaptToMainRot = true;
@@ -184,16 +192,16 @@ namespace Nuterra.BlockInjector
 
                 var cockpit_ven = new BlockPrefabBuilder("VENLightStud(111)", Vector3.forward * 0.5f, true)
                     .SetBlockID(9002, "517376c14c30592c")
-                .SetName("VEN Observatory")
-                .SetDescription("A slim, lower observatory that could fit nice on top or below a plane\nThis reorients itself to the direction of the cab\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
-                .SetPrice(500)
-                .SetHP(2500)
-                .SetGrade(1)
-                .SetFaction(FactionSubTypes.VEN)
-                .SetCategory(BlockCategories.Accessories)
-                .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_ven, "cockpit_ven"), true, GameObjectJSON.GetObjectFromGameResources<Material>("Venture_Main"))
-                .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_ven_icon_png)))
-                .SetSize(new IntVector3(1, 1, 2), BlockPrefabBuilder.AttachmentPoints.Bottom);
+                    .SetName("VEN Observatory")
+                    .SetDescription("A slim, lower observatory that could fit nice on top or below a plane\nThis reorients itself to the direction of the cab\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
+                    .SetPrice(500)
+                    .SetHP(2500)
+                    .SetGrade(1)
+                    .SetFaction(FactionSubTypes.VEN)
+                    .SetCategory(BlockCategories.Accessories)
+                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_ven, "cockpit_ven"), true, GameObjectJSON.GetObjectFromGameResources<Material>("Venture_Main"))
+                    .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_ven_icon_png)))
+                    .SetSize(new IntVector3(1, 1, 2), BlockPrefabBuilder.AttachmentPoints.Bottom);
 
                 var view3 = new GameObject("FirstPersonAnchor");
                 view3.AddComponent<ModuleFirstPerson>().AdaptToMainRot = true;
