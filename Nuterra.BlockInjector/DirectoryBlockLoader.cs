@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -51,6 +52,74 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        private static void ApplyTex(string FileName, string MatName, Texture2D Tex)
+        {
+            if (FileName.EndsWith(".1.png"))
+            {
+                Console.WriteLine($"Set {MatName} to {FileName}");
+                GameObjectJSON.GetObjectFromGameResources<Material>(MatName, true).mainTexture = Tex;
+            }
+            else if (FileName.EndsWith(".2.png"))
+            {
+                Console.WriteLine($"Set {MatName}'s gloss to {FileName}");
+                GameObjectJSON.GetObjectFromGameResources<Material>(MatName, true).SetTexture("_MetallicGlossMap", Tex);
+            }
+            else if (FileName.EndsWith(".3.png"))
+            {
+                Console.WriteLine($"Set {MatName}'s emission to {FileName}");
+                GameObjectJSON.GetObjectFromGameResources<Material>(MatName, true).SetTexture("_EmissionMap", Tex);
+            }
+        }
+
+        private static void ApplyTexToMultiple(string FileName, string MatName, Texture2D Tex)
+        {
+            if (FileName.EndsWith(".1.png"))
+            {
+                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MatName))
+                {
+                    try
+                    {
+                        if (game_mat.mainTexture.width >= 1024)
+                        {
+                            Console.WriteLine($"Set {game_mat.name} to {FileName}");
+                            game_mat.mainTexture = Tex;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            else if (FileName.EndsWith(".2.png"))
+            {
+                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MatName))
+                {
+                    try
+                    {
+                        if (game_mat.GetTexture("_MetallicGlossMap").width >= 1024)
+                        {
+                            Console.WriteLine($"Set {game_mat.name}'s gloss to {FileName}");
+                            game_mat.SetTexture("_MetallicGlossMap", Tex);
+                        }
+                    }
+                    catch { }
+                }
+            }
+            else if (FileName.EndsWith(".3.png"))
+            {
+                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MatName))
+                {
+                    try
+                    {
+                        if (game_mat.GetTexture("_EmissionMap").width >= 1024)
+                        {
+                            Console.WriteLine($"Set {game_mat.name}'s emission to {FileName}");
+                            game_mat.SetTexture("_EmissionMap", Tex);
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+
         public static void LoadBlocks()
         {
             var dir = new DirectoryInfo(Path.Combine(System.Reflection.Assembly.GetExecutingAssembly().Location, "../../../"));
@@ -61,6 +130,11 @@ namespace Nuterra.BlockInjector
                 {
                     Directory.CreateDirectory(BlockPath);
                 }
+                string TexPath = Path.Combine(BlockPath, "Textures");
+                if (!Directory.Exists(TexPath))
+                {
+                    Directory.CreateDirectory(TexPath);
+                }
                 string path = BlockPath + "/Example.json";
                 if (!File.Exists(path))
                 {
@@ -70,7 +144,6 @@ namespace Nuterra.BlockInjector
             catch(Exception E)
             {
                 Console.WriteLine("Could not access \"" + BlockPath + "\"!\n"+E.Message);
-                  
             }
             Sprite NoSpriteBlock;
             NoSpriteBlock = GameObjectJSON.GetObjectFromGameResources<Sprite>("Icon_Dimensions");
@@ -83,8 +156,43 @@ namespace Nuterra.BlockInjector
             {
                 try
                 {
-                    GameObjectJSON.AddObjectToUserResources(GameObjectJSON.ImageFromFile(Png.FullName), Png.Name);
+                    Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
+                    GameObjectJSON.AddObjectToUserResources(tex, Png.Name);
                     Console.WriteLine("Added " + Png.Name + "\n from " + Png.FullName);
+                    if (Png.Name.Length > 7)
+                    {
+                        string mat = Png.Name.Substring(0, Png.Name.Length - 6);
+                        try
+                        {
+                            if (mat == "Corp")
+                            {
+                                ApplyTexToMultiple(Png.Name, "Corp_", tex);
+                                Texture2D gso_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0f, 0.5f, 0.5f));
+                                ApplyTexToMultiple(Png.Name, "GSO_", gso_tex);
+
+                                Texture2D gc_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0f, 0.5f, 0.5f));
+                                ApplyTexToMultiple(Png.Name, "GeoCorp_", gc_tex);
+
+                                Texture2D ven_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0.5f, 0.5f, 0.5f));
+                                ApplyTexToMultiple(Png.Name, "Venture_", ven_tex);
+
+                                Texture2D he_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0.5f, 0.5f, 0.5f));
+                                ApplyTexToMultiple(Png.Name, "HE_", he_tex);
+                            }
+                            else if (mat.EndsWith("$"))
+                            {
+                                ApplyTexToMultiple(Png.Name, mat.Substring(0, mat.Length - 1), tex);
+                            }
+                            else
+                            {
+                                ApplyTex(Png.Name, mat, tex);
+                            }
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Could not apply texture to game material " + mat);
+                        }
+                    }
                 }
                 catch (Exception E)
                 {
@@ -507,7 +615,6 @@ namespace Nuterra.BlockInjector
             // so we'll strip them out ourselves;
             // NOTE: for safety and simplicity, we only support comments on their own lines,
             // not sharing lines with real JSON
-
             input = Regex.Replace(input, @"^\s*//.*$", "", RegexOptions.Multiline);  // removes comments like this
             input = Regex.Replace(input, @"^\s*/\*(\s|\S)*?\*/\s*$", "", RegexOptions.Multiline); /* comments like this */
 

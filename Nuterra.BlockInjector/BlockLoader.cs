@@ -181,14 +181,26 @@ namespace Nuterra.BlockInjector
                 }
             }
 
+            static Type BTT = typeof(BlockTypes);
+
             [HarmonyPatch(typeof(ManSpawn), "IsBlockAvailableOnPlatform")]
             private static class TableFix
             {
                 private static void Postfix(ref bool __result, BlockTypes blockType)
                 {
-                    if (!Enum.IsDefined(typeof(BlockTypes), blockType)) __result = true;
+                    if (!Enum.IsDefined(BTT, blockType)) __result = true;
                 }
             }
+
+            [HarmonyPatch(typeof(ModeCoOpCreative), "CheckBlockAllowed")]
+            private static class TableFixCoOp
+            {
+                private static void Postfix(ref bool __result, BlockTypes blockType)
+                {
+                    if (!Enum.IsDefined(BTT, blockType)) __result = true;
+                }
+            }
+
             [HarmonyPatch(typeof(StringLookup), "GetString")]
             private static class OnStringLookup
             {

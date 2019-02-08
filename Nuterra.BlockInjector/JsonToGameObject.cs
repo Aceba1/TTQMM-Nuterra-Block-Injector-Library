@@ -40,6 +40,20 @@ namespace Nuterra.BlockInjector
             return null;
         }
 
+        public static List<T> GetObjectsFromGameResources<T>(string startOfTargetName) where T : UnityEngine.Object
+        {
+            List<T> searchresult = new List<T>();
+            T[] search = Resources.FindObjectsOfTypeAll<T>();
+            for (int i = 0; i < search.Length; i++)
+            {
+                if (search[i].name.StartsWith(startOfTargetName))
+                {
+                    searchresult.Add(search[i]);
+                }
+            }
+            return searchresult;
+        }
+
         public static T GetObjectFromGameResources<T>(string targetName, bool Log = false) where T : UnityEngine.Object
         {
             T searchresult = null;
@@ -68,6 +82,20 @@ namespace Nuterra.BlockInjector
             texture.LoadImage(DATA);
             return texture;
         }
+
+        public static Texture2D CropImage(Texture2D source, Rect AreaNormalized)
+        {
+            int startX = Mathf.RoundToInt(source.width * AreaNormalized.x),
+                startY = Mathf.RoundToInt(source.height * AreaNormalized.y),
+                extentX = Mathf.RoundToInt(source.width * AreaNormalized.width),
+                extentY = Mathf.RoundToInt(source.height * AreaNormalized.height);
+            int Sizeof = extentX * extentY;
+            Texture2D Result = new Texture2D(extentX, extentY);
+            Result.SetPixels(source.GetPixels(startX, startY, extentX, extentY));
+            Result.Apply();
+            return Result;
+        }
+
         public static Texture2D ImageFromFile(string localPath)
         {
             string _localPath = System.IO.Path.Combine(Assembly.GetCallingAssembly().Location, "../" + localPath);
