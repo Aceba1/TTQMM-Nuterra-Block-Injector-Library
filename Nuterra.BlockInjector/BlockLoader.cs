@@ -37,7 +37,7 @@ namespace Nuterra.BlockInjector
         public static readonly Dictionary<int, CustomBlock> CustomBlocks = new Dictionary<int, CustomBlock>();
         public static readonly Dictionary<int, CustomChunk> CustomChunks = new Dictionary<int, CustomChunk>();
 
-        public static void Register(CustomBlock block)
+        public static bool Register(CustomBlock block)
         {
             try
             {
@@ -49,7 +49,7 @@ namespace Nuterra.BlockInjector
                 {
                     Timer.blocks += " - FAILED: Custom Block already exists!";
                     Console.WriteLine("Registering block failed: A block with the same ID already exists");
-                    return;
+                    return false;
                 }
                 CustomBlocks.Add(blockID, block);
                 bool BlockExists = spawnManager.IsValidBlockToSpawn((BlockTypes)blockID);
@@ -57,7 +57,7 @@ namespace Nuterra.BlockInjector
                 {
                     Timer.blocks += " - ID already present within system";
                     Console.WriteLine("Registering block failed: A block with the same ID already exists");
-                    return;
+                    return false;
                 }
                 int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
                 spawnManager.VisibleTypeInfo.SetDescriptor<FactionSubTypes>(hashCode, block.Faction);
@@ -74,6 +74,7 @@ namespace Nuterra.BlockInjector
                     var m_BlockPriceLookup = (typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(RecipeManager.inst) as Dictionary<int, int>);
                     if (m_BlockPriceLookup.ContainsKey(blockID)) m_BlockPriceLookup[blockID] = block.Price;
                     else m_BlockPriceLookup.Add(blockID, block.Price);
+                    return true;
                 }
                 catch (Exception E)
                 {
@@ -81,6 +82,7 @@ namespace Nuterra.BlockInjector
                     if (E.InnerException != null)
                         Console.WriteLine(E.InnerException.Message + "\n" + E.InnerException.StackTrace);
                     Timer.blocks += " FAILED: " + E.InnerException?.Message;
+                    return false;
                 }
             }
             catch (Exception E)
@@ -94,6 +96,7 @@ namespace Nuterra.BlockInjector
                 {
                     Timer.blocks += " - FAILED: " + E.Message;
                 }
+                return false;
             }
         }
 

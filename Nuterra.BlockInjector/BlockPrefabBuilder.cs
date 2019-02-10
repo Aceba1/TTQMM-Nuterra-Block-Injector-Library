@@ -20,15 +20,18 @@ namespace Nuterra.BlockInjector
                 Invoke("RunBlock", time);
             }
 
+            bool Passed;
+
             private void RunBlock()
             {
-                BlockLoader.Register(customBlock);
+                Passed = BlockLoader.Register(customBlock);
                 Singleton.DoOnceAfterStart(FinishBlock);
             }
 
             private void FinishBlock()
             {
                 customBlock.Prefab.SetActive(false);
+                if (Passed)
                 BlockLoader.FixBlockUnlockTable(customBlock);
                 UnityEngine.GameObject.Destroy(this.gameObject);
             }
