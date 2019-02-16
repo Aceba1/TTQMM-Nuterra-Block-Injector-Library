@@ -75,6 +75,11 @@ namespace Nuterra.BlockInjector
                 Texture2D main = GameObjectJSON.ImageFromFile(Properties.Resources.banana_material_png);
                 Texture2D gloss = GameObjectJSON.ImageFromFile(Properties.Resources.banana_gloss_material_png);
 
+                Material changemat2 = GameObjectJSON.MaterialFromShader();
+
+                changemat2.SetTexture("_MainTex", main);
+                changemat2.SetTexture("_MetallicGlossMap", gloss);
+
                 foreach (MeshFilter mes in componentsInChildren2)
                 {
                     string name = mes.name;
@@ -101,11 +106,13 @@ namespace Nuterra.BlockInjector
                             Component.DestroyImmediate(mes);
                             continue;
                         }
-                        Material changemat2 = mes.GetComponent<MeshRenderer>().material;
-                        changemat2.SetTexture("_MainTex", main);
-                        changemat2.SetTexture("_MetallicGlossMap", gloss);
+                        mes.GetComponent<MeshRenderer>().material = changemat2;
                     }
                 }
+                var firedata = banagun.Prefab.GetComponent<FireData>();
+                firedata.m_MuzzleVelocity *= 1.5f;
+                firedata.m_BulletSprayVariance *= 0.5f;
+                firedata.m_KickbackStrength *= 1.25f;
                 banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.banana_icon_png)))
                     .RegisterLater();
 
