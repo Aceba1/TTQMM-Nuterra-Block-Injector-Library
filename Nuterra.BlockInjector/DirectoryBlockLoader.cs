@@ -35,6 +35,7 @@ namespace Nuterra.BlockInjector
             public IntVector3[] Cells;
             public Vector3[] APs;
             public Vector3 ReferenceOffset;
+            public Vector3 ReferenceRotationOffset;
             public string Recipe;
             public SubObj[] SubObjects;
 
@@ -48,6 +49,7 @@ namespace Nuterra.BlockInjector
                 public string MeshTextureName;
                 public string MeshMaterialName;
                 public Vector3 SubPosition;
+                public Vector3 SubRotation;
                 public bool DestroyExistingRenderer;
             }
         }
@@ -248,6 +250,12 @@ namespace Nuterra.BlockInjector
                             {
                                 blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, !buildablock.KeepReferenceRenderers);
                             }
+
+                            if (buildablock.ReferenceRotationOffset != null && buildablock.ReferenceRotationOffset != Vector3.zero)
+                            {
+                                //Add Rotation
+                                blockbuilder.Prefab.transform.RotateChildren(buildablock.ReferenceRotationOffset);
+                            }
                         }
                     }
 
@@ -405,6 +413,10 @@ namespace Nuterra.BlockInjector
                             if (sub.SubPosition != null)
                             {
                                 childT.localPosition = sub.SubPosition;
+                            }
+                            if (sub.SubRotation != null)
+                            {
+                                childT.localRotation = Quaternion.Euler(sub.SubRotation);
                             }
                             //-DestroyCollidersOnObj
                             if (sub.DestroyExistingColliders)
@@ -608,6 +620,15 @@ namespace Nuterra.BlockInjector
                 }
             }
             return child;
+        }
+
+        private static void RotateChildren(this Transform transform, Vector3 Rotation)
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform Child = transform.GetChild(i);
+                Child.localRotation += Quaternion.Euler(Rotation);
+            }
         }
         public static string StripComments(string input)
         {
