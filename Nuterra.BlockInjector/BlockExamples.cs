@@ -110,9 +110,9 @@ namespace Nuterra.BlockInjector
                     }
                 }
                 var firedata = banagun.Prefab.GetComponent<FireData>();
-                firedata.m_MuzzleVelocity *= 1.5f;
-                firedata.m_BulletSprayVariance *= 0.5f;
-                firedata.m_KickbackStrength *= 1.25f;
+                firedata.m_MuzzleVelocity *= 1.6f;
+                firedata.m_BulletSprayVariance *= 0.3f;
+                firedata.m_KickbackStrength *= 1.6f;
                 banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.banana_icon_png)))
                     .RegisterLater();
 
