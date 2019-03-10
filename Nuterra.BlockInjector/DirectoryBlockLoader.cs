@@ -593,6 +593,7 @@ namespace Nuterra.BlockInjector
                             case FactionSubTypes.GC: fab = "gcfab"; break;
                             case FactionSubTypes.VEN: fab = "venfab"; break;
                             case FactionSubTypes.HE: fab = "hefab"; break;
+                            case FactionSubTypes.BF: fab = "bffab"; break;
                         }
 
                         CustomRecipe.RegisterRecipe(Input, new CustomRecipe.RecipeOutput[1] {
@@ -627,7 +628,7 @@ namespace Nuterra.BlockInjector
             for (int i = 0; i < transform.childCount; i++)
             {
                 Transform Child = transform.GetChild(i);
-                Child.localRotation += Quaternion.Euler(Rotation);
+                Child.Rotate(Rotation, Space.Self);
             }
         }
         public static string StripComments(string input)
