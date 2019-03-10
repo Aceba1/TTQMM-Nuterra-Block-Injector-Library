@@ -55,8 +55,8 @@ namespace Nuterra.BlockInjector
                 bool BlockExists = spawnManager.IsValidBlockToSpawn((BlockTypes)blockID);
                 if (BlockExists)
                 {
-                    Timer.blocks += " - ID already present within system";
-                    Console.WriteLine("Registering block failed: A block with the same ID already exists");
+                    Timer.blocks += " - ID already exists";
+                    Console.WriteLine("Registering block incomplete: A block with the same ID already exists");
                     return false;
                 }
                 int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
@@ -176,7 +176,7 @@ namespace Nuterra.BlockInjector
                         {
                             Console.WriteLine($"Hex code {prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString()} is unusable");
                             if (Timer.blocks != "")
-                                Timer.blocks += " ! WARNING: Hex code is unusable!";
+                                Timer.blocks += " - Bad hex-net code (can be safely ignored)";
                         }
                         return false;
                     }
