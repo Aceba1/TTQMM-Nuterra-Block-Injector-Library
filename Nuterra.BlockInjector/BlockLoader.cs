@@ -174,9 +174,17 @@ namespace Nuterra.BlockInjector
                         }
                         catch(Exception E)
                         {
-                            Console.WriteLine($"Hex code {prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString()} is unusable");
-                            if (Timer.blocks != "")
-                                Timer.blocks += " - Bad hex-net code (can be safely ignored)";
+                            try
+                            {
+                                var hex = prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString();
+                                Console.WriteLine($"Hex code {hex} is unusable");
+                                if (Timer.blocks != "" && hex != "")
+                                    Timer.blocks += " - Bad hex code (Can be ignored)";
+                            }
+                            catch
+                            {
+                                Console.WriteLine("Could not print hex error!");
+                            }
                         }
                         return false;
                     }

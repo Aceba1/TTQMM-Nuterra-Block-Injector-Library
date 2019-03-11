@@ -208,7 +208,7 @@ namespace Nuterra.BlockInjector
                     .SetGrade(1)
                     .SetFaction(FactionSubTypes.VEN)
                     .SetCategory(BlockCategories.Accessories)
-                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_ven, "cockpit_ven"), true, GameObjectJSON.GetObjectFromGameResources<Material>("Venture_Main"))
+                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_ven, "cockpit_ven"), true, GameObjectJSON.GetObjectFromGameResources<Material>("VEN_Main"))
                     .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_ven_icon_png)))
                     .SetSize(new IntVector3(1, 1, 2), BlockPrefabBuilder.AttachmentPoints.Bottom);
 

@@ -1,11 +1,13 @@
 // -- Make a copy of this file, change the ID and Hex, and modify the values shown to make your own block --
 // "PropertyName" : Value,
-// Only change the Value
+// Only change the Value of
 {
   "Name": "Magical Block",
   "Description": "A very nice block, loaded from the file system\nThis one is magical!", //You can make multiple lines with \n
   "ID": 534968, //A random ID that MUST be unique
-  "IDNetHex": "4ff30da9fd33fff4", //Get a random hex from https://www.random.org/bytes/ (8 bytes work)
+  
+  //This should no longer be necessary
+  //"IDNetHex": "4ff30da9fd33fff4", //Get a random hex from https://www.random.org/bytes/ (8 bytes work)
 
   "Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP = 3, Venture = 4, HawkEye = 5, Special = 6, BetterFuture = 7
   "Category": 0, //Control = 1, Standard = 2|0, Wheels = 3, Weapons = 4, Accessories = 5, Power = 6, Base = 7, Flight = 8
@@ -24,7 +26,7 @@
   /*  EITHER  */
   "MeshTextureName": null, //FILE Name of image for texture, such as "texture.png". File can be anywhere and should be uniquely named
   /*  OR  */
-  "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GeoCorp_Main", "Venture_Main", "BF_Main", and "HE_Main",. This material flashes and everything!
+  "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GC_Main", "VEN_Main", "BF_Main", and "HE_Main",. This material flashes and everything!
 
 
   /*  OPTIONAL  */ "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh

@@ -267,7 +267,17 @@ namespace Nuterra.BlockInjector
 
                     //Set IP
                     if (!BlockAlreadyExists)
-                        blockbuilder.SetBlockID(buildablock.ID, buildablock.IDNetHex);
+                    {
+                        if (buildablock.IDNetHex != null && buildablock.IDNetHex != "")
+                        {
+                            blockbuilder.SetBlockID(buildablock.ID, buildablock.IDNetHex);
+                        }
+                        else
+                        {
+                            blockbuilder.SetBlockID(buildablock.ID);
+                        }
+
+                    }
 
                     //Set Category
                     if (!BlockAlreadyExists)
