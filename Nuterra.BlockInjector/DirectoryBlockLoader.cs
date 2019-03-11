@@ -173,10 +173,10 @@ namespace Nuterra.BlockInjector
                                 ApplyTexToMultiple(Png.Name, "GSO_", gso_tex);
 
                                 Texture2D gc_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0f, 0.5f, 0.5f));
-                                ApplyTexToMultiple(Png.Name, "GeoCorp_", gc_tex);
+                                ApplyTexToMultiple(Png.Name, "GC_", gc_tex);
 
                                 Texture2D ven_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0.5f, 0.5f, 0.5f));
-                                ApplyTexToMultiple(Png.Name, "Venture_", ven_tex);
+                                ApplyTexToMultiple(Png.Name, "VEN_", ven_tex);
 
                                 Texture2D he_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0.5f, 0.5f, 0.5f));
                                 ApplyTexToMultiple(Png.Name, "HE_", he_tex);

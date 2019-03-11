@@ -23,7 +23,7 @@
 	/*  EITHER  */
 	"MeshTextureName": null, //Name of image for texture, such as "texture.png"
 	/*  OR  */
-	"MeshMaterialName": null, //Name of an in-game material to use, such as "GSO_Main", "GeoCorp_Main", "Venture_Main", and "HE_Main". This material flashes and everything!
+	"MeshMaterialName": null, //Name of an in-game material to use, such as "GSO_Main", "GC_Main", "VEN_Main", and "HE_Main". This material flashes and everything!
 
 
 	/*  OPTIONAL  */ "ColliderMeshName": null, //Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh
