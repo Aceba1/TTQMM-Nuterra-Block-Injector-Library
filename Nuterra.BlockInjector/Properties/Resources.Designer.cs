@@ -381,14 +381,16 @@ namespace Nuterra.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {
-        ///	&quot;Name&quot;: &quot;Magical Block&quot;,
-        ///	&quot;Description&quot;: &quot;A very nice block, loaded from the file system\nThis one is magical!&quot;, //You can make multiple lines with \n
-        ///	&quot;ID&quot;: 534968, //A random ID that must be unique		
-        ///	&quot;IDNetHex&quot;: &quot;4ff30da9fd33fff4&quot;, //Get a random hex from https://www.random.org/bytes/ (8 bytes work)
+        ///   Looks up a localized string similar to // -- Make a copy of this file, change the ID and Hex, and modify the values shown to make your own block --
+        ///// &quot;PropertyName&quot; : Value,
+        ///// Only change the Value
+        ///{
+        ///  &quot;Name&quot;: &quot;Magical Block&quot;,
+        ///  &quot;Description&quot;: &quot;A very nice block, loaded from the file system\nThis one is magical!&quot;, //You can make multiple lines with \n
+        ///  &quot;ID&quot;: 534968, //A random ID that MUST be unique
+        ///  &quot;IDNetHex&quot;: &quot;4ff30da9fd33fff4&quot;, //Get a random hex from https://www.random.org/bytes/ (8 bytes work)
         ///
-        ///	&quot;Faction&quot;: 1, //GSO = 1|0, GeoCorp = 2, EXP = 3, Venture = 4, HawkEye = 5, Special = 6
-        ///	&quot;Category&quot;: 0, //Control = 1, Standard = 2|0, Wheels = 3, Weapons = 4, Accessories = 5, Power = 6, Base = 7, [rest of string was truncated]&quot;;.
+        ///  &quot;Faction&quot;: 1, //GSO = 1|0, Geo [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ExampleJson {
             get {
