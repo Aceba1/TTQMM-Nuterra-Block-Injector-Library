@@ -61,16 +61,28 @@ namespace Nuterra.BlockInjector
             string failedsearch = "";
             for (int i = 0; i < search.Length; i++)
             {
-                if (search[i].name.StartsWith(targetName))
+                if (search[i].name == targetName)
                 {
                     searchresult = search[i];
                     break;
                 }
                 failedsearch += search[i].name + "; ";
             }
-            if (searchresult == null && Log)
+            if (searchresult == null)
             {
-                Debug.Log("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
+                for (int i = 0; i < search.Length; i++)
+                {
+                    if (search[i].name.StartsWith(targetName))
+                    {
+                        searchresult = search[i];
+                        break;
+                    }
+                    failedsearch += search[i].name + "; ";
+                }
+                if (searchresult == null && Log)
+                {
+                    Debug.Log("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
+                }
             }
             return searchresult;
         }
