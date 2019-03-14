@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace Nuterra.BlockInjector
 {
     internal static class DirectoryBlockLoader
     {
+
         internal struct BlockBuilder
         {
             public string Name;
@@ -38,6 +40,8 @@ namespace Nuterra.BlockInjector
             public Vector3 ReferenceRotationOffset;
             public string Recipe;
             public SubObj[] SubObjects;
+
+            public JObject JSONBLOCK;
 
             public struct SubObj
             {
@@ -219,9 +223,9 @@ namespace Nuterra.BlockInjector
                 {
                     //Read JSON
                     JObject jObject = JObject.Parse(StripComments(File.ReadAllText(Json.FullName)));
-                    bool BlockJSON = jObject.Count == 2;
-                    var buildablock = (BlockJSON ? jObject.First : jObject).ToObject<BlockBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
+                    var buildablock = jObject.ToObject<BlockBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
                     BlockPrefabBuilder blockbuilder;
+                    bool BlockJSON = buildablock.JSONBLOCK != null;
 
                     bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Length != 0;
 
@@ -262,7 +266,7 @@ namespace Nuterra.BlockInjector
                     //If gameobjectJSON exists, use it
                     if (BlockJSON)
                     {
-                        GameObjectJSON.CreateGameObject(jObject.Last.ToObject<JObject>(), blockbuilder.Prefab);
+                        GameObjectJSON.CreateGameObject(jObject.Property("JSONBLOCK").Value.ToObject<JObject>(), blockbuilder.Prefab);
                     }
 
                     //Set IP
@@ -350,6 +354,8 @@ namespace Nuterra.BlockInjector
                     //Get Material
                     if (buildablock.MeshMaterialName != null && buildablock.MeshMaterialName != "")
                     {
+                        buildablock.MeshMaterialName.Replace("Venture_", "VEN_");
+                        buildablock.MeshMaterialName.Replace("GeoCorp_", "GC_");
                         localmat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(buildablock.MeshMaterialName));
                     }
                     if (localmat == null)
@@ -469,6 +475,8 @@ namespace Nuterra.BlockInjector
                             }
                             if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
                             {
+                                sub.MeshMaterialName.Replace("Venture_", "VEN_");
+                                sub.MeshMaterialName.Replace("GeoCorp_", "GC_");
                                 mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(sub.MeshMaterialName));
                             }
                             bool SubTex = sub.MeshTextureName != null && sub.MeshTextureName != "";

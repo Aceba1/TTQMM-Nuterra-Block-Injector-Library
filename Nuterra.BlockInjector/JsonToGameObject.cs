@@ -11,30 +11,6 @@ namespace Nuterra.BlockInjector
 {
     public static class GameObjectJSON
     {
-        private static Dictionary<Type, Dictionary<string, string>> SwapIndex = new Dictionary<Type, Dictionary<string, string>>()
-        {
-            { typeof(Material), new Dictionary<string, string>(){
-                { "Venture_", "VEN_" },
-                { "GeoCorp_", "GC_" }
-            } }
-        };
-
-        private static string SwapIt(Type SearchType, string SearchString)
-        {
-            if (SwapIndex.TryGetValue(SearchType, out Dictionary<string, string> SwapLib))
-            {
-                try
-                {
-                    return SwapLib.First(p => SearchString.StartsWith(p.Key)).Value;
-                }
-                catch
-                {
-                    return SearchString;
-                }
-            }
-            return SearchString;
-        }
-
         private static Dictionary<Type, Dictionary<string, UnityEngine.Object>> LoadedResources = new Dictionary<Type, Dictionary<string, UnityEngine.Object>>();
 
         public static Material MaterialFromShader(string ShaderName = "Standard")
@@ -45,7 +21,7 @@ namespace Nuterra.BlockInjector
 
         public static T GetObjectFromUserResources<T>(string targetName) where T : UnityEngine.Object
         {
-            var t = typeof(T);
+            Type t = typeof(T);
             if (LoadedResources.ContainsKey(t) && LoadedResources[t].ContainsKey(targetName))
             {
                 return LoadedResources[t][targetName] as T;
@@ -68,11 +44,9 @@ namespace Nuterra.BlockInjector
         {
             List<T> searchresult = new List<T>();
             T[] search = Resources.FindObjectsOfTypeAll<T>();
-            Type t = typeof(T);
-            string _t = SwapIt(typeof(T), startOfTargetName);
             for (int i = 0; i < search.Length; i++)
             {
-                if (search[i].name.StartsWith(_t))
+                if (search[i].name.StartsWith(startOfTargetName))
                 {
                     searchresult.Add(search[i]);
                 }
@@ -85,11 +59,9 @@ namespace Nuterra.BlockInjector
             T searchresult = null;
             T[] search = Resources.FindObjectsOfTypeAll<T>();
             string failedsearch = "";
-            Type t = typeof(T);
-            string _t = SwapIt(typeof(T), targetName);
             for (int i = 0; i < search.Length; i++)
             {
-                if (search[i].name == _t)
+                if (search[i].name == targetName)
                 {
                     searchresult = search[i];
                     break;
@@ -100,7 +72,7 @@ namespace Nuterra.BlockInjector
             {
                 for (int i = 0; i < search.Length; i++)
                 {
-                    if (search[i].name.StartsWith(_t))
+                    if (search[i].name.StartsWith(targetName))
                     {
                         searchresult = search[i];
                         break;
@@ -109,7 +81,7 @@ namespace Nuterra.BlockInjector
                 }
                 if (searchresult == null && Log)
                 {
-                    Debug.Log("Could not find resource: " + _t + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
+                    Debug.Log("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
                 }
             }
             return searchresult;
@@ -226,8 +198,12 @@ namespace Nuterra.BlockInjector
                         Type componentType = Type.GetType(property.Name);
                         if (componentType == null)
                         {
-                            Debug.LogWarning(property.Name + " is not a type!");
-                            continue;
+                            componentType = Type.GetType(property.Name + ", Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+                            if (componentType == null)
+                            {
+                                Debug.LogWarning(property.Name + " is not a full type! It might need something like " + typeof(TankBlock).Assembly.FullName + ", for example " + typeof(ModuleDrill).AssemblyQualifiedName);
+                                continue;
+                            }
                         }
                         object component = result.GetComponent(componentType);
                         if (component as Component == null)

@@ -86,4 +86,43 @@
   } ]
 	
   */
+
+  //For great control of a block without creating a C# mod, such a system exists that you can modify the Hierarchy, and variables, of one.
+  //OPTIONAL
+  /*
+  
+  //Example to make a drill very powerful
+  "JSONBLOCK": {
+    "ModuleDrill": {
+      "damagePerSecond": 1000000
+    }
+  }
+
+  //Example to change travel distance of a projectile
+  "JSONBLOCK": {
+    "FireData": {
+      "m_MuzzleVelocity": 2.1
+    }
+  }
+
+  //You can access children of gameobjects as you access components. And in those children, modify their components or go deeper
+  "JSONBLOCK": {
+    "GameObject|_gimbalBase": {
+      "GimbalAimer": {
+        //Modifications go here
+      },
+      "GameObject|_gimbalElev": {
+        "GimbalAimer": {
+        //Modifications go here
+      }
+    }
+  }
+
+  //Note: Any component or gameobject which cannot be found will be created.
+  //A gameobject can be created without specifying a name, such as "GameObject": {}
+  //This is an old module which has recently been brought to life. It is not recommended for normal use, but brings much more capability. If you have any problems, ask on the Forum or official TerraTech Discord (discord.gg/terratechgame)
+
+  //It may be necessary to examine the hierarchy of the block you wish to base your block on. You can do that by pressing backslash with your mouse on top of that block, with the Control Blocks mod installed.
+
+  */
 }

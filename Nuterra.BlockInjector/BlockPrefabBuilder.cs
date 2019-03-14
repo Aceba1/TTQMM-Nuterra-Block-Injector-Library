@@ -98,7 +98,7 @@ namespace Nuterra.BlockInjector
             {
                 RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter), typeof(Collider));
             }
-            RemoveChildrenWithComponent(true, null, typeof(ColliderSwapper), typeof(TTNetworkTransform), typeof(UnityEngine.Networking.NetworkIdentity), typeof(ModuleDamage), typeof(TankBlock), typeof(Visible));
+            RemoveChildrenWithComponent(true, null, typeof(ColliderSwapper), typeof(TTNetworkTransform));
         }
 
         private void Initialize(GameObject prefab, bool clearGridInfo)
