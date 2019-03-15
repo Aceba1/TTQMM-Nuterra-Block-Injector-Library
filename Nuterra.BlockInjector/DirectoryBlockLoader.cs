@@ -53,6 +53,7 @@ namespace Nuterra.BlockInjector
                 public string MeshTextureName;
                 public string MeshMaterialName;
                 public Vector3 SubPosition;
+                public Vector3 SubScale;
                 public Vector3 SubRotation;
                 public bool DestroyExistingRenderer;
             }
@@ -412,7 +413,8 @@ namespace Nuterra.BlockInjector
                         var tr = blockbuilder.Prefab.transform;
                         foreach (var sub in buildablock.SubObjects) //For each SUB
                         {
-                            Transform childT = tr.RecursiveFind(sub.SubOverrideName);
+                            Transform childT = null;
+                            if (sub.SubOverrideName != null && sub.SubOverrideName != "") childT = tr.RecursiveFind(sub.SubOverrideName);
                             GameObject childG = null;
                             if (childT != null)
                             {
@@ -504,12 +506,25 @@ namespace Nuterra.BlockInjector
                                 mc.convex = true;
                                 mc.sharedMesh = colliderMesh;
                             }
-                            if (sub.MakeBoxCollider && mesh != null)
+                            if (sub.MakeBoxCollider)
                             {
-                                mesh.RecalculateBounds();
-                                var bc = childG.EnsureComponent<BoxCollider>();
-                                bc.size = mesh.bounds.size * 0.75f;
-                                bc.center = mesh.bounds.center;
+                                if (mesh != null)
+                                { 
+                                    mesh.RecalculateBounds();
+                                    var bc = childG.EnsureComponent<BoxCollider>();
+                                    bc.size = mesh.bounds.size * 0.75f;
+                                    bc.center = mesh.bounds.center;
+                                }
+                                else
+                                {
+                                    var bc = childG.EnsureComponent<BoxCollider>();
+                                    bc.size = Vector3.one;
+                                    bc.center = Vector3.zero;
+                                }
+                            }
+                            if (sub.SubScale != null || sub.SubScale != Vector3.zero)
+                            {
+                                childT.localScale = sub.SubScale;
                             }
                         }
                     }
