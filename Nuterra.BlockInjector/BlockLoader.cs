@@ -172,7 +172,7 @@ namespace Nuterra.BlockInjector
                         {
                             typeof(TTNetworkManager).GetMethod("AddSpawnableType").Invoke(__instance, new object[] { prefab });
                         }
-                        catch(Exception E)
+                        catch
                         {
                             try
                             {

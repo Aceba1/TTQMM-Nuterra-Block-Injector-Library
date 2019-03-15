@@ -12,7 +12,6 @@ namespace Nuterra.BlockInjector
             Material mat = GameObjectJSON.MaterialFromShader();
             mat.mainTexture = GameObjectJSON.ImageFromFile(Properties.Resources.bacon_material_png);
             Material GSOMain = GameObjectJSON.GetObjectFromGameResources<Material>("GSO_Main");
-
             {
 
                 new BlockPrefabBuilder(/*"GSOBlock(111)", true*/)

@@ -81,7 +81,7 @@ namespace Nuterra.BlockInjector
                 }
                 if (searchresult == null && Log)
                 {
-                    Debug.Log("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
+                    Console.WriteLine("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
                 }
             }
             return searchresult;
@@ -198,11 +198,15 @@ namespace Nuterra.BlockInjector
                         Type componentType = Type.GetType(property.Name);
                         if (componentType == null)
                         {
-                            componentType = Type.GetType(property.Name + ", Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+                            componentType = Type.GetType(property.Name + ", " + typeof(TankBlock).Assembly.FullName);
                             if (componentType == null)
                             {
-                                Debug.LogWarning(property.Name + " is not a full type! It might need something like " + typeof(TankBlock).Assembly.FullName + ", for example " + typeof(ModuleDrill).AssemblyQualifiedName);
-                                continue;
+                                componentType = Type.GetType(property.Name + ", " + typeof(GameObject).Assembly.FullName);
+                                if (componentType == null)
+                                {
+                                    Console.WriteLine(property.Name + " is not a known type! If you are using a Unity type, you might need to prefix the class with \"UnityEngine.\", for example, \"UnityEngine.LineRenderer\". If it is not from Unity or the game itself, it needs the class's Assembly's `FullName`, for example: \"" + typeof(TankBlock).Assembly.FullName + "\", in which it'd be used as \"" + typeof(ModuleDrill).AssemblyQualifiedName+"\"");
+                                    continue;
+                                }
                             }
                         }
                         object component = result.GetComponent(componentType);
@@ -211,18 +215,18 @@ namespace Nuterra.BlockInjector
                             component = result.AddComponent(componentType);
                             if (component == null)
                             {
-                                Debug.LogWarning(property.Name + " is a null component, but does not throw an exception...");
+                                Console.WriteLine(property.Name + " is a null component, but does not throw an exception...");
                                 continue;
                             }
-                            Debug.Log("Created " + property.Name);
+                            Console.WriteLine("Created " + property.Name);
                         }
                         ApplyValues(component, componentType, property.Value as JObject);
-                        Debug.Log("Set values of " + property.Name);
+                        Console.WriteLine("Set values of " + property.Name);
                     }
                 }
                 catch (Exception E)
                 {
-                    Debug.LogException(E);
+                    Console.WriteLine(E.Message + "\n" + E.StackTrace);
                 }
             }
 
@@ -231,14 +235,14 @@ namespace Nuterra.BlockInjector
 
         public static object ApplyValues(object instance, Type instanceType, JObject json)
         {
-            Debug.Log("Going down");
+            Console.WriteLine("Going down");
             object _instance = instance;
             BindingFlags bind = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             foreach (JProperty property in json.Properties())
             {
                 try
                 {
-                    Debug.Log(property.Name);
+                    Console.WriteLine(property.Name);
                     FieldInfo tField = instanceType.GetField(property.Name, bind);
                     PropertyInfo tProp = instanceType.GetProperty(property.Name, bind);
                     bool UseField = tProp == null;
@@ -246,7 +250,7 @@ namespace Nuterra.BlockInjector
                     {
                         if (tField == null)
                         {
-                            Debug.Log("skipping...");
+                            Console.WriteLine("skipping...");
                             continue;
                         }
                     }
@@ -266,11 +270,11 @@ namespace Nuterra.BlockInjector
                                 try { tProp.SetValue(_instance, rewrite, null); } catch { }
                         }
                     }
-                    if (property.Value is JValue)
+                    if (property.Value is JValue || property.Value is JArray)
                     {
                         try
                         {
-                            Debug.Log("Setting value");
+                            Console.WriteLine("Setting value");
                             if (UseField)
                             {
                                 tField.SetValue(_instance, property.Value.ToObject(tField.FieldType));
@@ -300,7 +304,7 @@ namespace Nuterra.BlockInjector
                             if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
                             {
                                 searchresult = LoadedResources[type][targetName];
-                                Debug.Log("Setting value from user resource reference");
+                                Console.WriteLine("Setting value from user resource reference");
                             }
                             else
                             {
@@ -311,14 +315,14 @@ namespace Nuterra.BlockInjector
                                     if (search[i].name == targetName)
                                     {
                                         searchresult = search[i];
-                                        Debug.Log("Setting value from existing resource reference");
+                                        Console.WriteLine("Setting value from existing resource reference");
                                         break;
                                     }
                                     failedsearch += "(" + search[i].name + ") ";
                                 }
                                 if (searchresult == null)
                                 {
-                                    Debug.Log("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
+                                    Console.WriteLine("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
                                 }
                             }
                             if (UseField)
@@ -332,9 +336,9 @@ namespace Nuterra.BlockInjector
                         }
                     }
                 }
-                catch (Exception E) { Debug.LogException(E); }
+                catch (Exception E) { Console.WriteLine(E.Message+"\n"+E.StackTrace); }
             }
-            Debug.Log("Going up");
+            Console.WriteLine("Going up");
             return _instance;
         }
     }
