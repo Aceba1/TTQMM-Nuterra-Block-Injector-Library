@@ -24,6 +24,7 @@ namespace Nuterra.BlockInjector
             public string IconName;
             public string MeshName;
             public string ColliderMeshName;
+            public bool SupressBoxColliderFallback;
             public string MeshTextureName;
             public string MeshMaterialName;
             public int Faction;
@@ -400,7 +401,7 @@ namespace Nuterra.BlockInjector
                         {
                             if (colliderMesh == null)
                             {
-                                blockbuilder.SetModel(mesh, true, localmat);
+                                blockbuilder.SetModel(mesh, !buildablock.SupressBoxColliderFallback, localmat);
                             }
                             else
                             {
