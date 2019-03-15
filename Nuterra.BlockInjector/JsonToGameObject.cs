@@ -166,7 +166,7 @@ namespace Nuterra.BlockInjector
            return CreateGameObject(Newtonsoft.Json.Linq.JObject.Parse(json));
         }
 
-        public static GameObject CreateGameObject(JObject json, GameObject GameObjectToPopulate = null)
+        public static GameObject CreateGameObject(JObject json, GameObject GameObjectToPopulate = null, string Spacing = "")
         {
             GameObject result;
             if (GameObjectToPopulate == null)
@@ -191,7 +191,7 @@ namespace Nuterra.BlockInjector
                         GameObject newGameObject = result.transform.Find(name)?.gameObject;
                         if (!newGameObject) newGameObject = new GameObject(name);
                         newGameObject.transform.parent = result.transform;
-                        CreateGameObject(property.Value as JObject, newGameObject);
+                        CreateGameObject(property.Value as JObject, newGameObject, Spacing +  " ");
                     }
                     else
                     {
@@ -218,10 +218,10 @@ namespace Nuterra.BlockInjector
                                 Console.WriteLine(property.Name + " is a null component, but does not throw an exception...");
                                 continue;
                             }
-                            Console.WriteLine("Created " + property.Name);
+                            Console.WriteLine(Spacing+"Created " + property.Name);
                         }
-                        ApplyValues(component, componentType, property.Value as JObject);
-                        Console.WriteLine("Set values of " + property.Name);
+                        ApplyValues(component, componentType, property.Value as JObject, Spacing);
+                        Console.WriteLine(Spacing+"Set values of " + property.Name);
                     }
                 }
                 catch (Exception E)
@@ -233,16 +233,16 @@ namespace Nuterra.BlockInjector
             return result;
         }
 
-        public static object ApplyValues(object instance, Type instanceType, JObject json)
+        public static object ApplyValues(object instance, Type instanceType, JObject json, string Spacing)
         {
-            Console.WriteLine("Going down");
+            Console.WriteLine(Spacing+"Going down");
             object _instance = instance;
             BindingFlags bind = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             foreach (JProperty property in json.Properties())
             {
                 try
                 {
-                    Console.WriteLine(property.Name);
+                    Console.WriteLine(Spacing+" "+property.Name);
                     FieldInfo tField = instanceType.GetField(property.Name, bind);
                     PropertyInfo tProp = instanceType.GetProperty(property.Name, bind);
                     bool UseField = tProp == null;
@@ -250,7 +250,7 @@ namespace Nuterra.BlockInjector
                     {
                         if (tField == null)
                         {
-                            Console.WriteLine("skipping...");
+                            Console.WriteLine(Spacing + " skipping...");
                             continue;
                         }
                     }
@@ -259,13 +259,13 @@ namespace Nuterra.BlockInjector
                         if (UseField)
                         {
                             object original = tField.GetValue(instance);
-                            object rewrite = ApplyValues(original, tField.FieldType, property.Value as JObject);
+                            object rewrite = ApplyValues(original, tField.FieldType, property.Value as JObject, Spacing + " ");
                             try { tField.SetValue(_instance, rewrite); } catch { }
                         }
                         else
                         {
                             object original = tProp.GetValue(instance, null);
-                            object rewrite = ApplyValues(original, tProp.PropertyType, property.Value as JObject);
+                            object rewrite = ApplyValues(original, tProp.PropertyType, property.Value as JObject, Spacing + " ");
                             if (tProp.CanWrite)
                                 try { tProp.SetValue(_instance, rewrite, null); } catch { }
                         }
@@ -274,7 +274,7 @@ namespace Nuterra.BlockInjector
                     {
                         try
                         {
-                            Console.WriteLine("Setting value");
+                            Console.WriteLine(Spacing+" Setting value");
                             if (UseField)
                             {
                                 tField.SetValue(_instance, property.Value.ToObject(tField.FieldType));
@@ -304,7 +304,7 @@ namespace Nuterra.BlockInjector
                             if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
                             {
                                 searchresult = LoadedResources[type][targetName];
-                                Console.WriteLine("Setting value from user resource reference");
+                                Console.WriteLine(Spacing+" Setting value from user resource reference");
                             }
                             else
                             {
@@ -315,7 +315,7 @@ namespace Nuterra.BlockInjector
                                     if (search[i].name == targetName)
                                     {
                                         searchresult = search[i];
-                                        Console.WriteLine("Setting value from existing resource reference");
+                                        Console.WriteLine(Spacing+" Setting value from existing resource reference");
                                         break;
                                     }
                                     failedsearch += "(" + search[i].name + ") ";
@@ -338,7 +338,7 @@ namespace Nuterra.BlockInjector
                 }
                 catch (Exception E) { Console.WriteLine(E.Message+"\n"+E.StackTrace); }
             }
-            Console.WriteLine("Going up");
+            Console.WriteLine(Spacing+"Going up");
             return _instance;
         }
     }
