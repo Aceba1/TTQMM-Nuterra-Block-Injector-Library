@@ -140,7 +140,7 @@ namespace Nuterra.BlockInjector
 
         public static Mesh MeshFromFile(string FILEDATA, string name)
         {
-            return ObjImporter.ImportFile(FILEDATA, name);
+            return FastObjImporter.Instance.ImportFileFromData(FILEDATA);
         }
 
         public static Mesh MeshFromFile(string localPath)
@@ -154,7 +154,7 @@ namespace Nuterra.BlockInjector
                 }
                 else throw new NullReferenceException("The file specified could not be found in " + localPath + " or " + _localPath);
             }
-            return ObjImporter.ImportFile(_localPath);
+            return FastObjImporter.Instance.ImportFileFromPath(_localPath);
         }
 
         public static void AddObjectToUserResources<T>(Type type, T Object, string Name) where T : UnityEngine.Object
