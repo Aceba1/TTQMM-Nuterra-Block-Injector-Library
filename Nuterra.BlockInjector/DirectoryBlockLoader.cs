@@ -60,22 +60,24 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        internal static Type MeshT = typeof(Mesh), Texture2DT = typeof(Texture2D), MaterialT = typeof(Material);
+
         private static void ApplyTex(string FileName, string MatName, Texture2D Tex)
         {
             if (FileName.EndsWith(".1.png"))
             {
                 Console.WriteLine($"Set {MatName} to {FileName}");
-                GameObjectJSON.GetObjectFromGameResources<Material>(MatName, true).mainTexture = Tex;
+                GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, MatName, true).mainTexture = Tex;
             }
             else if (FileName.EndsWith(".2.png"))
             {
                 Console.WriteLine($"Set {MatName}'s gloss to {FileName}");
-                GameObjectJSON.GetObjectFromGameResources<Material>(MatName, true).SetTexture("_MetallicGlossMap", Tex);
+                GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, MatName, true).SetTexture("_MetallicGlossMap", Tex);
             }
             else if (FileName.EndsWith(".3.png"))
             {
                 Console.WriteLine($"Set {MatName}'s emission to {FileName}");
-                GameObjectJSON.GetObjectFromGameResources<Material>(MatName, true).SetTexture("_EmissionMap", Tex);
+                GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, MatName, true).SetTexture("_EmissionMap", Tex);
             }
         }
 
@@ -83,7 +85,7 @@ namespace Nuterra.BlockInjector
         {
             if (FileName.EndsWith(".1.png"))
             {
-                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MatName))
+                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MaterialT, MatName))
                 {
                     try
                     {
@@ -98,7 +100,7 @@ namespace Nuterra.BlockInjector
             }
             else if (FileName.EndsWith(".2.png"))
             {
-                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MatName))
+                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MaterialT, MatName))
                 {
                     try
                     {
@@ -113,7 +115,7 @@ namespace Nuterra.BlockInjector
             }
             else if (FileName.EndsWith(".3.png"))
             {
-                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MatName))
+                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MaterialT, MatName))
                 {
                     try
                     {
@@ -325,10 +327,10 @@ namespace Nuterra.BlockInjector
                     //Set Icon
                     if (buildablock.IconName != null && buildablock.IconName != "")
                     {
-                        var Tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(buildablock.IconName);
+                        var Tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.IconName);
                         if (Tex == null)
                         {
-                            Tex = GameObjectJSON.GetObjectFromGameResources<Texture2D>(buildablock.IconName);
+                            Tex = GameObjectJSON.GetObjectFromGameResources<Texture2D>(Texture2DT, buildablock.IconName);
                             if (Tex == null)
                             {
                                 var Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(buildablock.IconName);
@@ -358,7 +360,7 @@ namespace Nuterra.BlockInjector
                     {
                         buildablock.MeshMaterialName.Replace("Venture_", "VEN_");
                         buildablock.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                        localmat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(buildablock.MeshMaterialName));
+                        localmat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, buildablock.MeshMaterialName));
                     }
                     if (localmat == null)
                     {
@@ -366,7 +368,7 @@ namespace Nuterra.BlockInjector
                     }
                     if (buildablock.MeshTextureName != null && buildablock.MeshTextureName != "")
                     {
-                        Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(buildablock.MeshTextureName);
+                        Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.MeshTextureName);
                         if (tex != null)
                         {
                             localmat.mainTexture = tex;
@@ -378,11 +380,11 @@ namespace Nuterra.BlockInjector
                         Mesh mesh = null;
                         if ((buildablock.MeshName != null && buildablock.MeshName != ""))
                         {
-                            mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(buildablock.MeshName);
+                            mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, buildablock.MeshName);
                         }
                         if (mesh == null && !HasSubObjs && !BlockAlreadyExists)
                         {
-                            mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>("Cube");
+                            mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>(MeshT, "Cube");
                             if (mesh == null)
                             {
                                 var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -394,7 +396,7 @@ namespace Nuterra.BlockInjector
                         Mesh colliderMesh = null;
                         if (buildablock.ColliderMeshName != null && buildablock.ColliderMeshName != "")
                         {
-                            colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(buildablock.ColliderMeshName);
+                            colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, buildablock.ColliderMeshName);
                         }
                         //-Apply
                         if (mesh != null)
@@ -461,13 +463,13 @@ namespace Nuterra.BlockInjector
                             Mesh mesh = null;
                             if (sub.MeshName != null && sub.MeshName != "")
                             {
-                                mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(sub.MeshName);
+                                mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.MeshName);
                             }
                             //-Get Collider
                             Mesh colliderMesh = null;
                             if (sub.ColliderMeshName != null && sub.ColliderMeshName != "")
                             {
-                                colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(sub.ColliderMeshName);
+                                colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.ColliderMeshName);
                             }
                             //-Get Material
                             Material mat = localmat;
@@ -480,12 +482,12 @@ namespace Nuterra.BlockInjector
                             {
                                 sub.MeshMaterialName.Replace("Venture_", "VEN_");
                                 sub.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                                mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(sub.MeshMaterialName));
+                                mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName));
                             }
                             bool SubTex = sub.MeshTextureName != null && sub.MeshTextureName != "";
                             if (SubTex)
                             {
-                                Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(sub.MeshTextureName);
+                                Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName);
                                 if (tex != null)
                                 {
                                     mat = new Material(mat) { mainTexture = tex };

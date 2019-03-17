@@ -21,7 +21,10 @@ namespace Nuterra.BlockInjector
 
         public static T GetObjectFromUserResources<T>(string targetName) where T : UnityEngine.Object
         {
-            Type t = typeof(T);
+            return GetObjectFromUserResources<T>(typeof(T), targetName);
+        }
+        public static T GetObjectFromUserResources<T>(Type t, string targetName) where T : UnityEngine.Object
+        {
             if (LoadedResources.ContainsKey(t) && LoadedResources[t].ContainsKey(targetName))
             {
                 return LoadedResources[t][targetName] as T;
@@ -29,9 +32,11 @@ namespace Nuterra.BlockInjector
             return null;
         }
 
+        internal static Type ManSpawnT = typeof(ManSpawn);
+
         public static GameObject GetBlockFromAssetTable(string NameOfBlock)
         {
-            var allblocks = ((BlockTable)typeof(ManSpawn).GetField("m_BlockTable", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ManSpawn.inst)).m_Blocks;
+            var allblocks = ((BlockTable)ManSpawnT.GetField("m_BlockTable", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ManSpawn.inst)).m_Blocks;
             foreach (var block in allblocks)
             {
                 if (block.name.StartsWith(NameOfBlock))
@@ -40,10 +45,10 @@ namespace Nuterra.BlockInjector
             return null;
         }
 
-        public static List<T> GetObjectsFromGameResources<T>(string startOfTargetName) where T : UnityEngine.Object
+        public static List<T> GetObjectsFromGameResources<T>(Type t, string startOfTargetName) where T : UnityEngine.Object
         {
             List<T> searchresult = new List<T>();
-            T[] search = Resources.FindObjectsOfTypeAll<T>();
+            T[] search = Resources.FindObjectsOfTypeAll(t) as T[];
             for (int i = 0; i < search.Length; i++)
             {
                 if (search[i].name.StartsWith(startOfTargetName))
@@ -53,11 +58,15 @@ namespace Nuterra.BlockInjector
             }
             return searchresult;
         }
+        public static List<T> GetObjectsFromGameResources<T>(string startOfTargetName) where T : UnityEngine.Object
+        {
+            return GetObjectsFromGameResources<T>(typeof(T), startOfTargetName);
+        }
 
-        public static T GetObjectFromGameResources<T>(string targetName, bool Log = false) where T : UnityEngine.Object
+        public static T GetObjectFromGameResources<T>(Type t, string targetName, bool Log = false) where T : UnityEngine.Object
         {
             T searchresult = null;
-            T[] search = Resources.FindObjectsOfTypeAll<T>();
+            T[] search = Resources.FindObjectsOfTypeAll(t) as T[];
             string failedsearch = "";
             for (int i = 0; i < search.Length; i++)
             {
@@ -85,6 +94,10 @@ namespace Nuterra.BlockInjector
                 }
             }
             return searchresult;
+        }
+        public static T GetObjectFromGameResources<T>(string targetName, bool Log = false) where T : UnityEngine.Object
+        {
+            return GetObjectFromGameResources<T>(typeof(T), targetName, Log);
         }
 
         public static Texture2D ImageFromFile(byte[] DATA)
@@ -144,9 +157,8 @@ namespace Nuterra.BlockInjector
             return ObjImporter.ImportFile(_localPath);
         }
 
-        public static void AddObjectToUserResources<T>(T Object, string Name) where T : UnityEngine.Object
+        public static void AddObjectToUserResources<T>(Type type, T Object, string Name) where T : UnityEngine.Object
         {
-            Type type = typeof(T);
             if (!LoadedResources.ContainsKey(type))
             {
                 LoadedResources.Add(type, new Dictionary<string, UnityEngine.Object>());
@@ -159,6 +171,11 @@ namespace Nuterra.BlockInjector
             {
                 LoadedResources[type].Add(Name, Object);
             }
+        }
+
+        public static void AddObjectToUserResources<T>(T Object, string Name) where T : UnityEngine.Object
+        {
+            AddObjectToUserResources<T>(typeof(T), Object, Name);
         }
 
         public static GameObject CreateGameObject(string json)
