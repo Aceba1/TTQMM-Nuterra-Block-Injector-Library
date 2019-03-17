@@ -429,6 +429,8 @@ namespace Nuterra.BlockInjector
                                 childG = new GameObject();
                                 childT = childG.transform;
                                 childT.parent = tr;
+                                childT.localPosition = Vector3.zero;
+                                childT.localRotation = Quaternion.identity;
                                 childG.layer = Globals.inst.layerTank;
                                 New = true;
                             }
@@ -496,7 +498,7 @@ namespace Nuterra.BlockInjector
                                     {
                                         if (New)
                                         {
-                                            mat = GameObjectJSON.MaterialFromShader();
+                                            mat = localmat;
                                         }
                                         else
                                         {
@@ -505,8 +507,7 @@ namespace Nuterra.BlockInjector
                                             {
                                                 mat = t.sharedMaterial;
                                             }
-                                            if (mat == null)
-                                                mat = GameObjectJSON.MaterialFromShader();
+                                            else mat = localmat;
                                         }
                                     }
                                     try
@@ -515,7 +516,7 @@ namespace Nuterra.BlockInjector
                                     }
                                     catch
                                     {
-                                        Console.WriteLine("Adding texture to subobj failed!");
+                                        mat = new Material(localmat) { mainTexture = tex };
                                     }
                                 }
                             }
@@ -523,7 +524,6 @@ namespace Nuterra.BlockInjector
                             if (mesh != null)
                             {
                                 childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
-
                             }
                             if (mesh!= null || SubTex)
                             {
