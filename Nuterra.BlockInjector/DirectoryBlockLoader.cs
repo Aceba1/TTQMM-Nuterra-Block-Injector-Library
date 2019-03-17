@@ -500,12 +500,23 @@ namespace Nuterra.BlockInjector
                                         }
                                         else
                                         {
-                                            mat = childG.GetComponent<MeshRenderer>()?.material;
+                                            var t = childG.GetComponent<MeshRenderer>();
+                                            if (t != null)
+                                            {
+                                                mat = t.sharedMaterial;
+                                            }
                                             if (mat == null)
                                                 mat = GameObjectJSON.MaterialFromShader();
                                         }
                                     }
-                                    mat = new Material(mat) { mainTexture = tex };
+                                    try
+                                    {
+                                        mat = new Material(mat) { mainTexture = tex };
+                                    }
+                                    catch
+                                    {
+                                        Console.WriteLine("Adding texture to subobj failed!");
+                                    }
                                 }
                             }
                             //-Apply
