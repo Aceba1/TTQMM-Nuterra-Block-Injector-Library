@@ -492,6 +492,19 @@ namespace Nuterra.BlockInjector
                                 Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName);
                                 if (tex != null)
                                 {
+                                    if (mat == null)
+                                    {
+                                        if (New)
+                                        {
+                                            mat = GameObjectJSON.MaterialFromShader();
+                                        }
+                                        else
+                                        {
+                                            mat = childG.GetComponent<MeshRenderer>()?.material;
+                                            if (mat == null)
+                                                mat = GameObjectJSON.MaterialFromShader();
+                                        }
+                                    }
                                     mat = new Material(mat) { mainTexture = tex };
                                 }
                             }
@@ -505,8 +518,8 @@ namespace Nuterra.BlockInjector
                             {
                                 if (mat!=null)
                                 childG.EnsureComponent<MeshRenderer>().material = mat;
-                                else if (New)
-                                    childG.EnsureComponent<MeshRenderer>().material = localmat;
+                                else if (New || childG.GetComponent<MeshRenderer>() == null)
+                                    childG.AddComponent<MeshRenderer>().material = localmat;
                             }
                             if (colliderMesh != null)
                             {
