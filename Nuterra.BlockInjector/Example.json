@@ -64,6 +64,7 @@
   //OPTIONAL
 	"GamePrefabReference": null, //Use a block prefab from the GAME'S RESOURCES as a base. For example, "GSOBlock(111)"
   "KeepReferenceRenderers": true,
+  "": false, //Disable creation of BoxCollider. This is for 
 	"ReferenceOffset": { "x": 0, "y": 0, "z": 0 }, //Shift the subobjects of the block prefab by x, y and z
   
   // Sub Objects can modify existing sub gameobjects on a prefab reference
@@ -76,7 +77,7 @@
     "MeshMaterialName": null,
     "SubPosition": { "x": 0, "y": 0, "z": 0 },
   }, {
-    "SubOverrideName":"name_of_sub_in_game",
+    "SubOverrideName":"Sub GameObject", //This line can be omitted (or set not to a valid subobject of the prefab) to create a new gameobject child.
     "DestroySubReferenceRenderer": false,
     "MeshName": null,
     "ColliderMeshName": null,

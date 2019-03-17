@@ -419,6 +419,7 @@ namespace Nuterra.BlockInjector
                             Transform childT = null;
                             if (sub.SubOverrideName != null && sub.SubOverrideName != "") childT = tr.RecursiveFind(sub.SubOverrideName);
                             GameObject childG = null;
+                            bool New = false;
                             if (childT != null)
                             {
                                 childG = childT.gameObject;
@@ -429,6 +430,7 @@ namespace Nuterra.BlockInjector
                                 childT = childG.transform;
                                 childT.parent = tr;
                                 childG.layer = Globals.inst.layerTank;
+                                New = true;
                             }
                             //-Offset
                             if (sub.SubPosition != null)
@@ -472,7 +474,7 @@ namespace Nuterra.BlockInjector
                                 colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.ColliderMeshName);
                             }
                             //-Get Material
-                            Material mat = localmat;
+                            Material mat = null;
                             var ren = childG.GetComponent<MeshRenderer>();
                             if (ren != null)
                             {
@@ -501,7 +503,10 @@ namespace Nuterra.BlockInjector
                             }
                             if (mesh!= null || SubTex)
                             {
+                                if (mat!=null)
                                 childG.EnsureComponent<MeshRenderer>().material = mat;
+                                else if (New)
+                                    childG.EnsureComponent<MeshRenderer>().material = localmat;
                             }
                             if (colliderMesh != null)
                             {
