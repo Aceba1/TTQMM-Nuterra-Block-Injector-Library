@@ -360,7 +360,11 @@ namespace Nuterra.BlockInjector
                     {
                         buildablock.MeshMaterialName.Replace("Venture_", "VEN_");
                         buildablock.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                        localmat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, buildablock.MeshMaterialName));
+                        try
+                        {
+                            localmat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, buildablock.MeshMaterialName));
+                        }
+                        catch { Console.WriteLine(buildablock.MeshMaterialName + " is not a valid Game Material!"); }
                     }
                     if (localmat == null)
                     {
@@ -486,7 +490,11 @@ namespace Nuterra.BlockInjector
                             {
                                 sub.MeshMaterialName.Replace("Venture_", "VEN_");
                                 sub.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                                mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName));
+                                try
+                                {
+                                    mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName));
+                                }
+                                catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
                             }
                             bool SubTex = sub.MeshTextureName != null && sub.MeshTextureName != "";
                             if (SubTex)
