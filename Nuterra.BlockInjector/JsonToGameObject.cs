@@ -146,7 +146,7 @@ namespace Nuterra.BlockInjector
 
         public static Mesh MeshFromData(string FILEDATA)
         {
-            //return FastObjImporter.Instance.ImportFileFromData(FILEDATA);
+            return FastObjImporter.Instance.ImportFileFromData(FILEDATA);
         }
 
         public static Mesh MeshFromFile(string localPath)
