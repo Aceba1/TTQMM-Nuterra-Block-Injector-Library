@@ -359,6 +359,7 @@
     <Compile Include="DirectoryBlockLoader.cs" />
     <Compile Include="JsonToGameObject.cs" />
     <Compile Include="ModuleFirstPersonView.cs" />
+    <Compile Include="NetHandler.cs" />
     <Compile Include="ObjImporter.cs" />
     <Compile Include="BlockExamples.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
