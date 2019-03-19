@@ -555,7 +555,7 @@ namespace Nuterra.BlockInjector
                                     bc.center = Vector3.zero;
                                 }
                             }
-                            if (sub.SubScale != null || sub.SubScale != Vector3.zero)
+                            if (sub.SubScale != null && sub.SubScale != Vector3.zero)
                             {
                                 childT.localScale = sub.SubScale;
                             }
