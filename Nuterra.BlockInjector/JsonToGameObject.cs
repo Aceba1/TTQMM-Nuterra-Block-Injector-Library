@@ -138,9 +138,15 @@ namespace Nuterra.BlockInjector
             return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(texture.width * 0.5f, texture.height * 0.5f), Mathf.Max(texture.width, texture.height) * Scale);
         }
 
+        [Obsolete("Please use MeshFromData")]
         public static Mesh MeshFromFile(string FILEDATA, string name)
         {
-            return FastObjImporter.Instance.ImportFileFromData(FILEDATA);
+            return MeshFromData(FILEDATA);
+        }
+
+        public static Mesh MeshFromData(string FILEDATA)
+        {
+            //return FastObjImporter.Instance.ImportFileFromData(FILEDATA);
         }
 
         public static Mesh MeshFromFile(string localPath)

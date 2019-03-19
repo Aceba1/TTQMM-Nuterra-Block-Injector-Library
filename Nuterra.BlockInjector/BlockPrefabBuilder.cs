@@ -43,7 +43,6 @@ namespace Nuterra.BlockInjector
         private Damageable _damageable;
         private ModuleDamage _moduleDamage;
         private AutoSpriteRenderer _spriteRenderer;
-        private GameObject _renderObject;
         private CustomBlock _customBlock;
         private UnityEngine.Networking.NetworkIdentity _netid;
         private NetBlock _netblock;
@@ -90,7 +89,7 @@ namespace Nuterra.BlockInjector
             if (original == null)
             {
                 if (!PrefabList.TryGetValue(PrefabFromResource, out original))
-                    throw new Exception("No prefab starting with \"" + PrefabFromResource + "\" could be found... (If relying on modded block, try to delay creation)");
+                    throw new Exception("No prefab starting with \"" + PrefabFromResource + "\" could be found... (Make sure block is created before this one!)");
             }
             var copy = UnityEngine.Object.Instantiate(original);
             Initialize(copy, false);
@@ -430,10 +429,7 @@ namespace Nuterra.BlockInjector
         public BlockPrefabBuilder SetModel(GameObject renderObject, bool MakeCopy = false)
         {
             ThrowIfFinished();
-            if (_renderObject)
-            {
-                GameObject.DestroyImmediate(_renderObject);
-            }
+            GameObject _renderObject;
             if (MakeCopy)
                 _renderObject = GameObject.Instantiate(renderObject);
             else
@@ -441,7 +437,6 @@ namespace Nuterra.BlockInjector
             _renderObject.transform.parent = _customBlock.Prefab.transform;
             _renderObject.transform.localPosition = Vector3.zero;
             _renderObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
-            _renderObject.name = $"RenderObject";
             _renderObject.layer = Globals.inst.layerTank;
 
             foreach (GameObject child in _renderObject.EnumerateHierarchy(false, false))
