@@ -534,10 +534,18 @@ namespace Nuterra.BlockInjector
                                 if (New) childG.AddComponent<MeshFilter>().sharedMesh = mesh;
                                 else childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
                             }
-                            if (mesh!= null || SubTex)
+                            if (mat!= null || SubTex)
                             {
-                                if (mat!=null) childG.EnsureComponent<MeshRenderer>().material = mat;
-                                else if (New || childG.GetComponent<MeshRenderer>() == null) childG.AddComponent<MeshRenderer>().material = localmat;
+                                if (mat != null) childG.EnsureComponent<MeshRenderer>().material = mat;
+                                else if (mesh != null)
+                                {
+                                    if (New || childG.GetComponent<MeshRenderer>() == null) childG.AddComponent<MeshRenderer>().material = localmat;
+                                }
+                                else
+                                {
+                                    var mr = childG.GetComponent<MeshRenderer>();
+                                    if (mr != null) mr.material = localmat;
+                                }
                             }
                             if (colliderMesh != null)
                             {
