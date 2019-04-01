@@ -30,16 +30,31 @@ namespace Nuterra
 
             public override void OnClientReceive(NetworkMessage netMsg)
             {
-                NetMessage reader = new NetMessage();
-                netMsg.ReadMessage(reader);
-                ClientReceive(reader);
+                try
+                {
+                    NetMessage reader = new NetMessage();
+                    netMsg.ReadMessage(reader);
+                    ClientReceive(reader);
+                }
+                catch(Exception E)
+                {
+                    Console.WriteLine($"Error on parsing client message for {typeof(NetMessage).FullName}: {E.Message}\n{E.StackTrace}");
+                }
+                
             }
 
             public override void OnHostReceive(NetworkMessage netMsg)
             {
-                NetMessage reader = new NetMessage();
-                netMsg.ReadMessage(reader);
-                HostReceive(reader);
+                try
+                {
+                    NetMessage reader = new NetMessage();
+                    netMsg.ReadMessage(reader);
+                    HostReceive(reader);
+                }
+                catch (Exception E)
+                {
+                    Console.WriteLine($"Error on parsing client message for {typeof(NetMessage).FullName}: {E.Message}\n{E.StackTrace}");
+                }
             }
         }
 
