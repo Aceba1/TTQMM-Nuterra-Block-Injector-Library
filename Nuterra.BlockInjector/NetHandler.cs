@@ -11,7 +11,7 @@ namespace Nuterra
     {
         private static NetworkInstanceId CurrentID;
         public static bool IsHost { get; private set; } = false;
-        
+
         public static Action<NetworkInstanceId> OnClientJoined;
         public static Action<NetworkInstanceId> OnClientLeft;
 
@@ -32,21 +32,23 @@ namespace Nuterra
             {
                 try
                 {
+                    Console.WriteLine($"Received client message {netMsg.msgType}");
                     NetMessage reader = new NetMessage();
                     netMsg.ReadMessage(reader);
                     ClientReceive(reader);
                 }
-                catch(Exception E)
+                catch (Exception E)
                 {
                     Console.WriteLine($"Error on parsing client message for {typeof(NetMessage).FullName}: {E.Message}\n{E.StackTrace}");
                 }
-                
+
             }
 
             public override void OnHostReceive(NetworkMessage netMsg)
             {
                 try
                 {
+                    Console.WriteLine($"Received server message {netMsg.msgType}");
                     NetMessage reader = new NetMessage();
                     netMsg.ReadMessage(reader);
                     HostReceive(reader);
@@ -99,6 +101,7 @@ namespace Nuterra
             try
             {
                 Singleton.Manager<ManNetwork>.inst.SendToAllClients(MessageID, Message, CurrentID);
+                Console.WriteLine($"Sent {MessageID} to all");
             }
             catch (Exception E)
             {
@@ -111,6 +114,7 @@ namespace Nuterra
             try
             {
                 Singleton.Manager<ManNetwork>.inst.SendToAllExceptClient(ClientConnectionToIgnore, MessageID, Message, CurrentID, SkipBroadcaster);
+                Console.WriteLine($"Sent {MessageID} to all-except");
             }
             catch (Exception E)
             {
@@ -123,6 +127,7 @@ namespace Nuterra
             try
             {
                 Singleton.Manager<ManNetwork>.inst.SendToClient(ClientConnection, MessageID, Message, CurrentID);
+                Console.WriteLine($"Sent {MessageID} to client");
             }
             catch (Exception E)
             {
@@ -135,6 +140,7 @@ namespace Nuterra
             try
             {
                 Singleton.Manager<ManNetwork>.inst.SendToServer(MessageID, Message, CurrentID);
+                Console.WriteLine($"Sent {MessageID} to server");
             }
             catch (Exception E)
             {
@@ -164,7 +170,7 @@ namespace Nuterra
                             IsHost = false;
                         }
                     }
-                    catch(Exception E)
+                    catch (Exception E)
                     {
                         Console.WriteLine($"Could not run Recycle patch! {E.Message}\n{E.StackTrace}");
                     }
@@ -176,21 +182,24 @@ namespace Nuterra
             {
                 static void Postfix(NetPlayer __instance)
                 {
-                    try { 
-                    foreach(var item in Subscriptions)
+                    try
                     {
-                        try { 
-                        if (item.Value.CanReceiveAsClient)
+                        foreach (var item in Subscriptions)
                         {
-                            Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(__instance.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
+                            try
+                            {
+                                if (item.Value.CanReceiveAsClient)
+                                {
+                                    Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(__instance.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
+                                    Console.WriteLine($"Added client subscription {item.Value}");
+                                }
+                            }
+                            catch (Exception E)
+                            {
+                                Console.WriteLine($"Exception on Client Subscription: {E.Message}\n{E.StackTrace}");
+                            }
                         }
-                        }
-                        catch (Exception E)
-                        {
-                            Console.WriteLine($"Exception on Client Subscription: {E.Message}\n{E.StackTrace}");
-                        }
-                    }
-                    OnClientJoined?.Invoke(__instance.netId);
+                        OnClientJoined?.Invoke(__instance.netId);
                     }
                     catch (Exception E)
                     {
@@ -217,6 +226,7 @@ namespace Nuterra
                                     if (item.Value.CanReceiveAsHost)
                                     {
                                         Singleton.Manager<ManNetwork>.inst.SubscribeToServerMessage(__instance.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnHostReceive));
+                                        Console.WriteLine($"Added server subscription {item.Value}");
                                     }
                                 }
                                 catch (Exception E)
