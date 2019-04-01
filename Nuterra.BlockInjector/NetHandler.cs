@@ -138,13 +138,21 @@ namespace Nuterra
             [HarmonyPatch(typeof(NetPlayer), "OnRecycle")]
             static class OnRecycle
             {
-                static void Postfix(NetPlayer __instance)
+
+                static void Prefix(NetPlayer __instance)
                 {
-                    if (__instance.isServer || __instance.isLocalPlayer)
+                    try
                     {
-                        IsHost = false;
+                        OnClientLeft?.Invoke(__instance.netId);
+                        if (__instance.isServer || __instance.isLocalPlayer)
+                        {
+                            IsHost = false;
+                        }
                     }
-                    OnClientLeft(__instance.netId);
+                    catch(Exception E)
+                    {
+                        Console.WriteLine($"Could not run Recycle patch! {E.Message}\n{E.StackTrace}");
+                    }
                 }
             }
 
@@ -153,14 +161,26 @@ namespace Nuterra
             {
                 static void Postfix(NetPlayer __instance)
                 {
+                    try { 
                     foreach(var item in Subscriptions)
                     {
+                        try { 
                         if (item.Value.CanReceiveAsClient)
                         {
                             Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(__instance.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
                         }
+                        }
+                        catch (Exception E)
+                        {
+                            Console.WriteLine($"Exception on Client Subscription: {E.Message}\n{E.StackTrace}");
+                        }
                     }
-                    OnClientJoined(__instance.netId);
+                    OnClientJoined?.Invoke(__instance.netId);
+                    }
+                    catch (Exception E)
+                    {
+                        Console.WriteLine($"Could not run Client patch! {E.Message}\n{E.StackTrace}");
+                    }
                 }
             }
 
@@ -169,17 +189,31 @@ namespace Nuterra
             {
                 static void Postfix(NetPlayer __instance)
                 {
-                    if (!IsHost)
+                    try
                     {
-                        foreach (var item in Subscriptions)
+                        if (!IsHost)
                         {
-                            if (item.Value.CanReceiveAsHost)
+                            CurrentID = __instance.netId;
+                            IsHost = true;
+                            foreach (var item in Subscriptions)
                             {
-                                Singleton.Manager<ManNetwork>.inst.SubscribeToServerMessage(__instance.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnHostReceive));
+                                try
+                                {
+                                    if (item.Value.CanReceiveAsHost)
+                                    {
+                                        Singleton.Manager<ManNetwork>.inst.SubscribeToServerMessage(__instance.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnHostReceive));
+                                    }
+                                }
+                                catch (Exception E)
+                                {
+                                    Console.WriteLine($"Exception on Server Subscription: {E.Message}\n{E.StackTrace}");
+                                }
                             }
                         }
-                        CurrentID = __instance.netId;
-                        IsHost = true;
+                    }
+                    catch (Exception E)
+                    {
+                        Console.WriteLine($"Could not run Server patch! {E.Message}\n{E.StackTrace}");
                     }
                 }
             }
