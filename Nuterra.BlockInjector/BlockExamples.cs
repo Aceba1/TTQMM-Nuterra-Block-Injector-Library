@@ -52,7 +52,7 @@ namespace Nuterra.BlockInjector
                     })
                     .SetMass(4)
                     .SetHP(3000)
-                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.bacon, "bacon"), true, mat)
+                    .SetModel(GameObjectJSON.MeshFromData(Properties.Resources.bacon), true, mat)
                     .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.bacon_icon_png)))
                     .RegisterLater();
 
@@ -90,15 +90,15 @@ namespace Nuterra.BlockInjector
                     {
                         if (name == "m_GSO_MgunFixed_111_Barrel")
                         {
-                            mes.mesh = GameObjectJSON.MeshFromFile(Properties.Resources.banana_barrel, "banana_barrel");
+                            mes.mesh = GameObjectJSON.MeshFromData(Properties.Resources.banana_barrel);
                         }
                         else if (name == "m_GSO_MgunFixed_111_Body")
                         {
-                            mes.mesh = GameObjectJSON.MeshFromFile(Properties.Resources.banana_body, "banana_body");
+                            mes.mesh = GameObjectJSON.MeshFromData(Properties.Resources.banana_body);
                         }
                         else if (name == "m_GSO_MgunFixed_111_Base")
                         {
-                            mes.mesh = GameObjectJSON.MeshFromFile(Properties.Resources.banana_base, "banana_base");
+                            mes.mesh = GameObjectJSON.MeshFromData(Properties.Resources.banana_base);
                         }
                         else
                         {
@@ -127,7 +127,7 @@ namespace Nuterra.BlockInjector
                     .SetHP(500)
                     .SetFaction(FactionSubTypes.GSO)
                     .SetCategory(BlockCategories.Accessories)
-                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_small, "cockpit_small"), true, GSOMain)
+                    .SetModel(GameObjectJSON.MeshFromData(Properties.Resources.cockpit_small), true, GSOMain)
                     .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_small_icon_png)))
                     .SetSize(IntVector3.one, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
@@ -149,7 +149,7 @@ namespace Nuterra.BlockInjector
                     .SetHP(500)
                     .SetFaction(FactionSubTypes.GSO)
                     .SetCategory(BlockCategories.Accessories)
-                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_small_2, "cockpit_small_2"), true, GSOMain)
+                    .SetModel(GameObjectJSON.MeshFromData(Properties.Resources.cockpit_small_2), true, GSOMain)
                     .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_small_2_icon_png)))
                     .SetSizeManual(new IntVector3[] { IntVector3.zero }, new Vector3[] { Vector3.down * 0.5f, Vector3.back * 0.5f });
 
@@ -183,7 +183,7 @@ namespace Nuterra.BlockInjector
                     .SetGrade(1)
                     .SetFaction(FactionSubTypes.GSO)
                     .SetCategory(BlockCategories.Accessories)
-                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_large, "cockpit_large"), true, GSOMain)
+                    .SetModel(GameObjectJSON.MeshFromData(Properties.Resources.cockpit_large), true, GSOMain)
                     .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_large_icon_png)))
                     .SetSize(IntVector3.one * 2, BlockPrefabBuilder.AttachmentPoints.Bottom);
 
@@ -207,7 +207,7 @@ namespace Nuterra.BlockInjector
                     .SetGrade(1)
                     .SetFaction(FactionSubTypes.VEN)
                     .SetCategory(BlockCategories.Accessories)
-                    .SetModel(GameObjectJSON.MeshFromFile(Properties.Resources.cockpit_ven, "cockpit_ven"), true, GameObjectJSON.GetObjectFromGameResources<Material>("VEN_Main"))
+                    .SetModel(GameObjectJSON.MeshFromData(Properties.Resources.cockpit_ven), true, GameObjectJSON.GetObjectFromGameResources<Material>("VEN_Main"))
                     .SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.cockpit_ven_icon_png)))
                     .SetSize(new IntVector3(1, 1, 2), BlockPrefabBuilder.AttachmentPoints.Bottom);
 
