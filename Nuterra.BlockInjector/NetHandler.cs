@@ -121,7 +121,7 @@ namespace Nuterra
             }
         }
 
-        public static class Patches
+        internal static class Patches
         {
             internal static void INIT()
             {
