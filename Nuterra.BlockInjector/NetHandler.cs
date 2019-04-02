@@ -20,8 +20,8 @@ namespace Nuterra
 
         internal class ActionWrapper<NetMessage> : NetAction where NetMessage : MessageBase, new()
         {
-            public Action<NetMessage> ClientReceive;
-            public Action<NetMessage> HostReceive;
+            public Action<NetMessage, NetworkMessage> ClientReceive;
+            public Action<NetMessage, NetworkMessage> HostReceive;
 
             public override void OnClientReceive(NetworkMessage netMsg)
             {
@@ -30,7 +30,7 @@ namespace Nuterra
                     Console.WriteLine($"Received client message {netMsg.msgType}");
                     NetMessage reader = new NetMessage();
                     netMsg.ReadMessage(reader);
-                    ClientReceive(reader);
+                    ClientReceive(reader, netMsg);
                 }
                 catch (Exception E)
                 {
@@ -46,7 +46,7 @@ namespace Nuterra
                     Console.WriteLine($"Received server message {netMsg.msgType}");
                     NetMessage reader = new NetMessage();
                     netMsg.ReadMessage(reader);
-                    HostReceive(reader);
+                    HostReceive(reader, netMsg);
                 }
                 catch (Exception E)
                 {
@@ -57,7 +57,7 @@ namespace Nuterra
 
         private static Dictionary<TTMsgType, NetAction> Subscriptions = new Dictionary<TTMsgType, NetAction>();
 
-        public static void Subscribe<CustomMessageBase>(TTMsgType MessageID, Action<CustomMessageBase> AsClientReceiveMessage, Action<CustomMessageBase> AsHostReceiveMessage = null)
+        public static void Subscribe<CustomMessageBase>(TTMsgType MessageID, Action<CustomMessageBase, NetworkMessage> AsClientReceiveMessage, Action<CustomMessageBase, NetworkMessage> AsHostReceiveMessage = null)
             where CustomMessageBase : MessageBase, new()
         {
             Subscriptions.Add(MessageID, new ActionWrapper<CustomMessageBase>()
