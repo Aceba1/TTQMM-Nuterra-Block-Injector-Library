@@ -9,6 +9,7 @@ namespace Nuterra.BlockInjector
     {
         public static void Load()
         {
+            #region Blocks
             Material mat = GameObjectJSON.MaterialFromShader();
             mat.mainTexture = GameObjectJSON.ImageFromFile(Properties.Resources.bacon_material_png);
             Material GSOMain = GameObjectJSON.GetObjectFromGameResources<Material>("GSO_Main");
@@ -220,6 +221,10 @@ namespace Nuterra.BlockInjector
 
             }
 
+            #endregion
+
+            #region Recipes
+
             CustomRecipe.RegisterRecipe(
                     new CustomRecipe.RecipeInput[]
                     {
@@ -303,6 +308,8 @@ namespace Nuterra.BlockInjector
             //    FrictionDynamic = 0f,
             //    FrictionStatic = 0f
             //}.Register);
+
+            #endregion
 
             var thng = new GameObject();
             var thnng = thng.AddComponent<FirstPersonCamera>();

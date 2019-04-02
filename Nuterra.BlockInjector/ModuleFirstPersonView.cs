@@ -113,7 +113,7 @@ namespace Nuterra.BlockInjector
                     {
                         EnableFPVState();
                     }
-                    else
+                    else if (IsActive)
                     {
                         Console.WriteLine("Could not find camera module");
                         DisableFPVState();

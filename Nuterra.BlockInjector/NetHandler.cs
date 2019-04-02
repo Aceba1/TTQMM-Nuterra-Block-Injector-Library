@@ -9,12 +9,7 @@ namespace Nuterra
 {
     public static class NetHandler
     {
-        private static NetworkInstanceId CurrentID;
-        public static bool IsHost { get; private set; } = false;
-
-        public static Action<NetworkInstanceId> OnClientJoined;
-        public static Action<NetworkInstanceId> OnClientLeft;
-
+        public static NetworkInstanceId ThisNetID => ManNetwork.inst.MyPlayer.netId;
         internal abstract class NetAction
         {
             public bool CanReceiveAsHost = false, CanReceiveAsClient = false;
@@ -74,33 +69,11 @@ namespace Nuterra
             });
         }
 
-        /* 
-        public class WaterChangeMessage : MessageBase
-        {
-            public WaterChangeMessage() { }
-            public WaterChangeMessage(float Height)
-            {
-                this.Height = Height;
-            }
-            public override void Deserialize(NetworkReader reader)
-            {
-                this.Height = reader.ReadSingle();
-            }
-
-            public override void Serialize(NetworkWriter writer)
-            {
-                writer.Write(this.Height);
-            }
-
-            public float Height;
-        } 
-        */
-
         public static void BroadcastMessageToAll<NetMessage>(TTMsgType MessageID, NetMessage Message) where NetMessage : MessageBase
         {
             try
             {
-                Singleton.Manager<ManNetwork>.inst.SendToAllClients(MessageID, Message, CurrentID);
+                Singleton.Manager<ManNetwork>.inst.SendToAllClients(MessageID, Message, ThisNetID);
                 Console.WriteLine($"Sent {MessageID} to all");
             }
             catch (Exception E)
@@ -113,7 +86,7 @@ namespace Nuterra
         {
             try
             {
-                Singleton.Manager<ManNetwork>.inst.SendToAllExceptClient(ClientConnectionToIgnore, MessageID, Message, CurrentID, SkipBroadcaster);
+                Singleton.Manager<ManNetwork>.inst.SendToAllExceptClient(ClientConnectionToIgnore, MessageID, Message, ThisNetID, SkipBroadcaster);
                 Console.WriteLine($"Sent {MessageID} to all-except");
             }
             catch (Exception E)
@@ -126,7 +99,7 @@ namespace Nuterra
         {
             try
             {
-                Singleton.Manager<ManNetwork>.inst.SendToClient(ClientConnection, MessageID, Message, CurrentID);
+                Singleton.Manager<ManNetwork>.inst.SendToClient(ClientConnection, MessageID, Message, ThisNetID);
                 Console.WriteLine($"Sent {MessageID} to client");
             }
             catch (Exception E)
@@ -139,7 +112,7 @@ namespace Nuterra
         {
             try
             {
-                Singleton.Manager<ManNetwork>.inst.SendToServer(MessageID, Message, CurrentID);
+                Singleton.Manager<ManNetwork>.inst.SendToServer(MessageID, Message, ThisNetID);
                 Console.WriteLine($"Sent {MessageID} to server");
             }
             catch (Exception E)
@@ -150,96 +123,64 @@ namespace Nuterra
 
         public static class Patches
         {
-            //[HarmonyPatch(typeof(ManLooseBlocks), "RegisterMessageHandlers")]
-            //static class CreateWaterHooks
-            //{
-            //    static void Postfix
-            //}
-
-            [HarmonyPatch(typeof(NetPlayer), "OnRecycle")]
-            static class OnRecycle
+            internal static void INIT()
             {
+                ManNetwork.inst.OnPlayerAdded.Subscribe(PlayerAdded);
+                ManNetwork.inst.OnServerHostStopped.Subscribe(ServerAdded);
+            }
 
-                static void Prefix(NetPlayer __instance)
+            private static void PlayerAdded(NetPlayer obj)
+            {
+                try
                 {
-                    try
+                    foreach (var item in Subscriptions)
                     {
-                        OnClientLeft?.Invoke(__instance.netId);
-                        if (__instance.isServer || __instance.isLocalPlayer)
+                        try
                         {
-                            IsHost = false;
+                            if (item.Value.CanReceiveAsClient)
+                            {
+                                Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(obj.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
+                                Console.WriteLine($"Added client subscription {item.Value}");
+                            }
+                        }
+                        catch (Exception E)
+                        {
+                            Console.WriteLine($"Exception on Client Subscription: {E.Message}\n{E.StackTrace}");
                         }
                     }
-                    catch (Exception E)
-                    {
-                        Console.WriteLine($"Could not run Recycle patch! {E.Message}\n{E.StackTrace}");
-                    }
+                }
+                catch (Exception E)
+                {
+                    Console.WriteLine($"Could not run Client patch! {E.Message}\n{E.StackTrace}");
                 }
             }
 
-            [HarmonyPatch(typeof(NetPlayer), "OnStartClient")]
-            static class OnStartClient
+            private static void ServerAdded()
             {
-                static void Postfix(NetPlayer __instance)
+                try
                 {
-                    try
+                    if (ManNetwork.IsHostOrWillBe)
                     {
                         foreach (var item in Subscriptions)
                         {
                             try
                             {
-                                if (item.Value.CanReceiveAsClient)
+                                if (item.Value.CanReceiveAsHost)
                                 {
-                                    Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(__instance.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
-                                    Console.WriteLine($"Added client subscription {item.Value}");
+                                    Singleton.Manager<ManNetwork>.inst.SubscribeToServerMessage(ManNetwork.inst.MyPlayer.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnHostReceive));
+                                    Console.WriteLine($"Added server subscription {item.Value}");
                                 }
                             }
                             catch (Exception E)
                             {
-                                Console.WriteLine($"Exception on Client Subscription: {E.Message}\n{E.StackTrace}");
+                                Console.WriteLine($"Exception on Server Subscription: {E.Message}\n{E.StackTrace}");
                             }
                         }
-                        OnClientJoined?.Invoke(__instance.netId);
-                    }
-                    catch (Exception E)
-                    {
-                        Console.WriteLine($"Could not run Client patch! {E.Message}\n{E.StackTrace}");
                     }
                 }
-            }
-
-            [HarmonyPatch(typeof(NetPlayer), "OnStartServer")]
-            static class OnStartServer
-            {
-                static void Postfix(NetPlayer __instance)
+                catch (Exception E)
                 {
-                    try
-                    {
-                        if (!IsHost)
-                        {
-                            CurrentID = __instance.netId;
-                            IsHost = true;
-                            foreach (var item in Subscriptions)
-                            {
-                                try
-                                {
-                                    if (item.Value.CanReceiveAsHost)
-                                    {
-                                        Singleton.Manager<ManNetwork>.inst.SubscribeToServerMessage(__instance.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnHostReceive));
-                                        Console.WriteLine($"Added server subscription {item.Value}");
-                                    }
-                                }
-                                catch (Exception E)
-                                {
-                                    Console.WriteLine($"Exception on Server Subscription: {E.Message}\n{E.StackTrace}");
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception E)
-                    {
-                        Console.WriteLine($"Could not run Server patch! {E.Message}\n{E.StackTrace}");
-                    }
+                    Console.WriteLine($"Could not run Server patch! {E.Message}\n{E.StackTrace}");
                 }
             }
         }
