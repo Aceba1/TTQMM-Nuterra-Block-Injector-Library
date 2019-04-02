@@ -137,11 +137,11 @@ namespace Nuterra.BlockInjector
         public static void PostModsLoaded()
         {
             new GameObject().AddComponent<Timer>();
-            Nuterra.NetHandler.Patches.INIT();
             BlockExamples.Load();
             DirectoryBlockLoader.LoadBlocks();
             var harmony = HarmonyInstance.Create("nuterra.block.injector");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+            PostStartEvent += NetHandler.Patches.INIT;
         }
 
         internal class Patches
