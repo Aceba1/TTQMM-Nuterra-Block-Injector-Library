@@ -159,7 +159,7 @@ namespace Nuterra
                         if (item.Value.CanReceiveAsClient)
                         {
                             Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(obj.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
-                            Console.WriteLine($"Added client subscription {item.Value}");
+                            Console.WriteLine($"Added client subscription {item.Key}, {item.Value}");
                         }
                     }
                     catch (Exception E)
@@ -176,7 +176,7 @@ namespace Nuterra
                             if (item.Value.CanReceiveAsHost)
                             {
                                 Singleton.Manager<ManNetwork>.inst.SubscribeToServerMessage(item.Key, new ManNetwork.MessageHandler(item.Value.OnHostReceive));
-                                Console.WriteLine($"Added server subscription {item.Value}");
+                                Console.WriteLine($"Added server subscription {item.Key}, {item.Value}");
                             }
                         }
                         catch (Exception E)
