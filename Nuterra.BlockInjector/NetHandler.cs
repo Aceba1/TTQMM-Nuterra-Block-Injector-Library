@@ -125,63 +125,64 @@ namespace Nuterra
         {
             internal static void INIT()
             {
-                ManNetwork.inst.OnPlayerAdded.Subscribe(PlayerAdded);
-                ManNetwork.inst.OnServerHostStopped.Subscribe(ServerAdded);
+                var g = new UnityEngine.GameObject();
+                UnityEngine.GameObject.DontDestroyOnLoad(g);
+                ManNetwork.inst.OnPlayerAdded.Subscribe(g.AddComponent<UnityBugWorkaround>().ActivateMe);
+            }
+
+            internal class UnityBugWorkaround : UnityEngine.MonoBehaviour
+            {
+                public void ActivateMe(NetPlayer obj)
+                {
+                    gameObject.SetActive(true);
+                }
+
+                private void Update()
+                {
+                    if (ManNetwork.inst.MyPlayer != null)
+                    {
+                        PlayerAdded(ManNetwork.inst.MyPlayer);
+                        gameObject.SetActive(false);
+                    }
+                }
             }
 
             private static void PlayerAdded(NetPlayer obj)
             {
-                try
+                foreach (var item in Subscriptions)
+                {
+                    try
+                    {
+                        if (item.Value.CanReceiveAsClient)
+                        {
+                            Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(obj.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
+                            Console.WriteLine($"Added client subscription {item.Value}");
+                        }
+                    }
+                    catch (Exception E)
+                    {
+                        Console.WriteLine($"Exception on Client Subscription: {E.Message}\n{E.StackTrace}");
+                    }
+                }
+                if (obj.IsHostPlayer || obj.isServer)
                 {
                     foreach (var item in Subscriptions)
                     {
                         try
                         {
-                            if (item.Value.CanReceiveAsClient)
+                            if (item.Value.CanReceiveAsHost)
                             {
-                                Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(obj.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
-                                Console.WriteLine($"Added client subscription {item.Value}");
+                                Singleton.Manager<ManNetwork>.inst.SubscribeToServerMessage(item.Key, new ManNetwork.MessageHandler(item.Value.OnHostReceive));
+                                Console.WriteLine($"Added server subscription {item.Value}");
                             }
                         }
                         catch (Exception E)
                         {
-                            Console.WriteLine($"Exception on Client Subscription: {E.Message}\n{E.StackTrace}");
+                            Console.WriteLine($"Exception on Server Subscription: {E.Message}\n{E.StackTrace}");
                         }
                     }
                 }
-                catch (Exception E)
-                {
-                    Console.WriteLine($"Could not run Client patch! {E.Message}\n{E.StackTrace}");
-                }
-            }
-
-            private static void ServerAdded()
-            {
-                try
-                {
-                    if (ManNetwork.IsHostOrWillBe)
-                    {
-                        foreach (var item in Subscriptions)
-                        {
-                            try
-                            {
-                                if (item.Value.CanReceiveAsHost)
-                                {
-                                    Singleton.Manager<ManNetwork>.inst.SubscribeToServerMessage(ManNetwork.inst.MyPlayer.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnHostReceive));
-                                    Console.WriteLine($"Added server subscription {item.Value}");
-                                }
-                            }
-                            catch (Exception E)
-                            {
-                                Console.WriteLine($"Exception on Server Subscription: {E.Message}\n{E.StackTrace}");
-                            }
-                        }
-                    }
-                }
-                catch (Exception E)
-                {
-                    Console.WriteLine($"Could not run Server patch! {E.Message}\n{E.StackTrace}");
-                }
+                Console.WriteLine($"Player {obj.netId} has joined: Name-{obj.name}, Server-{obj.isServer}, Host-{obj.IsHostPlayer}, Local-{obj.isLocalPlayer}, Client-{obj.isClient}");
             }
         }
     }
