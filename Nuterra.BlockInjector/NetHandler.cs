@@ -132,8 +132,11 @@ namespace Nuterra
 
             internal class UnityBugWorkaround : UnityEngine.MonoBehaviour
             {
+                List<NetPlayer> playersToSubscribe = new List<NetPlayer>();
+
                 public void ActivateMe(NetPlayer obj)
                 {
+                    playersToSubscribe.Add(obj);
                     gameObject.SetActive(true);
                 }
 
@@ -141,7 +144,7 @@ namespace Nuterra
                 {
                     if (ManNetwork.inst.MyPlayer != null)
                     {
-                        PlayerAdded(ManNetwork.inst.MyPlayer);
+                        foreach (NetPlayer obj in playersToSubscribe) PlayerAdded(obj);
                         gameObject.SetActive(false);
                     }
                 }
