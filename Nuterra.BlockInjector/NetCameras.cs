@@ -23,6 +23,7 @@ namespace Nuterra
             GameObject newbody = new GameObject("CameraObject");
             NetCamera newcam = newbody.AddComponent<NetCamera>();
             newcam.HasBody = Player != ManNetwork.inst.MyPlayer;
+            newcam.player = Player;
             if (newcam.HasBody)
             {
                 if (MeshBody == null)
@@ -74,7 +75,6 @@ namespace Nuterra
                 return;
             }
             color.material.SetColor("_Color", player.Colour);
-
         }
 
         internal void UpdateFromNet(CamDroneMessage msg)
