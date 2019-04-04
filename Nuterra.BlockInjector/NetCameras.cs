@@ -64,9 +64,16 @@ namespace Nuterra
                 return;
             }
             if (!HasBody)
+            {
+                if (ManNetwork.IsHost)
+                {
+                    NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { position = transform.position, rotation = transform.rotation }, true);
+                    return;
+                }
                 NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { position = transform.position, rotation = transform.rotation });
-            else
-                color.material.SetColor("_Color", player.Colour);
+                return;
+            }
+            color.material.SetColor("_Color", player.Colour);
 
         }
 
