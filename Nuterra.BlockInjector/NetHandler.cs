@@ -28,9 +28,7 @@ namespace Nuterra
                 try
                 {
                     Console.WriteLine($"Received client message {netMsg.msgType}");
-                    NetMessage reader = new NetMessage();
-                    netMsg.ReadMessage(reader);
-                    ClientReceive(reader, netMsg);
+                    ClientReceive(netMsg.ReadMessage<NetMessage>(), netMsg);
                 }
                 catch (Exception E)
                 {
@@ -43,10 +41,8 @@ namespace Nuterra
             {
                 try
                 {
-                    Console.WriteLine($"Received server message {netMsg.msgType}");
-                    NetMessage reader = new NetMessage();
-                    netMsg.ReadMessage(reader);
-                    HostReceive(reader, netMsg);
+                    Console.WriteLine($"Received server message {netMsg.msgType}");                    
+                    HostReceive(netMsg.ReadMessage<NetMessage>(), netMsg);
                 }
                 catch (Exception E)
                 {
@@ -73,7 +69,7 @@ namespace Nuterra
         {
             try
             {
-                Singleton.Manager<ManNetwork>.inst.SendToAllClients(MessageID, Message, ThisNetID);
+                Singleton.Manager<ManNetwork>.inst.SendToAllClients(MessageID, Message/*, ThisNetID*/);
                 Console.WriteLine($"Sent {MessageID} to all");
             }
             catch (Exception E)
@@ -86,7 +82,7 @@ namespace Nuterra
         {
             try
             {
-                Singleton.Manager<ManNetwork>.inst.SendToAllExceptClient(ClientConnectionToIgnore, MessageID, Message, ThisNetID, SkipBroadcaster);
+                Singleton.Manager<ManNetwork>.inst.SendToAllExceptClient(ClientConnectionToIgnore, MessageID, Message/*, ThisNetID*/, SkipBroadcaster);
                 Console.WriteLine($"Sent {MessageID} to all-except");
             }
             catch (Exception E)
@@ -99,7 +95,7 @@ namespace Nuterra
         {
             try
             {
-                Singleton.Manager<ManNetwork>.inst.SendToClient(ClientConnection, MessageID, Message, ThisNetID);
+                Singleton.Manager<ManNetwork>.inst.SendToClient(ClientConnection, MessageID, Message/*, ThisNetID*/);
                 Console.WriteLine($"Sent {MessageID} to client");
             }
             catch (Exception E)
@@ -112,7 +108,7 @@ namespace Nuterra
         {
             try
             {
-                Singleton.Manager<ManNetwork>.inst.SendToServer(MessageID, Message, ThisNetID);
+                Singleton.Manager<ManNetwork>.inst.SendToServer(MessageID, Message);
                 Console.WriteLine($"Sent {MessageID} to server");
             }
             catch (Exception E)
@@ -159,7 +155,7 @@ namespace Nuterra
                     {
                         if (item.Value.CanReceiveAsClient)
                         {
-                            Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(obj.netId, item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
+                            Singleton.Manager<ManNetwork>.inst.SubscribeToClientMessage(/*obj.netId, */item.Key, new ManNetwork.MessageHandler(item.Value.OnClientReceive));
                             Console.WriteLine($"Added client subscription {item.Key}, {item.Value}");
                         }
                     }
