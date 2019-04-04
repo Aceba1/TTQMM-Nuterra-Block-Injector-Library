@@ -146,6 +146,7 @@ namespace Nuterra
                     {
                         foreach (NetPlayer obj in playersToSubscribe) PlayerAdded(obj);
                         gameObject.SetActive(false);
+                        playersToSubscribe.Clear();
                     }
                 }
             }
