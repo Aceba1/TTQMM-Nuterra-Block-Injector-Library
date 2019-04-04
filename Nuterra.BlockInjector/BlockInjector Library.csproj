@@ -359,6 +359,7 @@
     <Compile Include="DirectoryBlockLoader.cs" />
     <Compile Include="JsonToGameObject.cs" />
     <Compile Include="ModuleFirstPersonView.cs" />
+    <Compile Include="NetCameras.cs" />
     <Compile Include="NetHandler.cs" />
     <Compile Include="ObjImporter.cs" />
     <Compile Include="BlockExamples.cs" />
@@ -389,6 +390,8 @@
     <None Include="Block Resources\cockpit_small_icon_png" />
     <None Include="Block Resources\cockpit_ven.obj" />
     <None Include="Block Resources\cockpit_ven_icon_png" />
+    <None Include="Block Resources\MPCamDrone\barrel.obj" />
+    <None Include="Block Resources\MPCamDrone\base.obj" />
     <None Include="Example - SubObjects.json" />
     <None Include="mod.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

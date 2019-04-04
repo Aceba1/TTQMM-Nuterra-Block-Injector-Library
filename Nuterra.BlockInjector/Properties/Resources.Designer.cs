@@ -383,18 +383,71 @@ namespace Nuterra.Properties {
         /// <summary>
         ///   Looks up a localized string similar to // -- Make a copy of this file, change the ID and Hex, and modify the values shown to make your own block --
         ///// &quot;PropertyName&quot; : Value,
-        ///// Only change the Value
+        ///// Only change the Value of
         ///{
         ///  &quot;Name&quot;: &quot;Magical Block&quot;,
         ///  &quot;Description&quot;: &quot;A very nice block, loaded from the file system\nThis one is magical!&quot;, //You can make multiple lines with \n
         ///  &quot;ID&quot;: 534968, //A random ID that MUST be unique
-        ///  &quot;IDNetHex&quot;: &quot;4ff30da9fd33fff4&quot;, //Get a random hex from https://www.random.org/bytes/ (8 bytes work)
-        ///
-        ///  &quot;Faction&quot;: 1, //GSO = 1|0, Geo [rest of string was truncated]&quot;;.
+        ///  
+        ///  //This should no longer be necessary
+        ///  //&quot;IDNetHex&quot;: &quot;4ff30da9fd33fff4&quot;, //Get a random hex from https://www.random.org/bytes/ ( [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ExampleJson {
             get {
                 return ResourceManager.GetString("ExampleJson", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to # Blender v2.80 (sub 47) OBJ File: &apos;&apos;
+        ///# www.blender.org
+        ///mtllib barrel.mtl
+        ///o Cylinder.003_Cylinder.005
+        ///v 0.000000 0.075000 -0.050000
+        ///v 0.000000 0.075000 0.250000
+        ///v 0.053033 0.053033 -0.050000
+        ///v 0.053033 0.053033 0.250000
+        ///v 0.075000 0.000000 -0.050000
+        ///v 0.075000 -0.000000 0.250000
+        ///v 0.053033 -0.053033 -0.050000
+        ///v 0.053033 -0.053033 0.250000
+        ///v -0.000000 -0.075000 -0.050000
+        ///v -0.000000 -0.075000 0.250000
+        ///v -0.053033 -0.053033 -0.050000
+        ///v -0.053033 -0.053033 0.250000
+        ///v -0.075000 0.000000 -0.050000
+        ///v -0.075000 -0 [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string mpcamdrone_barrel {
+            get {
+                return ResourceManager.GetString("mpcamdrone_barrel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to # Blender v2.80 (sub 47) OBJ File: &apos;&apos;
+        ///# www.blender.org
+        ///mtllib base.mtl
+        ///o Cube
+        ///v -0.000069 -0.050000 -0.300000
+        ///v -0.000069 0.050000 -0.300000
+        ///v 0.259808 -0.050000 0.150000
+        ///v 0.259808 0.050000 0.150000
+        ///v -0.259808 -0.050000 0.150000
+        ///v -0.259808 0.050000 0.150000
+        ///v 0.091506 -0.050000 0.150000
+        ///v 0.091506 0.050000 0.150000
+        ///v -0.091506 -0.050000 0.150000
+        ///v -0.091506 0.050000 0.150000
+        ///v -0.078011 0.050000 -0.165000
+        ///v 0.077873 0.050000 -0.165000
+        ///v -0.078011 -0.050000 -0.165000
+        ///v 0.077873 -0.050000 -0.165000
+        ///v 0.19 [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string mpcamdrone_body {
+            get {
+                return ResourceManager.GetString("mpcamdrone_body", resourceCulture);
             }
         }
     }

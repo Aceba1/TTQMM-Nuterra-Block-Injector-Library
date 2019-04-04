@@ -10,6 +10,8 @@ namespace Nuterra
     public static class NetHandler
     {
         public static NetworkInstanceId ThisNetID => ManNetwork.inst.MyPlayer.netId;
+        public static Action<NetPlayer> OnPlayerJoined;
+
         internal abstract class NetAction
         {
             public bool CanReceiveAsHost = false, CanReceiveAsClient = false;
@@ -27,7 +29,7 @@ namespace Nuterra
             {
                 try
                 {
-                    Console.WriteLine($"Received client message {netMsg.msgType}");
+                    //Console.WriteLine($"Received client message {netMsg.msgType}");
                     ClientReceive(netMsg.ReadMessage<NetMessage>(), netMsg);
                 }
                 catch (Exception E)
@@ -41,7 +43,7 @@ namespace Nuterra
             {
                 try
                 {
-                    Console.WriteLine($"Received server message {netMsg.msgType}");                    
+                    //Console.WriteLine($"Received server message {netMsg.msgType}");                    
                     HostReceive(netMsg.ReadMessage<NetMessage>(), netMsg);
                 }
                 catch (Exception E)
@@ -70,7 +72,7 @@ namespace Nuterra
             try
             {
                 Singleton.Manager<ManNetwork>.inst.SendToAllClients(MessageID, Message/*, ThisNetID*/);
-                Console.WriteLine($"Sent {MessageID} to all");
+                //Console.WriteLine($"Sent {MessageID} to all");
             }
             catch (Exception E)
             {
@@ -83,7 +85,7 @@ namespace Nuterra
             try
             {
                 Singleton.Manager<ManNetwork>.inst.SendToAllExceptClient(ClientConnectionToIgnore, MessageID, Message/*, ThisNetID*/, SkipBroadcaster);
-                Console.WriteLine($"Sent {MessageID} to all-except");
+                //Console.WriteLine($"Sent {MessageID} to all-except");
             }
             catch (Exception E)
             {
@@ -96,7 +98,7 @@ namespace Nuterra
             try
             {
                 Singleton.Manager<ManNetwork>.inst.SendToClient(ClientConnection, MessageID, Message/*, ThisNetID*/);
-                Console.WriteLine($"Sent {MessageID} to client");
+                //Console.WriteLine($"Sent {MessageID} to client");
             }
             catch (Exception E)
             {
@@ -109,7 +111,7 @@ namespace Nuterra
             try
             {
                 Singleton.Manager<ManNetwork>.inst.SendToServer(MessageID, Message);
-                Console.WriteLine($"Sent {MessageID} to server");
+                //Console.WriteLine($"Sent {MessageID} to server");
             }
             catch (Exception E)
             {
@@ -124,6 +126,9 @@ namespace Nuterra
                 var g = new UnityEngine.GameObject();
                 UnityEngine.GameObject.DontDestroyOnLoad(g);
                 ManNetwork.inst.OnPlayerAdded.Subscribe(g.AddComponent<UnityBugWorkaround>().ActivateMe);
+
+                Subscribe<NetCamera.CamDroneMessage>(NetCamera.MsgCamDrone, NetCamera.OnUpdateDrone, NetCamera.OnServerUpdateDrone);
+                OnPlayerJoined += NetCamera.CreateForPlayer;
             }
 
             internal class UnityBugWorkaround : UnityEngine.MonoBehaviour
@@ -140,7 +145,11 @@ namespace Nuterra
                 {
                     if (ManNetwork.inst.MyPlayer != null)
                     {
-                        foreach (NetPlayer obj in playersToSubscribe) PlayerAdded(obj);
+                        foreach (NetPlayer obj in playersToSubscribe)
+                        {
+                            PlayerAdded(obj);
+                            OnPlayerJoined?.Invoke(obj);
+                        }
                         gameObject.SetActive(false);
                         playersToSubscribe.Clear();
                     }
