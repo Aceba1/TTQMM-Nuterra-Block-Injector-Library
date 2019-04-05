@@ -53,9 +53,13 @@ namespace Nuterra
 
         private void Update()
         {
-            if (!player.isClient)
+            if (player == null || !player.isClient)
             {
-                Lookup.Remove(player);
+                try
+                {
+                    Lookup.Remove(player);
+                }
+                catch { }
                 GameObject.Destroy(gameObject);
                 return;
             }
@@ -83,7 +87,7 @@ namespace Nuterra
                 Vector3 newpos = player.CurTech.tech.WorldCenterOfMass + msg.position;
                 var pastpos = transform.position;
                 transform.position = newpos;
-                transform.rotation = Quaternion.Euler(0, msg.rotation.eulerAngles.y, 0) * Quaternion.LookRotation(pastpos - newpos - Vector3.up * 5f, Vector3.forward);
+                transform.rotation = Quaternion.Euler(90, msg.rotation.eulerAngles.y, 0) * Quaternion.LookRotation(pastpos - newpos - Vector3.up * 2.5f, Vector3.forward);
                 T_Barrel.rotation = msg.rotation;
             }
             catch { }
@@ -118,6 +122,15 @@ namespace Nuterra
             public Vector3 position;
             public Quaternion rotation;
             public NetPlayer player;
+        }
+
+        internal static void RemoveDrone(NetPlayer obj)
+        {
+            if (Lookup.TryGetValue(obj, out var netCamera))
+            {
+                netCamera.player = null;
+                GameObject.Destroy(netCamera.gameObject);
+            }
         }
     }
 }

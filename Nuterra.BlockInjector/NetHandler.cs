@@ -127,8 +127,11 @@ namespace Nuterra
                 UnityEngine.GameObject.DontDestroyOnLoad(g);
                 ManNetwork.inst.OnPlayerAdded.Subscribe(g.AddComponent<UnityBugWorkaround>().ActivateMe);
 
+                // NetDrones
+
                 Subscribe<NetCamera.CamDroneMessage>(NetCamera.MsgCamDrone, NetCamera.OnUpdateDrone, NetCamera.OnServerUpdateDrone);
                 OnPlayerJoined += NetCamera.CreateForPlayer;
+                ManNetwork.inst.OnPlayerRemoved.Subscribe(NetCamera.RemoveDrone);
             }
 
             internal class UnityBugWorkaround : UnityEngine.MonoBehaviour
