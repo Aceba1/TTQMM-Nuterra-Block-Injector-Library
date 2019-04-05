@@ -61,12 +61,16 @@ namespace Nuterra
             }
             if (!HasBody)
             {
+                Transform campos = TankCamera.inst.transform;
+                if (campos == null) return;
+                Vector3 PosToSend = campos.position - player.CurTech.tech.WorldCenterOfMass;
+                Quaternion RotToSend = campos.rotation;
                 if (ManNetwork.IsHost)
                 {
-                    NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { player = player, position = Camera.current ? Camera.current.transform.position : Vector3.down * 1000f, rotation = Camera.current ? Camera.current.transform.rotation : Quaternion.identity } , true);
+                    NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { player = player, position = PosToSend, rotation = RotToSend } , true);
                     return;
                 }
-                NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { player = player, position = Camera.current ? Camera.current.transform.position : Vector3.down * 1000f, rotation = Camera.current ? Camera.current.transform.rotation : Quaternion.identity });
+                NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { player = player, position = PosToSend, rotation = RotToSend });
                 return;
             }
             color.material.SetColor("_Color", player.Colour);
@@ -74,10 +78,15 @@ namespace Nuterra
 
         internal void UpdateFromNet(CamDroneMessage msg)
         {
-            var pastpos = transform.position;
-            transform.position = msg.position;
-            transform.rotation = Quaternion.Euler(0, msg.rotation.eulerAngles.y, 0) * Quaternion.LookRotation(pastpos - msg.position - Vector3.up * 5f, Vector3.forward);
-            T_Barrel.rotation = msg.rotation;
+            try
+            {
+                Vector3 newpos = player.CurTech.tech.WorldCenterOfMass + msg.position;
+                var pastpos = transform.position;
+                transform.position = newpos;
+                transform.rotation = Quaternion.Euler(0, msg.rotation.eulerAngles.y, 0) * Quaternion.LookRotation(pastpos - newpos - Vector3.up * 5f, Vector3.forward);
+                T_Barrel.rotation = msg.rotation;
+            }
+            catch { }
         }
 
         public static void OnUpdateDrone(CamDroneMessage msg, NetworkMessage sender)
