@@ -44,7 +44,7 @@ namespace Nuterra
                 newcam.T_Barrel.parent = newbody.transform;
                 barrel.AddComponent<MeshFilter>().sharedMesh = MeshBarrel;
                 barrel.AddComponent<MeshRenderer>().sharedMaterial = DroneMat;
-                newbody.transform.position = Vector3.down * 1000f;
+                newbody.transform.position = new Vector3(UnityEngine.Random.value * 5f - 2.5f, UnityEngine.Random.value * 5f - 10f, UnityEngine.Random.value * 5f - 2.5f);
             }
             Lookup.Add(Player, newcam);
         }
