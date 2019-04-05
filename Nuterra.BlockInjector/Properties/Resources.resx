@@ -181,4 +181,7 @@
   <data name="mpcamdrone_body" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\block resources\mpcamdrone\base.obj;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="mpcamdrone_tex" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\block resources\mpcamdrone\tex_png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

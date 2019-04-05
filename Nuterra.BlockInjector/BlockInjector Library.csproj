@@ -45,6 +45,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
     <Reference Include="TextMeshPro-2017.2-1.0.56-Runtime">
       <HintPath>..\..\..\..\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech Beta\TerraTechWin64_Data\Managed_Old\TextMeshPro-2017.2-1.0.56-Runtime.dll</HintPath>
       <Private>False</Private>
@@ -403,6 +404,9 @@
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Block Resources\MPCamDrone\tex_png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

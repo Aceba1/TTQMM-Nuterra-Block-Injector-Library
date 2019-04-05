@@ -173,7 +173,7 @@ namespace Nuterra
                         Console.WriteLine($"Exception on Client Subscription: {E.Message}\n{E.StackTrace}");
                     }
                 }
-                if (obj.IsHostPlayer || obj.isServer)
+                if (obj.IsHostPlayer)
                 {
                     foreach (var item in Subscriptions)
                     {

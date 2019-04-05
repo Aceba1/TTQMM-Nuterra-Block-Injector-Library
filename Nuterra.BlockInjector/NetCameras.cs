@@ -20,7 +20,9 @@ namespace Nuterra
         Transform T_Barrel;
         public static void CreateForPlayer(NetPlayer Player)
         {
+            if (Lookup == null) Lookup = new Dictionary<NetPlayer, NetCamera>();
             GameObject newbody = new GameObject("CameraObject");
+            GameObject.DontDestroyOnLoad(newbody);
             NetCamera newcam = newbody.AddComponent<NetCamera>();
             newcam.HasBody = Player != ManNetwork.inst.MyPlayer;
             newcam.player = Player;
@@ -31,10 +33,7 @@ namespace Nuterra
                     MeshBody = GameObjectJSON.MeshFromData(Properties.Resources.mpcamdrone_body);
                     MeshBarrel = GameObjectJSON.MeshFromData(Properties.Resources.mpcamdrone_barrel);
                     DroneMat = GameObjectJSON.MaterialFromShader();
-                    var tex = new Texture2D(2, 2);
-                    tex.SetPixel(0, 0, Color.gray); tex.SetPixel(1, 0, Color.white); tex.SetPixel(0, 1, Color.black); tex.SetPixel(1, 1, Color.black);
-                    tex.Apply();
-                    DroneMat.mainTexture = tex;
+                    DroneMat.mainTexture = GameObjectJSON.ImageFromFile(Properties.Resources.mpcamdrone_tex);
                 }
                 
                 newbody.AddComponent<MeshFilter>().sharedMesh = MeshBody;
@@ -45,12 +44,7 @@ namespace Nuterra
                 newcam.T_Barrel.parent = newbody.transform;
                 barrel.AddComponent<MeshFilter>().sharedMesh = MeshBarrel;
                 barrel.AddComponent<MeshRenderer>().sharedMaterial = DroneMat;
-            }
-            else
-            {
-                newbody.transform.parent = Singleton.cameraTrans;
-                newbody.transform.localPosition = Vector3.zero;
-                newbody.transform.localRotation = Quaternion.identity;
+                newbody.transform.position = Vector3.down * 1000f;
             }
         }
 
@@ -68,10 +62,10 @@ namespace Nuterra
             {
                 if (ManNetwork.IsHost)
                 {
-                    NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { position = transform.position, rotation = transform.rotation }, true);
+                    NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { position = Camera.current ? Camera.current.transform.position : Vector3.down * 1000f, rotation = Camera.current ? Camera.current.transform.rotation : Quaternion.identity } , true);
                     return;
                 }
-                NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { position = transform.position, rotation = transform.rotation });
+                NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { position = Camera.current ? Camera.current.transform.position : Vector3.down * 1000f, rotation = Camera.current ? Camera.current.transform.rotation : Quaternion.identity });
                 return;
             }
             color.material.SetColor("_Color", player.Colour);
@@ -79,15 +73,16 @@ namespace Nuterra
 
         internal void UpdateFromNet(CamDroneMessage msg)
         {
-            transform.LookAt(msg.position - Vector3.up * 6f, Vector3.forward);
-            transform.rotation *= Quaternion.Euler(0, msg.rotation.eulerAngles.y, 0);
+            var pastpos = transform.position;
             transform.position = msg.position;
-            T_Barrel.localRotation = Quaternion.Euler(msg.rotation.eulerAngles.x, 0, 0);
+            transform.rotation = Quaternion.Euler(0, msg.rotation.eulerAngles.y, 0) * Quaternion.LookRotation(pastpos - msg.position - Vector3.up * 5f, Vector3.forward);
+            T_Barrel.rotation = msg.rotation;
         }
 
         public static void OnUpdateDrone(CamDroneMessage msg, NetworkMessage sender)
         {
-            Lookup[sender.GetSender()].UpdateFromNet(msg);
+            if (Lookup.TryGetValue(sender.GetSender(), out NetCamera cam))
+                cam.UpdateFromNet(msg);
         }
 
         internal static void OnServerUpdateDrone(CamDroneMessage msg, NetworkMessage sender)
