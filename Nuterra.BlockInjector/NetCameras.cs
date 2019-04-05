@@ -61,7 +61,7 @@ namespace Nuterra
             }
             if (!HasBody)
             {
-                Transform campos = TankCamera.inst.transform;
+                Transform campos = Camera.allCameras[0].transform;
                 if (campos == null) return;
                 Vector3 PosToSend = campos.position - player.CurTech.tech.WorldCenterOfMass;
                 Quaternion RotToSend = campos.rotation;
