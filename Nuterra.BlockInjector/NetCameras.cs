@@ -55,21 +55,21 @@ namespace Nuterra
 
         private void Update()
         {
-            try
+            if (player == null || !player.isClient)
             {
-                if (player == null || !player.isClient)
+                try
                 {
-                    try
-                    {
-                        Lookup.Remove(player);
-                    }
-                    catch { }
-                    GameObject.Destroy(gameObject);
-                    return;
+                    Lookup.Remove(player);
                 }
-                if (!HasBody)
+                catch { }
+                GameObject.Destroy(gameObject);
+                return;
+            }
+            if (!HasBody)
+            {
+                try
                 {
-                    Transform campos = Camera.allCameras[0].transform;
+                    Transform campos = Camera.current.transform;
                     if (campos == null) return;
                     Vector3 PosToSend = campos.position - player.CurTech.tech.WorldCenterOfMass;
                     Quaternion RotToSend = campos.rotation;
@@ -79,24 +79,11 @@ namespace Nuterra
                         return;
                     }
                     NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { player = player, position = PosToSend, rotation = RotToSend });
-                    return;
-                }
-                color.material.SetColor("_Color", player.Colour);
-            }
-            catch
-            {
-                try
-                {
-                    Lookup.Remove(player);
-                }
-                catch { }
-                try
-                {
-                    GameObject.Destroy(gameObject);
                 }
                 catch { }
                 return;
             }
+            color.material.SetColor("_Color", player.Colour);
         }
 
         internal void UpdateFromNet(CamDroneMessage msg)
