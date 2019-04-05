@@ -46,6 +46,7 @@ namespace Nuterra
                 barrel.AddComponent<MeshRenderer>().sharedMaterial = DroneMat;
                 newbody.transform.position = Vector3.down * 1000f;
             }
+            Lookup.Add(Player, newcam);
         }
 
 
@@ -62,10 +63,10 @@ namespace Nuterra
             {
                 if (ManNetwork.IsHost)
                 {
-                    NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { position = Camera.current ? Camera.current.transform.position : Vector3.down * 1000f, rotation = Camera.current ? Camera.current.transform.rotation : Quaternion.identity } , true);
+                    NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { player = player, position = Camera.current ? Camera.current.transform.position : Vector3.down * 1000f, rotation = Camera.current ? Camera.current.transform.rotation : Quaternion.identity } , true);
                     return;
                 }
-                NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { position = Camera.current ? Camera.current.transform.position : Vector3.down * 1000f, rotation = Camera.current ? Camera.current.transform.rotation : Quaternion.identity });
+                NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { player = player, position = Camera.current ? Camera.current.transform.position : Vector3.down * 1000f, rotation = Camera.current ? Camera.current.transform.rotation : Quaternion.identity });
                 return;
             }
             color.material.SetColor("_Color", player.Colour);
@@ -81,7 +82,7 @@ namespace Nuterra
 
         public static void OnUpdateDrone(CamDroneMessage msg, NetworkMessage sender)
         {
-            if (Lookup.TryGetValue(sender.GetSender(), out NetCamera cam))
+            if (Lookup.TryGetValue(msg.player, out NetCamera cam))
                 cam.UpdateFromNet(msg);
         }
 
@@ -97,14 +98,17 @@ namespace Nuterra
             {
                 position = reader.ReadVector3();
                 rotation = reader.ReadQuaternion();
+                player = reader.ReadNetworkIdentity().GetComponent<NetPlayer>();
             }
             public override void Serialize(NetworkWriter writer)
             {
                 writer.Write(position);
                 writer.Write(rotation);
+                writer.Write(player.NetIdentity);
             }
             public Vector3 position;
             public Quaternion rotation;
+            public NetPlayer player;
         }
     }
 }
