@@ -46,6 +46,8 @@ namespace Nuterra
                 barrel.AddComponent<MeshRenderer>().sharedMaterial = DroneMat;
                 newbody.transform.position = new Vector3(UnityEngine.Random.value * 5f - 2.5f, UnityEngine.Random.value * 5f - 10f, UnityEngine.Random.value * 5f - 2.5f);
             }
+            if (Lookup.ContainsKey(Player))
+                Lookup.Remove(Player);
             Lookup.Add(Player, newcam);
         }
 
@@ -53,31 +55,48 @@ namespace Nuterra
 
         private void Update()
         {
-            if (player == null || !player.isClient)
+            try
+            {
+                if (player == null || !player.isClient)
+                {
+                    try
+                    {
+                        Lookup.Remove(player);
+                    }
+                    catch { }
+                    GameObject.Destroy(gameObject);
+                    return;
+                }
+                if (!HasBody)
+                {
+                    Transform campos = Camera.allCameras[0].transform;
+                    if (campos == null) return;
+                    Vector3 PosToSend = campos.position - player.CurTech.tech.WorldCenterOfMass;
+                    Quaternion RotToSend = campos.rotation;
+                    if (ManNetwork.IsHost)
+                    {
+                        NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { player = player, position = PosToSend, rotation = RotToSend }, true);
+                        return;
+                    }
+                    NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { player = player, position = PosToSend, rotation = RotToSend });
+                    return;
+                }
+                color.material.SetColor("_Color", player.Colour);
+            }
+            catch
             {
                 try
                 {
                     Lookup.Remove(player);
                 }
                 catch { }
-                GameObject.Destroy(gameObject);
-                return;
-            }
-            if (!HasBody)
-            {
-                Transform campos = Camera.allCameras[0].transform;
-                if (campos == null) return;
-                Vector3 PosToSend = campos.position - player.CurTech.tech.WorldCenterOfMass;
-                Quaternion RotToSend = campos.rotation;
-                if (ManNetwork.IsHost)
+                try
                 {
-                    NetHandler.BroadcastMessageToAllExcept(MsgCamDrone, new CamDroneMessage() { player = player, position = PosToSend, rotation = RotToSend } , true);
-                    return;
+                    GameObject.Destroy(gameObject);
                 }
-                NetHandler.BroadcastMessageToServer(MsgCamDrone, new CamDroneMessage() { player = player, position = PosToSend, rotation = RotToSend });
+                catch { }
                 return;
             }
-            color.material.SetColor("_Color", player.Colour);
         }
 
         internal void UpdateFromNet(CamDroneMessage msg)
@@ -95,8 +114,15 @@ namespace Nuterra
 
         public static void OnUpdateDrone(CamDroneMessage msg, NetworkMessage sender)
         {
-            if (Lookup.TryGetValue(msg.player, out NetCamera cam))
-                cam.UpdateFromNet(msg);
+            try
+            {
+                if (Lookup.TryGetValue(msg.player, out NetCamera cam))
+                    cam.UpdateFromNet(msg);
+            }
+            catch
+            {
+                Lookup.Remove(msg.player);
+            }
         }
 
         internal static void OnServerUpdateDrone(CamDroneMessage msg, NetworkMessage sender)
@@ -128,8 +154,13 @@ namespace Nuterra
         {
             if (Lookup.TryGetValue(obj, out var netCamera))
             {
-                netCamera.player = null;
-                GameObject.Destroy(netCamera.gameObject);
+                try
+                {
+                    netCamera.player = null;
+                    GameObject.Destroy(netCamera.gameObject);
+                }
+                catch { }
+                Lookup.Remove(obj);
             }
         }
     }
