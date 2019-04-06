@@ -93,7 +93,8 @@ namespace Nuterra
                 Vector3 newpos = player.CurTech.tech.WorldCenterOfMass + msg.position;
                 var pastpos = transform.position;
                 transform.position = newpos;
-                transform.rotation = Quaternion.Euler(90, msg.rotation.eulerAngles.y, 0) * Quaternion.LookRotation(pastpos - newpos - Vector3.up * 2.5f, Vector3.forward);
+                var dif = pastpos - newpos - Vector3.up * 2f;
+                transform.rotation = Quaternion.Euler(-90, msg.rotation.eulerAngles.y, 0) * Quaternion.FromToRotation(Vector3.down, dif.normalized);
                 T_Barrel.rotation = msg.rotation;
             }
             catch { }
