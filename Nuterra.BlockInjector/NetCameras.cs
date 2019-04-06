@@ -94,7 +94,7 @@ namespace Nuterra
                 var pastpos = transform.position;
                 transform.position = newpos;
                 var dif = pastpos - newpos - Vector3.up * 2f;
-                transform.rotation = Quaternion.Euler(-90, msg.rotation.eulerAngles.y, 0) * Quaternion.FromToRotation(Vector3.down, dif.normalized);
+                transform.rotation = Quaternion.Euler(0, msg.rotation.eulerAngles.y, 0) * Quaternion.FromToRotation(Vector3.down, dif.normalized);
                 T_Barrel.rotation = msg.rotation;
             }
             catch { }
