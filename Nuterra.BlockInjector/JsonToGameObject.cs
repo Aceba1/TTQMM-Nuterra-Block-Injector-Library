@@ -42,6 +42,14 @@ namespace Nuterra.BlockInjector
                 if (block.name.StartsWith(NameOfBlock))
                     return block;
             }
+            string NewSearch = NameOfBlock.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
+            foreach (var block in allblocks)
+            {
+                if (block.name.Replace("_", "").Replace(" ", "").ToLower().StartsWith(NewSearch))
+                {
+                    return block;
+                }
+            }
             return null;
         }
 

@@ -163,15 +163,15 @@ namespace Nuterra.BlockInjector
 
             }
 
-            {
-                new BlockPrefabBuilder(GameObjectJSON.GetBlockFromAssetTable("SPEColourBlock11_Yellow (111)"), false)
-                    .SetBlockID((int)BlockTypes.SPEColourBlock11_Yellow_111)
-                    .SetFaction(FactionSubTypes.SPE)
-                    .SetCategory(BlockCategories.Standard)
-                    .SetName("Barry Bee Benson Block")
-                    .SetDescription("A colour block for making BEES!\n\n\"According to all known laws of aviation, there is no way that a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyways. Because bees don't care what humans think is impossible.\"")
-                    .RegisterLater();
-            }
+            //{
+            //    new BlockPrefabBuilder(GameObjectJSON.GetBlockFromAssetTable("SPEColourBlock11_Yellow (111)"), false)
+            //        .SetBlockID((int)BlockTypes.SPEColourBlock11_Yellow_111)
+            //        .SetFaction(FactionSubTypes.SPE)
+            //        .SetCategory(BlockCategories.Standard)
+            //        .SetName("Barry Bee Benson Block")
+            //        .SetDescription("A colour block for making BEES!\n\n\"According to all known laws of aviation, there is no way that a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyways. Because bees don't care what humans think is impossible.\"")
+            //        .RegisterLater();
+            //}
 
             {
 

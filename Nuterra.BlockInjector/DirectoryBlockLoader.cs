@@ -140,11 +140,6 @@ namespace Nuterra.BlockInjector
                 {
                     Directory.CreateDirectory(BlockPath);
                 }
-                string TexPath = Path.Combine(BlockPath, "Textures");
-                if (!Directory.Exists(TexPath))
-                {
-                    Directory.CreateDirectory(TexPath);
-                }
                 string path = BlockPath + "/Example.json";
                 if (!File.Exists(path))
                 {
@@ -233,13 +228,15 @@ namespace Nuterra.BlockInjector
 
                     bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Length != 0;
 
-                    bool BlockAlreadyExists = ManSpawn.inst.IsValidBlockToSpawn((BlockTypes)buildablock.ID);
+                    bool BlockAlreadyExists = false;//ManSpawn.inst.IsValidBlockToSpawn((BlockTypes)buildablock.ID);
                     bool Prefabbed = buildablock.GamePrefabReference != null && buildablock.GamePrefabReference != "";
+                    /*
                     if (BlockAlreadyExists)
                     { // BLOCK ALREADY EXISTS
-                        blockbuilder = new BlockPrefabBuilder(GameObjectJSON.GetObjectFromGameResources<GameObject>(buildablock.GamePrefabReference), false);
+                        blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, false);
                     }
                     else
+                    */
                     {
                         //Prefab reference
                         if (!Prefabbed)

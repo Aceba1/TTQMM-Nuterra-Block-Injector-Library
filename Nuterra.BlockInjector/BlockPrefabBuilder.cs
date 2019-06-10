@@ -89,7 +89,19 @@ namespace Nuterra.BlockInjector
             if (original == null)
             {
                 if (!PrefabList.TryGetValue(PrefabFromResource, out original))
-                    throw new Exception("No prefab starting with \"" + PrefabFromResource + "\" could be found... (Make sure block is created before this one!)");
+                {
+                    string NewSearch = PrefabFromResource.Replace("(", "").Replace(")", "").Replace("_","").Replace(" ", "").ToLower();
+                    foreach (var go in gos)
+                    {
+                        if (go.name.Replace("_", "").Replace(" ", "").ToLower().StartsWith(NewSearch))
+                        {
+                            original = go;
+                            break;
+                        }
+                    }
+                    if (original == null)
+                        throw new Exception($"No prefab starting with '{PrefabFromResource}' or '{NewSearch}' could be found... (Make sure block is created before this one!)");
+                }
             }
             var copy = UnityEngine.Object.Instantiate(original);
             Initialize(copy, false);

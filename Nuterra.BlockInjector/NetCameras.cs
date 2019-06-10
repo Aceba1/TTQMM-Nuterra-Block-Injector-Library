@@ -22,7 +22,6 @@ namespace Nuterra
         {
             if (Lookup == null) Lookup = new Dictionary<NetPlayer, NetCamera>();
             GameObject newbody = new GameObject("CameraObject");
-            GameObject.DontDestroyOnLoad(newbody);
             NetCamera newcam = newbody.AddComponent<NetCamera>();
             newcam.HasBody = Player != ManNetwork.inst.MyPlayer;
             newcam.player = Player;
