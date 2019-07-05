@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Reflection;
+using System.Collections;
 
 namespace Nuterra.BlockInjector
 {
@@ -74,33 +75,43 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        private Hashtable _gameBlocks;
+        Hashtable GameBlocks
+        {
+            get
+            {
+                if (_gameBlocks == null)
+                {
+                    _gameBlocks = new Hashtable();
+                    var gos = Resources.FindObjectsOfTypeAll<GameObject>();
+                    foreach (var go in gos)
+                    {
+                        if (go.GetComponent<TankBlock>())
+                        {
+                            _gameBlocks.Add(go.name.Replace("_", "").Replace(" ", "").ToLower(), go);
+                        }
+                    }
+                }
+                return _gameBlocks;
+            }
+        }
+
         internal void CreateFromRes(string PrefabFromResource, bool RemoveRenderers)
         {
             GameObject original = null;
-            var gos = Resources.FindObjectsOfTypeAll<GameObject>();
-            foreach (var go in gos)
+            if (!PrefabList.TryGetValue(PrefabFromResource, out original))
             {
-                if (go.name.StartsWith(PrefabFromResource))
+                string NewSearch = PrefabFromResource.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
+                try
                 {
-                    original = go;
-                    break;
+                    original = GameBlocks[NewSearch] as GameObject;
                 }
-            }
-            if (original == null)
-            {
-                if (!PrefabList.TryGetValue(PrefabFromResource, out original))
+                catch { /*report in below condition*/ }
+                if (original == null)
                 {
-                    string NewSearch = PrefabFromResource.Replace("(", "").Replace(")", "").Replace("_","").Replace(" ", "").ToLower();
-                    foreach (var go in gos)
-                    {
-                        if (go.name.Replace("_", "").Replace(" ", "").ToLower().StartsWith(NewSearch))
-                        {
-                            original = go;
-                            break;
-                        }
-                    }
-                    if (original == null)
-                        throw new Exception($"No prefab starting with '{PrefabFromResource}' or '{NewSearch}' could be found... (Make sure block is created before this one!)");
+                    string errStr = $"No prefab named '{PrefabFromResource}' => '{NewSearch}' could be found... (Make sure block exists before this one!)";
+                    Console.WriteLine(errStr);
+                    throw new Exception(errStr);
                 }
             }
             var copy = UnityEngine.Object.Instantiate(original);

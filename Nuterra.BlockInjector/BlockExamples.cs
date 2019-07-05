@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using System.Diagnostics;
 
 namespace Nuterra.BlockInjector
 {
@@ -9,6 +10,8 @@ namespace Nuterra.BlockInjector
     {
         public static void Load()
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             #region Blocks
             Material mat = GameObjectJSON.MaterialFromShader();
             mat.mainTexture = GameObjectJSON.ImageFromFile(Properties.Resources.bacon_material_png);
@@ -222,7 +225,8 @@ namespace Nuterra.BlockInjector
             }
 
             #endregion
-
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate example blocks");
+            sw.Restart();
             #region Recipes
 
             CustomRecipe.RegisterRecipe(
@@ -310,6 +314,7 @@ namespace Nuterra.BlockInjector
             //}.Register);
 
             #endregion
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate example block recipes");
 
             var thng = new GameObject();
             var thnng = thng.AddComponent<FirstPersonCamera>();
