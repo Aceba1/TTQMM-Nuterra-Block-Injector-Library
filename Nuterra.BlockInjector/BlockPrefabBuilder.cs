@@ -86,10 +86,14 @@ namespace Nuterra.BlockInjector
                     var gos = Resources.FindObjectsOfTypeAll<GameObject>();
                     foreach (var go in gos)
                     {
-                        if (go.GetComponent<TankBlock>())
+                        try
                         {
-                            _gameBlocks.Add(go.name.Replace("_", "").Replace(" ", "").ToLower(), go);
+                            if (go.GetComponent<TankBlock>())
+                            {
+                                _gameBlocks.Add(go.name.Replace("_", "").Replace(" ", "").ToLower(), go);
+                            }
                         }
+                        catch { /*fail silently*/ }
                     }
                 }
                 return _gameBlocks;
@@ -99,21 +103,28 @@ namespace Nuterra.BlockInjector
         internal void CreateFromRes(string PrefabFromResource, bool RemoveRenderers)
         {
             GameObject original = null;
-            if (!PrefabList.TryGetValue(PrefabFromResource, out original))
+            //if (!PrefabList.TryGetValue(PrefabFromResource, out original))
+            //{
+            string NewSearch = PrefabFromResource.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
+            try
             {
-                string NewSearch = PrefabFromResource.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
-                try
+                if (GameBlocks.ContainsKey(NewSearch))
                 {
                     original = GameBlocks[NewSearch] as GameObject;
                 }
-                catch { /*report in below condition*/ }
-                if (original == null)
+                else
                 {
-                    string errStr = $"No prefab named '{PrefabFromResource}' => '{NewSearch}' could be found... (Make sure block exists before this one!)";
-                    Console.WriteLine(errStr);
-                    throw new Exception(errStr);
+                    PrefabList.TryGetValue(PrefabFromResource, out original);
                 }
             }
+            catch { /*report in below condition*/ }
+            if (original == null)
+            {
+                string errStr = $"No prefab named '{PrefabFromResource}' => '{NewSearch}' could be found... (Make sure block exists before this one!)";
+                Console.WriteLine(errStr);
+                throw new Exception(errStr);
+            }
+            //}
             var copy = UnityEngine.Object.Instantiate(original);
             Initialize(copy, false);
             if (RemoveRenderers)
@@ -160,7 +171,9 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             string name = _customBlock.Name;
+
             while (PrefabList.ContainsKey(name)) name += "+";
+            _customBlock.Prefab.name = name;
             PrefabList.Add(name, _customBlock.Prefab);
             OverrideValidity.Add(_customBlock.BlockID, _customBlock.Prefab.name);
             //_customBlock.Prefab.transform.position = Vector3.down * 1000f;
