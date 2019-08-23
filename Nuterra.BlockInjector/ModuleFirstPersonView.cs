@@ -67,7 +67,7 @@ namespace Nuterra.BlockInjector
                 camera = null;
             }
             Console.WriteLine("Camera: Switched to TankCamera");
-            TankCamera.inst.LockCamera(false);
+            TankCamera.inst.FreezeCamera(false);
             TankCamera.inst.Enable();
             CurrentModule = -1;
         }
@@ -82,7 +82,7 @@ namespace Nuterra.BlockInjector
                 originalFOV = camera.fieldOfView;
             }
             camera.fieldOfView = FOV;
-            TankCamera.inst.LockCamera(true);
+            TankCamera.inst.FreezeCamera(true);
             if (CurrentModule <= -2)
             {
                 CurrentModule = Module.Count - 1;
@@ -156,8 +156,8 @@ namespace Nuterra.BlockInjector
                 Vector3 mouseDelta = Input.mousePosition - _mouseStart;
 
                 mouseDelta = mouseDelta / Screen.width;
-                float changeAroundY = mouseDelta.x * TankCamera.inst.spinSensitivity * 400f * Globals.inst.m_CurrentCamSpinSensHorizontal;
-                float changeAroundX = mouseDelta.y * TankCamera.inst.spinSensitivity * 400f * Globals.inst.m_CurrentCamSpinSensVertical;
+                float changeAroundY = mouseDelta.x * 300f * Globals.inst.m_RuntimeCameraSpinSensHorizontal;
+                float changeAroundX = mouseDelta.y * 300f * Globals.inst.m_RuntimeCameraSpinSensVertical;
 
                 changeAroundY += _rotationStart.eulerAngles.y;
                 changeAroundX += _rotationStart.eulerAngles.x;
