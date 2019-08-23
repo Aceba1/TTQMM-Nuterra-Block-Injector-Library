@@ -287,16 +287,18 @@ namespace Nuterra.BlockInjector
 
         public BlockPrefabBuilder SetBlockID(int id)
         {
-            return SetBlockID(id, "");
-        }
-
-        public BlockPrefabBuilder SetBlockID(int id, string Net128HashHex)
-        {
             ThrowIfFinished();
             _customBlock.BlockID = id;
             _visible.m_ItemType = new ItemTypeInfo(ObjectTypes.Block, id);
-            if (Net128HashHex != "")
-                typeof(UnityEngine.Networking.NetworkIdentity).GetField("m_AssetId", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(_netid, UnityEngine.Networking.NetworkHash128.Parse(Net128HashHex));
+            return this;
+        }
+
+        [Obsolete("Hex code is unnecessary, please supply only an ID")]
+        public BlockPrefabBuilder SetBlockID(int id, string Net128HashHex)
+        {
+            SetBlockID(id);
+            //if (Net128HashHex != "")
+            //    typeof(UnityEngine.Networking.NetworkIdentity).GetField("m_AssetId", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(_netid, UnityEngine.Networking.NetworkHash128.Parse(Net128HashHex
             return this;
         }
 
