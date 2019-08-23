@@ -69,7 +69,7 @@ namespace Nuterra.BlockInjector
                     //    System.Collections.IDictionary dict = (System.Collections.IDictionary)typeof(ManSpawn).GetField("m_BlockPrefabs", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).GetValue(spawnManager);
                     //    dict.Remove(blockID);
                     //}
-                    Patches.Catching = true;
+                    //Patches.Catching = true;
                     typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance).Invoke(spawnManager, new object[] { block.Prefab });
                     var m_BlockPriceLookup = (typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(RecipeManager.inst) as Dictionary<int, int>);
                     if (m_BlockPriceLookup.ContainsKey(blockID)) m_BlockPriceLookup[blockID] = block.Price;
@@ -160,38 +160,38 @@ namespace Nuterra.BlockInjector
             //}
 
 
-            public static bool Catching = false;
-            [HarmonyPatch(typeof(TTNetworkManager), "AddSpawnableType")]
-            private static class CatchHexRepeat
-            {
-                private static bool Prefix(ref TTNetworkManager __instance, Transform prefab)
-                {
-                    if (Catching)
-                    {
-                        Catching = false;
-                        try
-                        {
-                            typeof(TTNetworkManager).GetMethod("AddSpawnableType").Invoke(__instance, new object[] { prefab });
-                        }
-                        catch
-                        {
-                            try
-                            {
-                                var hex = prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString();
-                                Console.WriteLine($"Hex code {hex} is unusable");
-                                if (Timer.blocks != "" && hex != "")
-                                    Timer.blocks += " - Bad hex code (Can be ignored)";
-                            }
-                            catch
-                            {
-                                Console.WriteLine("Could not print hex error!");
-                            }
-                        }
-                        return false;
-                    }
-                    return true;
-                }
-            }
+            //public static bool Catching = false;
+            //[HarmonyPatch(typeof(TTNetworkManager), "AddSpawnableType")]
+            //private static class CatchHexRepeat
+            //{
+            //    private static bool Prefix(ref TTNetworkManager __instance, Transform prefab)
+            //    {
+            //        if (Catching)
+            //        {
+            //            Catching = false;
+            //            try
+            //            {
+            //                typeof(TTNetworkManager).GetMethod("AddSpawnableType").Invoke(__instance, new object[] { prefab });
+            //            }
+            //            catch
+            //            {
+            //                try
+            //                {
+            //                    var hex = prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString();
+            //                    Console.WriteLine($"Hex code {hex} is unusable");
+            //                    if (Timer.blocks != "" && hex != "")
+            //                        Timer.blocks += " - Bad hex code (Can be ignored)";
+            //                }
+            //                catch
+            //                {
+            //                    Console.WriteLine("Could not print hex error!");
+            //                }
+            //            }
+            //            return false;
+            //        }
+            //        return true;
+            //    }
+            //}
 
             static Type BTT = typeof(BlockTypes);
 
@@ -200,7 +200,7 @@ namespace Nuterra.BlockInjector
             {
                 private static void Postfix(ref bool __result, BlockTypes blockType)
                 {
-                    if (!Enum.IsDefined(BTT, blockType)) __result = true;
+                    if (!__result && !Enum.IsDefined(BTT, blockType)) __result = true;
                 }
             }
 
@@ -209,7 +209,7 @@ namespace Nuterra.BlockInjector
             {
                 private static void Postfix(ref bool __result, BlockTypes blockType)
                 {
-                    if (!Enum.IsDefined(BTT, blockType)) __result = true;
+                    if (!__result && !Enum.IsDefined(BTT, blockType)) __result = true;
                 }
             }
 
