@@ -19,7 +19,7 @@ namespace Nuterra.BlockInjector
             {
 
                 new BlockPrefabBuilder(/*"GSOBlock(111)", true*/)
-                    .SetBlockID(10000, "95f04b12b0e9537c")
+                    .SetBlockID(10000)//, "95f04b12b0e9537c")
                     .SetName("GSO Bacon strip")
                     .SetDescription("A long strip of bacon with bullet absoring grease\n" +
                     "\n" +
@@ -65,7 +65,7 @@ namespace Nuterra.BlockInjector
             {
 
                 var banagun = new BlockPrefabBuilder("GSOMGunFixed(111)", false);
-                banagun.SetBlockID(10001, "daed1d86d809998a")
+                banagun.SetBlockID(10001)//, "daed1d86d809998a")
                     .SetName("GSO Banana gun")
                     .SetDescription("A very special banana. But not as special as you are, your banana friend tells us.")
                     .SetPrice(297)
@@ -124,7 +124,7 @@ namespace Nuterra.BlockInjector
             {
 
                 var cockpit_s = new BlockPrefabBuilder("GSOLightStud(111)", true)
-                    .SetBlockID(9000, "66a82861496cfa13")
+                    .SetBlockID(9000)//, "66a82861496cfa13")
                     .SetName("GSO Top Cockpit")
                     .SetDescription("Pop in here and have a first-person look at the world from this block! (The side with the diamond is the viewing direction)\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
                     .SetPrice(300)
@@ -146,7 +146,7 @@ namespace Nuterra.BlockInjector
             {
 
                 var cockpit_s2 = new BlockPrefabBuilder("GSOLightStud(111)", true)
-                    .SetBlockID(9005, "9a6b06c93f545c61")
+                    .SetBlockID(9005)//, "9a6b06c93f545c61")
                     .SetName("GSO Sided Swerve Cockpit")
                     .SetDescription("Just like the other cockpit, but can be mounted on the sides of things for a better look at your surroundings!\nNOTICE: Make sure the red AP is facing up!\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
                     .SetPrice(300)
@@ -179,7 +179,7 @@ namespace Nuterra.BlockInjector
             {
 
                 var cockpit_l = new BlockPrefabBuilder("GSOLightStud(111)", Vector3.one * 0.5f, true)
-                    .SetBlockID(9001, "6a9262c04f45a53c")
+                    .SetBlockID(9001)//, "6a9262c04f45a53c")
                     .SetName("GSO Observatory")
                     .SetDescription("Mount this gigantic hamsterball to your tech to be right in the action!\nThis reorients itself to the direction of the cab\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
                     .SetPrice(500)
@@ -203,7 +203,7 @@ namespace Nuterra.BlockInjector
             {
 
                 var cockpit_ven = new BlockPrefabBuilder("VENLightStud(111)", Vector3.forward * 0.5f, true)
-                    .SetBlockID(9002, "517376c14c30592c")
+                    .SetBlockID(9002)//, "517376c14c30592c")
                     .SetName("VEN Observatory")
                     .SetDescription("A slim, lower observatory that could fit nice on top or below a plane\nThis reorients itself to the direction of the cab\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)")
                     .SetPrice(500)
