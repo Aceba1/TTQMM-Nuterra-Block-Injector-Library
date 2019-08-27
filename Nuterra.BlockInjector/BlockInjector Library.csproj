@@ -46,14 +46,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
-    <Reference Include="TextMeshPro-2017.2-1.0.56-Runtime">
-      <HintPath>..\..\..\..\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech\TerraTechWin64_Data\Managed_Old\TextMeshPro-2017.2-1.0.56-Runtime.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TimeOfDay">
-      <HintPath>..\..\..\..\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech\TerraTechWin64_Data\Managed_Old\TimeOfDay.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.Analytics.DataPrivacy">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\TerraTech\TerraTechWin64_Data\Managed\Unity.Analytics.DataPrivacy.dll</HintPath>
       <Private>False</Private>
@@ -76,10 +68,6 @@
     </Reference>
     <Reference Include="UnityEngine.AccessibilityModule">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\TerraTech\TerraTechWin64_Data\Managed\UnityEngine.AccessibilityModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.Advertisements">
-      <HintPath>..\..\..\..\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech\TerraTechWin64_Data\Managed\UnityEngine.Advertisements.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AIModule">
@@ -336,18 +324,6 @@
     </Reference>
     <Reference Include="UnityPluginLogImport">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\TerraTech\TerraTechWin64_Data\Managed\UnityPluginLogImport.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="uScriptAssembly">
-      <HintPath>..\..\..\..\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech\TerraTechWin64_Data\Managed\uScriptAssembly.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="uScriptRuntime">
-      <HintPath>..\..\..\..\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech\TerraTechWin64_Data\Managed\uScriptRuntime.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UsersImport">
-      <HintPath>..\..\..\..\Desktop\Steam Install\Steam Installation Folder\steamapps\common\TerraTech\TerraTechWin64_Data\Managed\UsersImport.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
