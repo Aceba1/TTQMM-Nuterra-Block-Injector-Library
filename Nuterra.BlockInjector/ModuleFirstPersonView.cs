@@ -156,8 +156,8 @@ namespace Nuterra.BlockInjector
                 Vector3 mouseDelta = Input.mousePosition - _mouseStart;
 
                 mouseDelta = mouseDelta / Screen.width;
-                float changeAroundY = mouseDelta.x * 300f * Globals.inst.m_RuntimeCameraSpinSensHorizontal;
-                float changeAroundX = mouseDelta.y * 300f * Globals.inst.m_RuntimeCameraSpinSensVertical;
+                float changeAroundY = mouseDelta.x * 200f * Globals.inst.m_RuntimeCameraSpinSensHorizontal;
+                float changeAroundX = mouseDelta.y * 200f * Globals.inst.m_RuntimeCameraSpinSensVertical;
 
                 changeAroundY += _rotationStart.eulerAngles.y;
                 changeAroundX += _rotationStart.eulerAngles.x;
