@@ -502,7 +502,7 @@ namespace Nuterra.BlockInjector
             {
                 Mesh.RecalculateBounds();
                 var bc = model.AddComponent<BoxCollider>();
-                bc.size = Mesh.bounds.size * 0.75f;
+                bc.size = Mesh.bounds.size - Vector3.one * 0.2f;
                 bc.center = Mesh.bounds.center;
             }
             SetModel(model);

@@ -549,7 +549,7 @@ namespace Nuterra.BlockInjector
                                 { 
                                     mesh.RecalculateBounds();
                                     var bc = childG.EnsureComponent<BoxCollider>();
-                                    bc.size = mesh.bounds.size * 0.75f;
+                                    bc.size = mesh.bounds.size - Vector3.one * 0.2f;
                                     bc.center = mesh.bounds.center;
                                 }
                                 else
