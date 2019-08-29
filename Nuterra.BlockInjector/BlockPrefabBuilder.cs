@@ -332,7 +332,27 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        /// <summary>
+        /// Define both the cells and APs of a block
+        /// </summary>
+        /// <param name="cells">Cells used to define the used space in a tech's grid</param>
+        /// <param name="aps">The Attach Points of a block. Half a unit away from the center of a cell in one direction (0f, -0.5f, 0f)</param>
+        /// <param name="IgnoreFaults">Do not throw exception when given invalid arguments</param>
+        /// <returns></returns>
         public BlockPrefabBuilder SetSizeManual(IntVector3[] cells, Vector3[] aps, bool IgnoreFaults = false)
+        {
+            SetSizeManual(cells, IgnoreFaults);
+            SetAPsManual(aps, IgnoreFaults);
+            return this;
+        }
+
+        /// <summary>
+        /// Define only the cells, without touching APs
+        /// </summary>
+        /// <param name="cells">Cells used to define the used space in a tech's grid</param>
+        /// <param name="IgnoreFaults">Do not throw exception when given invalid arguments</param>
+        /// <returns></returns>
+        public BlockPrefabBuilder SetSizeManual(IntVector3[] cells, bool IgnoreFaults = false)
         {
             ThrowIfFinished();
             if (!IgnoreFaults)
@@ -344,6 +364,22 @@ namespace Nuterra.BlockInjector
                         throw new Exception("There is a cell out of range! (" + cell.x.ToString() + ", " + cell.y.ToString() + ", " + cell.z.ToString() + ")\nMake sure that cells do not go below 0 in any axis. Check your APs as well");
                     }
                 }
+            }
+            TankBlock.filledCells = cells;
+            return this;
+        }
+
+        /// <summary>
+        /// Define only the APs of a block
+        /// </summary>
+        /// <param name="aps">The Attach Points of a block. Half a unit away from the center of a cell in one direction (0f, -0.5f, 0f)</param>
+        /// <param name="IgnoreFaults">Do not throw exception when given invalid arguments</param>
+        /// <returns></returns>
+        public BlockPrefabBuilder SetAPsManual(Vector3[] aps, bool IgnoreFaults = false)
+        {
+            ThrowIfFinished();
+            if (!IgnoreFaults)
+            {
                 for (int i = 0; i < aps.Length; i++)
                 {
                     if ((aps[i].x % 0.5f != 0f) || (aps[i].y % 0.5 != 0) || (aps[i].z % 0.5 != 0))
@@ -360,11 +396,39 @@ namespace Nuterra.BlockInjector
                     }
                 }
             }
-            TankBlock.filledCells = cells;
             TankBlock.attachPoints = aps;
             return this;
         }
 
+        /// <summary>
+        /// Make a 3D rect of grid cells set to the defined size
+        /// </summary>
+        /// <param name="size">The extents of a block</param>
+        /// <returns></returns>
+        public BlockPrefabBuilder SetSize(IntVector3 size)
+        {
+            ThrowIfFinished();
+            List<IntVector3> cells = new List<IntVector3>();
+            for (int x = 0; x < size.x; x++)
+            {
+                for (int y = 0; y < size.y; y++)
+                {
+                    for (int z = 0; z < size.z; z++)
+                    {
+                        cells.Add(new Vector3(x, y, z));
+                    }
+                }
+            }
+            TankBlock.filledCells = cells.ToArray();
+            return this;
+        }
+
+        /// <summary>
+        /// Make a 3D rect of grid cells set to the defined size, and generate APs
+        /// </summary>
+        /// <param name="size">the extents of a block</param>
+        /// <param name="points"></param>
+        /// <returns></returns>
         public BlockPrefabBuilder SetSize(IntVector3 size, AttachmentPoints points = AttachmentPoints.Bottom)
         {
             ThrowIfFinished();

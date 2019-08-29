@@ -584,19 +584,24 @@ namespace Nuterra.BlockInjector
 
                     //Set Size
                     if (!BlockAlreadyExists)
+                    {
                         if (buildablock.Cells != null && buildablock.Cells.Length != 0)
-                    {
-                        blockbuilder.SetSizeManual(buildablock.Cells, buildablock.APs);
-                    }
-                    else
-                    {
-                        IntVector3 extents = buildablock.BlockExtents;
-                        if (extents == null)
                         {
-                            extents = IntVector3.one;
+                            blockbuilder.SetSizeManual(buildablock.Cells);
                         }
-
-                        blockbuilder.SetSize(extents, (buildablock.APsOnlyAtBottom ? BlockPrefabBuilder.AttachmentPoints.Bottom : BlockPrefabBuilder.AttachmentPoints.All));
+                        else
+                        {
+                            IntVector3 extents = buildablock.BlockExtents;
+                            if (extents == null)
+                            {
+                                extents = IntVector3.one;
+                            }
+                            blockbuilder.SetSize(extents, (buildablock.APsOnlyAtBottom ? BlockPrefabBuilder.AttachmentPoints.Bottom : BlockPrefabBuilder.AttachmentPoints.All));
+                        }
+                        if (buildablock.APs != null)
+                        {
+                            blockbuilder.SetAPsManual(buildablock.APs);
+                        }
                     }
 
                     //Set Mass
