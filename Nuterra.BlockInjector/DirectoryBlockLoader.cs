@@ -20,7 +20,6 @@ namespace Nuterra.BlockInjector
             public bool KeepReferenceRenderers;
             public string GamePrefabReference;
             public int ID;
-            public string IDNetHex;
             public string IconName;
             public string MeshName;
             public string ColliderMeshName;
@@ -163,7 +162,7 @@ namespace Nuterra.BlockInjector
                 {
                     Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
                     GameObjectJSON.AddObjectToUserResources(tex, Png.Name);
-                    Console.WriteLine("Added " + Png.Name + "\n from " + Png.FullName);
+                    //Console.WriteLine("Added " + Png.Name + "\n from " + Png.FullName);
                     if (Png.Name.Length > 7)
                     {
                         string mat = Png.Name.Substring(0, Png.Name.Length - 6);
@@ -228,7 +227,7 @@ namespace Nuterra.BlockInjector
 
                     bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Length != 0;
 
-                    bool BlockAlreadyExists = false;//ManSpawn.inst.IsValidBlockToSpawn((BlockTypes)buildablock.ID);
+                    const bool BlockAlreadyExists = false;//ManSpawn.inst.IsValidBlockToSpawn((BlockTypes)buildablock.ID);
                     bool Prefabbed = buildablock.GamePrefabReference != null && buildablock.GamePrefabReference != "";
                     /*
                     if (BlockAlreadyExists)
@@ -273,15 +272,7 @@ namespace Nuterra.BlockInjector
                     //Set IP
                     if (!BlockAlreadyExists)
                     {
-                        if (buildablock.IDNetHex != null && buildablock.IDNetHex != "")
-                        {
-                            blockbuilder.SetBlockID(buildablock.ID, buildablock.IDNetHex);
-                        }
-                        else
-                        {
-                            blockbuilder.SetBlockID(buildablock.ID);
-                        }
-
+                        blockbuilder.SetBlockID(buildablock.ID);
                     }
 
                     //Set Category
