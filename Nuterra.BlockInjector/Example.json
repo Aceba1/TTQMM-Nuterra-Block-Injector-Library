@@ -5,9 +5,6 @@
   "Name": "Magical Block",
   "Description": "A very nice block, loaded from the file system\nThis one is magical!", //You can make multiple lines with \n
   "ID": 534968, //A random ID that MUST be unique
-  
-  //This should no longer be necessary
-  //"IDNetHex": "4ff30da9fd33fff4", //Get a random hex from https://www.random.org/bytes/ (8 bytes work)
 
   "Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP = 3, Venture = 4, HawkEye = 5, Special = 6, BetterFuture = 7
   "Category": 0, //Control = 1, Standard = 2|0, Wheels = 3, Weapons = 4, Accessories = 5, Power = 6, Base = 7, Flight = 8
@@ -22,76 +19,138 @@
 
   "Recipe": "PlumbiaIngot, 5, plumbiteoRe", // Separate chunk names or IDs with a comma. Not case sensitive.
 
-
   /*  EITHER  */
   "MeshTextureName": null, //FILE Name of image for texture, such as "texture.png". File can be anywhere and should be uniquely named
   /*  OR  */
   "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GC_Main", "VEN_Main", "BF_Main", and "HE_Main",. This material flashes and everything!
 
+  "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh
+  "SupressBoxColliderFallback": false, //Disable creation of BoxCollider. Useful for if SubObjects is being used for it
 
-  /*  OPTIONAL  */ "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh
 
   // X is right and left, Y is up and down, and Z is forward and backward
 
-	/*  EITHER  */
-	"Cells": [ //The grid space to be occupied
-		{ "x": 0, "y": 0, "z": 0 },
-		{ "x": 0, "y": 1, "z": 0 }
-	],
-	"APs": [ //The location of APs on the block. For use with "Cells"
-		{ "x": 0, "y": -0.5, "z": 0 }, 
-		{ "x": -0.5, "y": 0, "z": 0 },
-		{ "x": 0.5, "y": 0, "z": 0 }, 
-		{ "x": 0, "y": 0, "z": -0.5 }, 
-		{ "x": 0, "y": 0, "z": 0.5 }, 
-		{ "x": 0, "y": 1.5, "z": 0 }
-	],
-	/*  OR  */
-  "BlockExtents": //Makes a grid box with these dimensions. Is ignored if "Cells": is used
+  /*  EITHER  */
+  "Cells": [ //Units in the grid space to be occupied
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    }
+  ],
+  /*  OR  */
+  "BlockExtents": //Makes a grid box with these dimensions. IGNORED if "Cells": is used
   {
     "x": 1,
-    "y": 1,
+    "y": 2,
     "z": 1
-  }, // A vector of (1, 1, 1) returns a one-celled block
-  "APsOnlyAtBottom": false //Make APs only on the bottom, or have all faces covered. Only works with "BlockExtents":
+  }, // A vector of (1, 1, 1) returns a one-celled block (Width, Height, Length)
 
-
+  /*  EITHER  */
+  "APsOnlyAtBottom": false, //Make APs only on the bottom, or have all faces covered. IGNORED if "APs": is used. ONLY works with "BlockExtents":
+  /*  OR  */
+  "APs": [ //The location of APs on the block. Delete this or set to null if you'd rather use "BlockExtents": and "APsOnlyAtBottom":
+    {
+      "x": 0,
+      "y": -0.5,
+      "z": 0
+    },
+    {
+      "x": -0.5,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "x": 0.5,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": -0.5
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0.5
+    },
+    {
+      "x": 0,
+      "y": 1.5,
+      "z": 0
+    }
+  ],
 
   // Delete /* and */ if using
 
-  /*    
-  
   //OPTIONAL
-	"GamePrefabReference": null, //Use a block prefab from the GAME'S RESOURCES as a base. For example, "GSOBlock(111)"
+  "GamePrefabReference": null, //Use a block prefab from the GAME'S RESOURCES as a base. For example, "GSOBlock(111)"
   "KeepReferenceRenderers": true,
-  "": false, //Disable creation of BoxCollider. This is for 
-	"ReferenceOffset": { "x": 0, "y": 0, "z": 0 }, //Shift the subobjects of the block prefab by x, y and z
-  
-  // Sub Objects can modify existing sub gameobjects on a prefab reference
-  "SubObjects": [ {
-    "SubOverrideName":"name_of_sub_in_game",
-    "DestroySubReferenceRenderer": false,
-    "MeshName": null,
-    "ColliderMeshName": null,
-    "MeshTextureName": null,
-    "MeshMaterialName": null,
-    "SubPosition": { "x": 0, "y": 0, "z": 0 },
-  }, {
-    "SubOverrideName":"Sub GameObject", //This line can be omitted (or set not to a valid subobject of the prefab) to create a new gameobject child.
-    "DestroySubReferenceRenderer": false,
-    "MeshName": null,
-    "ColliderMeshName": null,
-    "MeshTextureName": null,
-    "MeshMaterialName": null,
-    "SubPosition": { "x": 0, "y": 0, "z": 0 }
-  } ]
-	
+  "ReferenceOffset": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  }, //Shift the subobjects of the block prefab by x, y and z
+  /*
+  "ReferenceRotationOffset": {
+    "x": 0, // Pitch
+    "y": 0, // Yaw
+    "z": 0  // Roll
+  }, //Rotate the subobjects of the block prefab
+  */
+
+  // Sub Objects can modify existing sub gameobjects on a prefab reference. Properties can be omitted as necessary
+  /*
+  "SubObjects": [
+    { // This is the start of a subobject modifier item
+      "SubOverrideName": "m_CORP_Block_SubObject", //This line can be omitted (or set to not a valid subobject of the prefab) to create a new gameobject child.
+      "DestroyExistingRenderer": false,
+      "DestroyExistingColliders": false,
+      "MeshName": null,
+      "MakeBoxCollider": false,
+      "ColliderMeshName": null,
+      "MeshTextureName": null,
+      "MeshMaterialName": null,
+      "SubPosition": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "SubScale": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "SubRotation": {
+        "x": 0, // Pitch
+        "y": 0, // Yaw
+        "z": 0  // Roll
+      }
+    }, // You can add as many items as needed for your block
+    {
+      "SubOverrideName": "SubGameObject/CommonName", // For target subobjects with shared names, a number or parent subobject name can be used to target the right one
+      "DestroyExistingRenderer": false,
+      "MeshName": null,
+      "ColliderMeshName": null,
+      "MeshMaterialName": null,
+      "SubPosition": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ]
   */
 
   //For great control of a block without creating a C# mod, such a system exists that you can modify the Hierarchy, and variables, of one.
   //OPTIONAL
   /*
-  
   //Example to make a drill very powerful
   "JSONBLOCK": {
     "ModuleDrill": {
@@ -118,12 +177,11 @@
       }
     }
   }
-
+  */
   //Note: Any component or gameobject which cannot be found will be created.
   //A gameobject can be created without specifying a name, such as "GameObject": {}
-  //This is an old module which has recently been brought to life. It is not recommended for normal use, but brings much more capability. If you have any problems, ask on the Forum or official TerraTech Discord (discord.gg/terratechgame)
+  //This is an old module which has recently been brought to life. It is not recommended for normal use, but brings much more capability. 
+  //If you have any problems or recommendations, ask on the Forum or official TerraTech Discord (discord.gg/terratechgame)
 
   //It may be necessary to examine the hierarchy of the block you wish to base your block on. You can do that by pressing backslash with your mouse on top of that block, with the Control Blocks mod installed.
-
-  */
 }
