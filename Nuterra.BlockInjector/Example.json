@@ -152,7 +152,7 @@
   //OPTIONAL
   /*
   //Example to make a drill very powerful
-  "JSONBLOCK": {
+  "JSONBLOCK": {               
     "ModuleDrill": {
       "damagePerSecond": 1000000
     }
@@ -167,21 +167,47 @@
 
   //You can access children of gameobjects as you access components. And in those children, modify their components or go deeper
   "JSONBLOCK": {
-    "GameObject|_gimbalBase": {
-      "GimbalAimer": {
-        //Modifications go here
+    "GameObject|_gimbalBase": {        //When a property name starts with GameObject|, it means it is a subobject. Which holds more subobjects, or components
+      "GimbalAimer": {                 //This is a component, and holds values
+        "rotationLimits": [-90, 90]//Modifications go here
       },
       "GameObject|_gimbalElev": {
         "GimbalAimer": {
-        //Modifications go here
+        "rotationLimits": [-90, 90]//Modifications go here
       }
     }
   }
+
+  //You can even modify damage caused from bullets
+  "JSONBLOCK": {
+    "ModuleWeapon": {
+      "m_RotateSpeed" : 15
+    },
+    "FireData": {
+      "Instantiate|m_BulletPrefab": { //Instantiating duplicates the object in the property to make it unique from the prefab. Enters the subobject rather than component
+        "WeaponRound": {              //Hence why the component type is used. Can be combined with more subobject exploration or components for more control 
+          "m_Damage": 10000,
+        },
+        "Projectile": {               //Use if the projectile is an explosion
+          "Instantiate|m_Explosion": {
+            "Explosion": {
+              "m_ExplosionSize": 1,
+              "m_EffectRadius": 4,
+              "m_MaxDamageStrength": 1000,
+              "m_MaxImpulseStrength": 1000
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // There are a LOT of things that can be modified, but to learn of them would require a dumper tool/mod, or decompiler.
   */
   //Note: Any component or gameobject which cannot be found will be created.
   //A gameobject can be created without specifying a name, such as "GameObject": {}
   //This is an old module which has recently been brought to life. It is not recommended for normal use, but brings much more capability. 
-  //If you have any problems or recommendations, ask on the Forum or official TerraTech Discord (discord.gg/terratechgame)
+  //If you have any problems, recommendations, or seek for guidance, ask on the Forum or official TerraTech Discord (discord.gg/terratechgame)
 
   //It may be necessary to examine the hierarchy of the block you wish to base your block on. You can do that by pressing backslash with your mouse on top of that block, with the Control Blocks mod installed.
 }
