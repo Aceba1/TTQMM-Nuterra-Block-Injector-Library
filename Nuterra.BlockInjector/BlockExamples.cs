@@ -116,6 +116,17 @@ namespace Nuterra.BlockInjector
                 firedata.m_MuzzleVelocity *= 1.6f;
                 firedata.m_BulletSprayVariance *= 0.3f;
                 firedata.m_KickbackStrength *= 1.6f;
+                var newbullet = GameObject.Instantiate(firedata.m_BulletPrefab);
+                newbullet.gameObject.SetActive(false);
+                var lr = newbullet.gameObject.GetComponent<LineRenderer>();
+                var colorKeys = lr.colorGradient.colorKeys;
+                for (int i = 0; i < colorKeys.Length; i++)
+                {
+                    var color = colorKeys[i];
+                    colorKeys[i] = new GradientColorKey(new Color(color.color.r, color.color.g, 0), color.time);
+                }
+                typeof(WeaponRound).GetField("m_Damage", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(newbullet, 100);
+                firedata.m_BulletPrefab = newbullet;
                 banagun.SetIcon(GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile(Properties.Resources.banana_icon_png)))
                     .RegisterLater();
 
