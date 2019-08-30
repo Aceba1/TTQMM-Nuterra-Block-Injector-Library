@@ -61,7 +61,7 @@ namespace Nuterra.BlockInjector
 
         internal static Type MeshT = typeof(Mesh), Texture2DT = typeof(Texture2D), MaterialT = typeof(Material);
 
-        private static void ApplyTex(string FileName, string MatName, Texture2D Tex)
+        /*private static void ApplyTex(string FileName, string MatName, Texture2D Tex)
         {
             if (FileName.EndsWith(".1.png"))
             {
@@ -128,6 +128,7 @@ namespace Nuterra.BlockInjector
                 }
             }
         }
+        */
 
         public static void LoadBlocks()
         {
@@ -163,40 +164,40 @@ namespace Nuterra.BlockInjector
                     Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
                     GameObjectJSON.AddObjectToUserResources(tex, Png.Name);
                     //Console.WriteLine("Added " + Png.Name + "\n from " + Png.FullName);
-                    if (Png.Name.Length > 7)
-                    {
-                        string mat = Png.Name.Substring(0, Png.Name.Length - 6);
-                        try
-                        {
-                            if (mat == "Corp")
-                            {
-                                ApplyTexToMultiple(Png.Name, "Corp_", tex);
-                                Texture2D gso_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0f, 0.5f, 0.5f));
-                                ApplyTexToMultiple(Png.Name, "GSO_", gso_tex);
+                    //if (Png.Name.Length > 7)
+                    //{
+                    //    string mat = Png.Name.Substring(0, Png.Name.Length - 6);
+                    //    try
+                    //    {
+                    //        if (mat == "Corp")
+                    //        {
+                    //            ApplyTexToMultiple(Png.Name, "Corp_", tex);
+                    //            Texture2D gso_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0f, 0.5f, 0.5f));
+                    //            ApplyTexToMultiple(Png.Name, "GSO_", gso_tex);
 
-                                Texture2D gc_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0f, 0.5f, 0.5f));
-                                ApplyTexToMultiple(Png.Name, "GC_", gc_tex);
+                    //            Texture2D gc_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0f, 0.5f, 0.5f));
+                    //            ApplyTexToMultiple(Png.Name, "GC_", gc_tex);
 
-                                Texture2D ven_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0.5f, 0.5f, 0.5f));
-                                ApplyTexToMultiple(Png.Name, "VEN_", ven_tex);
+                    //            Texture2D ven_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0.5f, 0.5f, 0.5f));
+                    //            ApplyTexToMultiple(Png.Name, "VEN_", ven_tex);
 
-                                Texture2D he_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0.5f, 0.5f, 0.5f));
-                                ApplyTexToMultiple(Png.Name, "HE_", he_tex);
-                            }
-                            else if (mat.EndsWith("$"))
-                            {
-                                ApplyTexToMultiple(Png.Name, mat.Substring(0, mat.Length - 1), tex);
-                            }
-                            else
-                            {
-                                ApplyTex(Png.Name, mat, tex);
-                            }
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Could not apply texture to game material " + mat);
-                        }
-                    }
+                    //            Texture2D he_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0.5f, 0.5f, 0.5f));
+                    //            ApplyTexToMultiple(Png.Name, "HE_", he_tex);
+                    //        }
+                    //        else if (mat.EndsWith("$"))
+                    //        {
+                    //            ApplyTexToMultiple(Png.Name, mat.Substring(0, mat.Length - 1), tex);
+                    //        }
+                    //        else
+                    //        {
+                    //            ApplyTex(Png.Name, mat, tex);
+                    //        }
+                    //    }
+                    //    catch
+                    //    {
+                    //        Console.WriteLine("Could not apply texture to game material " + mat);
+                    //    }
+                    //}
                 }
                 catch (Exception E)
                 {
@@ -208,7 +209,7 @@ namespace Nuterra.BlockInjector
                 try
                 {
                     GameObjectJSON.AddObjectToUserResources(GameObjectJSON.MeshFromFile(Obj.FullName), Obj.Name);
-                    Console.WriteLine("Added " + Obj.Name + "\n from " + Obj.FullName);
+                    //Console.WriteLine("Added " + Obj.Name + "\n from " + Obj.FullName);
                 }
                 catch (Exception E)
                 {
