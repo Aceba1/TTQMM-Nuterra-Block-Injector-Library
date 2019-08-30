@@ -13,6 +13,8 @@ namespace Nuterra.BlockInjector
     {
         private static Dictionary<Type, Dictionary<string, UnityEngine.Object>> LoadedResources = new Dictionary<Type, Dictionary<string, UnityEngine.Object>>();
 
+        const string m_tab = "  ";
+
         public static Material MaterialFromShader(string ShaderName = "Standard")
         {
             var shader = Shader.Find(ShaderName);
@@ -42,10 +44,10 @@ namespace Nuterra.BlockInjector
                 if (block.name.StartsWith(NameOfBlock))
                     return block;
             }
-            string NewSearch = NameOfBlock.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
+            string NewSearch = NameOfBlock.Replace("(", "").Replace(")", "").Replace("_", "").Replace(m_tab, "").ToLower();
             foreach (var block in allblocks)
             {
-                if (block.name.Replace("_", "").Replace(" ", "").ToLower().StartsWith(NewSearch))
+                if (block.name.Replace("_", "").Replace(m_tab, "").ToLower().StartsWith(NewSearch))
                 {
                     return block;
                 }
@@ -220,9 +222,12 @@ namespace Nuterra.BlockInjector
                         }
 
                         GameObject newGameObject = result.transform.Find(name)?.gameObject;
-                        if (!newGameObject) newGameObject = new GameObject(name);
-                        newGameObject.transform.parent = result.transform;
-                        CreateGameObject(property.Value as JObject, newGameObject, Spacing +  " ");
+                        if (!newGameObject)
+                        {
+                            newGameObject = new GameObject(name);
+                            newGameObject.transform.parent = result.transform;
+                        }
+                        CreateGameObject(property.Value as JObject, newGameObject, Spacing +  m_tab);
                     }
                     else
                     {
@@ -273,15 +278,27 @@ namespace Nuterra.BlockInjector
             {
                 try
                 {
-                    Console.WriteLine(Spacing+" "+property.Name);
-                    FieldInfo tField = instanceType.GetField(property.Name, bind);
-                    PropertyInfo tProp = instanceType.GetProperty(property.Name, bind);
+                    string name = property.Name;
+                    Console.WriteLine(Spacing + m_tab + property.Name);
+                    int GetCustomName = property.Name.IndexOf('|');
+                    bool Wipe = false, Instantiate = false, Duplicate = false;
+                    if (GetCustomName != -1)
+                    {
+                        Wipe = name.StartsWith("Wipe");
+                        Instantiate = name.StartsWith("Instantiate");
+                        Duplicate = name.StartsWith("Duplicate");
+                        name = property.Name.Substring(GetCustomName + 1);
+                    }
+                    FieldInfo tField = instanceType.GetField(name, bind);
+                    PropertyInfo tProp = instanceType.GetProperty(name, bind);
+                    MethodInfo tMethod = instanceType.GetMethod(name, bind);
                     bool UseField = tProp == null;
+                    bool UseMethod = tMethod != null;
                     if (UseField)
                     {
                         if (tField == null)
                         {
-                            Console.WriteLine(Spacing + " skipping...");
+                            Console.WriteLine(Spacing + m_tab + "skipping...");
                             continue;
                         }
                     }
@@ -289,30 +306,76 @@ namespace Nuterra.BlockInjector
                     {
                         if (UseField)
                         {
-                            object original = tField.GetValue(instance);
-                            object rewrite = ApplyValues(original, tField.FieldType, property.Value as JObject, Spacing + " ");
-                            try { tField.SetValue(_instance, rewrite); } catch { }
-                        }
-                        else
-                        {
-                            object original = tProp.GetValue(instance, null);
-                            object rewrite = ApplyValues(original, tProp.PropertyType, property.Value as JObject, Spacing + " ");
-                            if (tProp.CanWrite)
-                                try { tProp.SetValue(_instance, rewrite, null); } catch { }
-                        }
-                    }
-                    if (property.Value is JValue || property.Value is JArray)
-                    {
-                        try
-                        {
-                            Console.WriteLine(Spacing+" Setting value");
-                            if (UseField)
+                            object original, rewrite;
+                            if (!Wipe)
                             {
-                                tField.SetValue(_instance, property.Value.ToObject(tField.FieldType));
+                                original = tField.GetValue(instance);
+                                if (Instantiate || Duplicate)
+                                {
+                                    bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
+                                    var nObj = Component.Instantiate(original as Component);
+                                    nObj.gameObject.SetActive(isActive);
+                                    Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                                    CreateGameObject(property.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                                    rewrite = nObj;
+                                }
+                                else rewrite = ApplyValues(original, tField.FieldType, property.Value as JObject, Spacing + m_tab);
                             }
                             else
                             {
-                                tProp.SetValue(_instance, property.Value.ToObject(tProp.PropertyType), null);
+                                original = Activator.CreateInstance(tField.FieldType);
+                                rewrite = ApplyValues(original, tField.FieldType, property.Value as JObject, Spacing + m_tab);
+                            }
+                            try { tField.SetValue(_instance, rewrite); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
+                        }
+                        else
+                        {
+                            object original, rewrite;
+                            if (!Wipe)
+                            {
+                                original = tProp.GetValue(instance, null);
+                                if (Instantiate)
+                                {
+                                    bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
+                                    var nObj = Component.Instantiate(original as Component);
+                                    nObj.gameObject.SetActive(isActive);
+                                    Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                                    CreateGameObject(property.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                                    rewrite = nObj;
+                                }
+                                else rewrite = ApplyValues(original, tProp.PropertyType, property.Value as JObject, Spacing + m_tab);
+                            }
+                            else
+                            {
+                                original = Activator.CreateInstance(tProp.PropertyType);
+                                rewrite = ApplyValues(original, tProp.PropertyType, property.Value as JObject, Spacing + m_tab);
+                            }
+                            if (tProp.CanWrite)
+                                try { tProp.SetValue(_instance, rewrite, null); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
+                        }
+                    }
+                    if (property.Value is JValue || property.Value is JArray )
+                    {
+                        try
+                        {
+                            if (UseMethod)
+                            {
+                                Console.WriteLine(Spacing + m_tab + ">Calling method (No parameters)");
+
+                                var value = property.Value;
+                                tMethod.Invoke(_instance, null);
+                            }
+                            else
+                            {
+                                Console.WriteLine(Spacing + m_tab + ">Setting value");
+                                if (UseField)
+                                {
+                                    tField.SetValue(_instance, property.Value.ToObject(tField.FieldType));
+                                }
+                                else
+                                {
+                                    tProp.SetValue(_instance, property.Value.ToObject(tProp.PropertyType), null);
+                                }
                             }
                         }
                         catch
@@ -335,7 +398,7 @@ namespace Nuterra.BlockInjector
                             if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
                             {
                                 searchresult = LoadedResources[type][targetName];
-                                Console.WriteLine(Spacing+" Setting value from user resource reference");
+                                Console.WriteLine(Spacing + m_tab + ">Setting value from user resource reference");
                             }
                             else
                             {
@@ -346,7 +409,7 @@ namespace Nuterra.BlockInjector
                                     if (search[i].name == targetName)
                                     {
                                         searchresult = search[i];
-                                        Console.WriteLine(Spacing+" Setting value from existing resource reference");
+                                        Console.WriteLine(Spacing + m_tab + ">Setting value from existing resource reference");
                                         break;
                                     }
                                     failedsearch += "(" + search[i].name + ") ";
@@ -367,7 +430,7 @@ namespace Nuterra.BlockInjector
                         }
                     }
                 }
-                catch (Exception E) { Console.WriteLine(E.Message+"\n"+E.StackTrace); }
+                catch (Exception E) { Console.WriteLine(Spacing + "!!!" + E.Message/*+"\n"+E.StackTrace*/); }
             }
             Console.WriteLine(Spacing+"Going up");
             return _instance;
