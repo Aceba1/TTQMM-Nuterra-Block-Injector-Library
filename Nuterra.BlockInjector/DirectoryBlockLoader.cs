@@ -56,6 +56,51 @@ namespace Nuterra.BlockInjector
                 public Vector3 SubScale;
                 public Vector3 SubRotation;
                 public bool DestroyExistingRenderer;
+                //PUT ANIMATION CURVES HERE
+                public AnimInfo[] Animation;
+                public struct AnimInfo
+                {
+                    public string ClipName;
+                    public Curve[] Curves;
+
+                    public AnimationCurve[] GetAnimationCurves()
+                    {
+                        var result = new AnimationCurve[Curves.Length];
+                        for (int i = 0; i < Curves.Length; i++)
+                        {
+                            result[i] = Curves[i].ToAnimationCurve();
+                        }
+                        return result;
+                    }
+
+                    public struct Curve
+                    {
+                        public string ComponentName;
+                        public string PropertyName;
+                        public Key[] Keys;
+                        public AnimationCurve ToAnimationCurve()
+                        {
+                            var Keyframes = new Keyframe[Keys.Length];
+                            for(int i = 0; i < Keys.Length; i++)
+                            {
+                                Keyframes[i] = Keys[i].ToKeyframe();
+                            }
+                            return new AnimationCurve(Keyframes);
+                        }
+
+                        public struct Key
+                        {
+                            public float Time;
+                            public float Value;
+                            public float inTangent;
+                            public float outTangent;
+                            public Keyframe ToKeyframe()
+                            {
+                                return new Keyframe(Time, Value, inTangent, outTangent);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -564,6 +609,21 @@ namespace Nuterra.BlockInjector
                             {
                                 childT.localScale = sub.SubScale;
                             }
+                            //-Animation
+                            if (sub.Animation != null)
+                            {
+                                Console.WriteLine("Animation block detected");
+                                var mA = tr.GetComponentsInChildren<Animator>(true);
+                                if (mA.Length != 0)
+                                {
+                                    var Animator = mA[0];
+                                    GameObjectJSON.DumpAnimation(Animator);
+                                    foreach (var anim in sub.Animation)
+                                    {
+                                        GameObjectJSON.ModifyAnimation(Animator, anim.ClipName, childT.GetPath(Animator.transform), GameObjectJSON.AnimationCurveStruct.ConvertToStructArray(anim.Curves));
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -685,15 +745,32 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        private static Transform RecursiveFind(this Transform transform, string NameOfChild)
+        private static string GetPath(this Transform transform, Transform targetParent = null)
         {
-            var child = transform.Find(NameOfChild);
-            if (child == null && transform.childCount > 0)
+            if (transform == targetParent) return "";
+            string result = transform.name;
+            Transform parent = transform.parent;
+            while(!(parent == targetParent || parent == null))
             {
-                for(int i = 0; i < transform.childCount; i++)
+                result = parent.name + "/" + result;
+                parent = parent.parent;
+            }
+            return result;
+        }
+
+        private static Transform RecursiveFind(this Transform transform, string NameOfChild, string HierarchyBuildup = "")
+        {
+
+            var child = transform.Find(NameOfChild.Substring(NameOfChild.LastIndexOf('/') + 1));
+            if ((child == null || HierarchyBuildup.EndsWith(NameOfChild)) && transform.childCount > 0)
+            {
+                for (int i = 0; i < transform.childCount; i++)
                 {
-                    child = RecursiveFind(transform.GetChild(i), NameOfChild);
-                    if (child != null) return child;
+                    child = RecursiveFind(transform.GetChild(i), NameOfChild, HierarchyBuildup + "/" + transform.name);
+                    if (child != null)
+                    {
+                        return child;
+                    }
                 }
             }
             return child;

@@ -194,6 +194,85 @@ namespace Nuterra.BlockInjector
             AddObjectToUserResources<T>(typeof(T), Object, Name);
         }
 
+        public static void DumpAnimation(Animator animator)
+        {
+            Console.WriteLine("Clip names for animator " + animator.name + ":");
+            for (int i = 0; i < animator.layerCount; i++)
+            {
+                Console.WriteLine(">Layer " + i.ToString() + ":");
+                foreach (var clip in animator.GetCurrentAnimatorClipInfo(i))
+                {
+                    Console.WriteLine(" >" + clip.clip.name);
+                }
+            } 
+        }
+
+        public struct AnimationCurveStruct
+        {
+            internal static AnimationCurveStruct[] ConvertToStructArray(DirectoryBlockLoader.BlockBuilder.SubObj.AnimInfo.Curve[] curves)
+            {
+                var result = new AnimationCurveStruct[curves.Length];
+                for (int i = 0; i < curves.Length; i++)
+                {
+                    result[i] = new AnimationCurveStruct(curves[i].ComponentName, curves[i].PropertyName, curves[i].ToAnimationCurve());
+                }
+                return result;
+            }
+
+            public AnimationCurveStruct(string Type, string PropertyName, AnimationCurve Curve)
+            {
+                this.Type = GameObjectJSON.GetType(Type);
+                this.PropertyName = PropertyName;
+                this.Curve = Curve;
+            }
+            public Type Type;
+            public string PropertyName;
+            public AnimationCurve Curve;
+        }
+
+        public static void ModifyAnimation(Animator animator, string clipName, string path, AnimationCurveStruct[] curves)
+        {
+            for(int i = 0; i < animator.layerCount; i++)
+            {
+                var clips = animator.GetCurrentAnimatorClipInfo(i);
+                foreach (var clip in clips)
+                {
+                    if (clip.clip.name == clipName)
+                    {
+                        foreach (var curve in curves)
+                        {
+                            clip.clip.SetCurve(path, curve.Type, curve.PropertyName, curve.Curve);
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        static Dictionary<string, Type> stringtypecache = new Dictionary<string, Type>();
+        public static Type GetType(string Name)
+        {
+            Type type;
+            if (stringtypecache.TryGetValue(Name, out type)) return type;
+            type = Type.GetType(Name);
+            if (type == null)
+            {
+                type = Type.GetType(Name + ", " + typeof(TankBlock).Assembly.FullName);
+                if (type == null)
+                {
+                    type = Type.GetType(Name + ", " + typeof(GameObject).Assembly.FullName);
+                    if (type == null)
+                    {
+                        Console.WriteLine(Name + " is not a known type! If you are using a Unity type, you might need to prefix the class with \"UnityEngine.\", for example, \"UnityEngine.LineRenderer\". If it is not from Unity or the game itself, it needs the class's Assembly's `FullName`, for example: \"" + typeof(TankBlock).Assembly.FullName + "\", in which it'd be used as \"" + typeof(TankBlock).AssemblyQualifiedName + "\"");
+                        stringtypecache.Add(Name, null);
+                        return null;
+                    }
+                }
+            }
+            stringtypecache.Add(Name, type);
+            return type;
+        }
+
         public static GameObject CreateGameObject(string json)
         {
            return CreateGameObject(Newtonsoft.Json.Linq.JObject.Parse(json));
@@ -231,20 +310,8 @@ namespace Nuterra.BlockInjector
                     }
                     else
                     {
-                        Type componentType = Type.GetType(property.Name);
-                        if (componentType == null)
-                        {
-                            componentType = Type.GetType(property.Name + ", " + typeof(TankBlock).Assembly.FullName);
-                            if (componentType == null)
-                            {
-                                componentType = Type.GetType(property.Name + ", " + typeof(GameObject).Assembly.FullName);
-                                if (componentType == null)
-                                {
-                                    Console.WriteLine(property.Name + " is not a known type! If you are using a Unity type, you might need to prefix the class with \"UnityEngine.\", for example, \"UnityEngine.LineRenderer\". If it is not from Unity or the game itself, it needs the class's Assembly's `FullName`, for example: \"" + typeof(TankBlock).Assembly.FullName + "\", in which it'd be used as \"" + typeof(ModuleDrill).AssemblyQualifiedName+"\"");
-                                    continue;
-                                }
-                            }
-                        }
+                        Type componentType = GetType(property.Name);
+                        if (componentType == null) continue;
                         object component = result.GetComponent(componentType);
                         if (component as Component == null)
                         {
