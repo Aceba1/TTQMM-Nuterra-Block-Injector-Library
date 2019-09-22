@@ -406,6 +406,7 @@ namespace Nuterra.BlockInjector
                                     nObj.gameObject.SetActive(isActive);
                                     Console.WriteLine(Spacing + m_tab + ">Instantiating");
                                     CreateGameObject(property.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                                    Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
                                     rewrite = nObj;
                                 }
                                 else rewrite = ApplyValues(original, tField.FieldType, property.Value as JObject, Spacing + m_tab);
@@ -430,6 +431,7 @@ namespace Nuterra.BlockInjector
                                     nObj.gameObject.SetActive(isActive);
                                     Console.WriteLine(Spacing + m_tab + ">Instantiating");
                                     CreateGameObject(property.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                                    Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
                                     rewrite = nObj;
                                 }
                                 else rewrite = ApplyValues(original, tProp.PropertyType, property.Value as JObject, Spacing + m_tab);
@@ -523,6 +525,44 @@ namespace Nuterra.BlockInjector
             }
             Console.WriteLine(Spacing+"Going up");
             return _instance;
+        }
+        public static string LogAllComponents(Transform SearchIn, bool Reflection = false, string Indenting = "")
+        {
+            string result = "";
+            Component[] c = SearchIn.GetComponents<Component>();
+            foreach (Component comp in c)
+            {
+                result += "\n" + Indenting + comp.name + " : " + comp.GetType().Name;
+                if (Reflection)
+                {
+                    var t = comp.GetType();
+                    var f = t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                    var p = t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+                    foreach (var field in f)
+                    {
+                        result += $"\n{Indenting} (F).{field.Name} ({field.FieldType.ToString()}) = {field.GetValue(comp)}";
+                    }
+                    foreach (var field in p)
+                    {
+                        result += $"\n{Indenting} (P).{field.Name} ({field.PropertyType.ToString()})";
+                        try
+                        {
+                            result += $" = {field.GetValue(comp, null)}";
+                        }
+                        catch { }
+                    }
+                }
+                else
+                {
+                    if (comp is MeshRenderer) result += " : Material (" + ((MeshRenderer)comp).material.name + ")";
+                }
+            }
+            for (int i = SearchIn.transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = SearchIn.transform.GetChild(i);
+                result += LogAllComponents(child, Reflection, Indenting + "  ");
+            }
+            return result;
         }
     }
 }
