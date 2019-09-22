@@ -21,6 +21,28 @@ namespace Nuterra.BlockInjector
             return new Material(shader);
         }
 
+        public static Material SetTexturesToMaterial(bool MakeCopy, Material material, Texture2D Alpha = null, Texture2D MetallicGloss = null, Texture2D Emission = null)
+        {
+            bool flag1 = Alpha != null, flag2 = MetallicGloss != null, flag3 = Emission!=null;
+            if (MakeCopy && (flag1 || flag2 || flag3))
+            {
+                material = new Material(material);
+            }
+            if (flag1)
+            {
+                material.SetTexture("_MainTex", Alpha);
+            }
+            if (flag2)
+            {
+                material.SetTexture("_MetallicGlossMap", MetallicGloss);
+            }
+            if (flag3)
+            {
+                material.SetTexture("_EmissionMap", Emission);
+            }
+            return material;
+        }
+
         public static T GetObjectFromUserResources<T>(string targetName) where T : UnityEngine.Object
         {
             return GetObjectFromUserResources<T>(typeof(T), targetName);

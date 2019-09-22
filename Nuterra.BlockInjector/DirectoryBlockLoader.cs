@@ -25,6 +25,8 @@ namespace Nuterra.BlockInjector
             public string ColliderMeshName;
             public bool SupressBoxColliderFallback;
             public string MeshTextureName;
+            public string MeshGlossTextureName;
+            public string MeshEmissionTextureName;
             public string MeshMaterialName;
             public int Faction;
             public int Category;
@@ -51,6 +53,8 @@ namespace Nuterra.BlockInjector
                 public bool MakeBoxCollider;
                 public string ColliderMeshName;
                 public string MeshTextureName;
+                public string MeshGlossTextureName;
+                public string MeshEmissionTextureName;
                 public string MeshMaterialName;
                 public Vector3? SubPosition;
                 public Vector3? SubScale;
@@ -195,8 +199,6 @@ namespace Nuterra.BlockInjector
             {
                 Console.WriteLine("Could not access \"" + BlockPath + "\"!\n"+E.Message);
             }
-            Sprite NoSpriteBlock;
-            NoSpriteBlock = GameObjectJSON.GetObjectFromGameResources<Sprite>("Icon_Dimensions");
             var CustomBlocks = new DirectoryInfo(BlockPath);
             var cbJson = CustomBlocks.GetFiles("*.json", SearchOption.AllDirectories);
             var cbObj = CustomBlocks.GetFiles("*.obj", SearchOption.AllDirectories);
@@ -396,7 +398,7 @@ namespace Nuterra.BlockInjector
                         buildablock.MeshMaterialName.Replace("GeoCorp_", "GC_");
                         try
                         {
-                            localmat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, buildablock.MeshMaterialName));
+                            localmat = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, buildablock.MeshMaterialName);
                         }
                         catch { Console.WriteLine(buildablock.MeshMaterialName + " is not a valid Game Material!"); }
                     }
@@ -404,14 +406,17 @@ namespace Nuterra.BlockInjector
                     {
                         localmat = GameObjectJSON.MaterialFromShader();
                     }
-                    if (buildablock.MeshTextureName != null && buildablock.MeshTextureName != "")
-                    {
-                        Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.MeshTextureName);
-                        if (tex != null)
-                        {
-                            localmat.mainTexture = tex;
-                        }
-                    }
+
+                    bool missingflag1 = string.IsNullOrWhiteSpace(buildablock.MeshTextureName),
+                        missingflag2 = string.IsNullOrWhiteSpace(buildablock.MeshGlossTextureName),
+                        missingflag3 = string.IsNullOrWhiteSpace(buildablock.MeshEmissionTextureName);
+                    localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
+                        missingflag1 ? null :
+                        GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.MeshTextureName),
+                        missingflag2 ? null :
+                        GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.MeshGlossTextureName),
+                        missingflag3 ? null :
+                        GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.MeshEmissionTextureName));
                     //Set Model
                     {
                         //-Get Mesh
@@ -514,11 +519,14 @@ namespace Nuterra.BlockInjector
                                 colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.ColliderMeshName);
                             }
                             //-Get Material
-                            Material mat = null;
-                            var ren = childG.GetComponent<MeshRenderer>();
-                            if (ren != null)
+                            Material mat = localmat;
+                            if (!New && !sub.DestroyExistingRenderer)
                             {
-                                mat = ren.material;
+                                var ren = childG.GetComponent<MeshRenderer>();
+                                if (ren != null)
+                                {
+                                    mat = ren.material;
+                                }
                             }
                             if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
                             {
@@ -526,61 +534,28 @@ namespace Nuterra.BlockInjector
                                 sub.MeshMaterialName.Replace("GeoCorp_", "GC_");
                                 try
                                 {
-                                    mat = new Material(GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName));
+                                    var mat2 = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName);
+                                    if (mat2 == null) Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!");
+                                    else mat = mat2;
                                 }
                                 catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
                             }
-                            bool SubTex = sub.MeshTextureName != null && sub.MeshTextureName != "";
-                            if (SubTex)
-                            {
-                                Texture2D tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName);
-                                if (tex != null)
-                                {
-                                    if (mat == null)
-                                    {
-                                        if (New)
-                                        {
-                                            mat = localmat;
-                                        }
-                                        else
-                                        {
-                                            var t = childG.GetComponent<MeshRenderer>();
-                                            if (t != null)
-                                            {
-                                                mat = t.sharedMaterial;
-                                            }
-                                            else mat = localmat;
-                                        }
-                                    }
-                                    try
-                                    {
-                                        mat = new Material(mat) { mainTexture = tex };
-                                    }
-                                    catch
-                                    {
-                                        mat = new Material(localmat) { mainTexture = tex };
-                                    }
-                                }
-                            }
+                            mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
+                                string.IsNullOrWhiteSpace(sub.MeshTextureName) ? null :
+                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
+                                string.IsNullOrWhiteSpace(sub.MeshGlossTextureName) ? null :
+                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
+                                string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName) ? null :
+                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
                             //-Apply
                             if (mesh != null)
                             {
                                 if (New) childG.AddComponent<MeshFilter>().sharedMesh = mesh;
                                 else childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
                             }
-                            if (mat!= null || SubTex)
-                            {
-                                if (mat != null) childG.EnsureComponent<MeshRenderer>().material = mat;
-                                else if (mesh != null)
-                                {
-                                    if (New || childG.GetComponent<MeshRenderer>() == null) childG.AddComponent<MeshRenderer>().material = localmat;
-                                }
-                                else
-                                {
-                                    var mr = childG.GetComponent<MeshRenderer>();
-                                    if (mr != null) mr.material = localmat;
-                                }
-                            }
+
+                            childG.EnsureComponent<MeshRenderer>().material = mat;
+
                             if (colliderMesh != null)
                             {
                                 MeshCollider mc;
