@@ -45,8 +45,8 @@ namespace Nuterra.BlockInjector
         private ModuleDamage _moduleDamage;
         private AutoSpriteRenderer _spriteRenderer;
         private CustomBlock _customBlock;
-        private UnityEngine.Networking.NetworkIdentity _netid;
-        private NetBlock _netblock;
+//        private UnityEngine.Networking.NetworkIdentity _netid;
+//        private NetBlock _netblock;
 
         public BlockPrefabBuilder()
         {
@@ -152,8 +152,8 @@ namespace Nuterra.BlockInjector
 
             _visible = _customBlock.Prefab.EnsureComponent<Visible>();
 
-            _netid = _customBlock.Prefab.EnsureComponent<UnityEngine.Networking.NetworkIdentity>();
-            _netblock = _customBlock.Prefab.EnsureComponent<NetBlock>();
+//            _netid = _customBlock.Prefab.EnsureComponent<UnityEngine.Networking.NetworkIdentity>();
+//            _netblock = _customBlock.Prefab.EnsureComponent<NetBlock>();
 
             BindingFlags b = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
             typeof(TankBlock).GetProperty("visible", b).SetValue(TankBlock, _visible, null);
