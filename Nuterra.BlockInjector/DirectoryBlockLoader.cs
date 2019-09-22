@@ -36,8 +36,8 @@ namespace Nuterra.BlockInjector
             public bool APsOnlyAtBottom;
             public IntVector3[] Cells;
             public Vector3[] APs;
-            public Vector3 ReferenceOffset;
-            public Vector3 ReferenceRotationOffset;
+            public Vector3? ReferenceOffset;
+            public Vector3? ReferenceRotationOffset;
             public string Recipe;
             public SubObj[] SubObjects;
 
@@ -52,9 +52,9 @@ namespace Nuterra.BlockInjector
                 public string ColliderMeshName;
                 public string MeshTextureName;
                 public string MeshMaterialName;
-                public Vector3 SubPosition;
-                public Vector3 SubScale;
-                public Vector3 SubRotation;
+                public Vector3? SubPosition;
+                public Vector3? SubScale;
+                public Vector3? SubRotation;
                 public bool DestroyExistingRenderer;
                 //PUT ANIMATION CURVES HERE
                 public AnimInfo[] Animation;
@@ -291,20 +291,20 @@ namespace Nuterra.BlockInjector
                         else
                         {
                             Prefabbed = true;
-                            if (buildablock.ReferenceOffset != null && buildablock.ReferenceOffset != Vector3.zero)
+                            if (buildablock.ReferenceOffset.HasValue && buildablock.ReferenceOffset != Vector3.zero)
                             {
                                 //Offset Prefab
-                                blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, buildablock.ReferenceOffset, !buildablock.KeepReferenceRenderers);
+                                blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, buildablock.ReferenceOffset.Value, !buildablock.KeepReferenceRenderers);
                             }
                             else
                             {
                                 blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, !buildablock.KeepReferenceRenderers);
                             }
 
-                            if (buildablock.ReferenceRotationOffset != null && buildablock.ReferenceRotationOffset != Vector3.zero)
+                            if (buildablock.ReferenceRotationOffset.HasValue && buildablock.ReferenceRotationOffset != Vector3.zero)
                             {
                                 //Add Rotation
-                                blockbuilder.Prefab.transform.RotateChildren(buildablock.ReferenceRotationOffset);
+                                blockbuilder.Prefab.transform.RotateChildren(buildablock.ReferenceRotationOffset.Value);
                             }
                         }
                     }
@@ -473,13 +473,13 @@ namespace Nuterra.BlockInjector
                                 New = true;
                             }
                             //-Offset
-                            if (sub.SubPosition != null)
+                            if (sub.SubPosition.HasValue)
                             {
-                                childT.localPosition = sub.SubPosition;
+                                childT.localPosition = sub.SubPosition.Value;
                             }
-                            if (sub.SubRotation != null)
+                            if (sub.SubRotation.HasValue)
                             {
-                                childT.localRotation = Quaternion.Euler(sub.SubRotation);
+                                childT.localRotation = Quaternion.Euler(sub.SubRotation.Value);
                             }
                             //-DestroyCollidersOnObj
                             if (sub.DestroyExistingColliders)
@@ -605,9 +605,9 @@ namespace Nuterra.BlockInjector
                                     bc.center = Vector3.zero;
                                 }
                             }
-                            if (sub.SubScale != null && sub.SubScale != Vector3.zero)
+                            if (sub.SubScale.HasValue && sub.SubScale != Vector3.zero)
                             {
-                                childT.localScale = sub.SubScale;
+                                childT.localScale = sub.SubScale.Value;
                             }
                             //-Animation
                             if (sub.Animation != null)
