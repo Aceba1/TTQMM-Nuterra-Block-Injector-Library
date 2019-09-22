@@ -460,6 +460,7 @@ namespace Nuterra.BlockInjector
                         foreach (var sub in buildablock.SubObjects) //For each SUB
                         {
                             Transform childT = null;
+                            string LocalPath;
                             if (sub.SubOverrideName != null && sub.SubOverrideName != "") childT = tr.RecursiveFind(sub.SubOverrideName);
                             GameObject childG = null;
                             bool New = false;
@@ -469,7 +470,9 @@ namespace Nuterra.BlockInjector
                             }
                             else
                             {
-                                childG = new GameObject();
+                                string name = "SubObject_" + (tr.childCount + 1).ToString();
+                                LocalPath = "/" + name;
+                                childG = new GameObject(name);
                                 childT = childG.transform;
                                 childT.parent = tr;
                                 childT.localPosition = Vector3.zero;
