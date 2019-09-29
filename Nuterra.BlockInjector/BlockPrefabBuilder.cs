@@ -277,6 +277,22 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        public BlockPrefabBuilder SetDetachFragility(float Fragility)
+        {
+            ThrowIfFinished();
+            _moduleDamage.m_DamageDetachFragility = Fragility;
+            return this;
+        }
+
+        static FieldInfo m_DamageableType = typeof(Damageable).GetField("m_DamageableType", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+
+        public BlockPrefabBuilder SetDamageableType(ManDamage.DamageableType type)
+        {
+            ThrowIfFinished();
+            m_DamageableType.SetValue(_damageable, type);
+            return this;
+        }
+
         public BlockPrefabBuilder SetName(string blockName)
         {
             ThrowIfFinished();

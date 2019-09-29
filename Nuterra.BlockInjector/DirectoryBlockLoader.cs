@@ -33,6 +33,8 @@ namespace Nuterra.BlockInjector
             public int Grade;
             public int Price;
             public int HP;
+            public int? DamageableType;
+            public float? Fragility;
             public float Mass;
             public IntVector3 BlockExtents;
             public bool APsOnlyAtBottom;
@@ -49,8 +51,10 @@ namespace Nuterra.BlockInjector
             {
                 public string SubOverrideName;
                 public string MeshName;
+                public int? Layer;
                 public bool DestroyExistingColliders;
                 public bool MakeBoxCollider;
+                public bool MakeSphereCollider;
                 public string ColliderMeshName;
                 public string MeshTextureName;
                 public string MeshGlossTextureName;
@@ -204,6 +208,8 @@ namespace Nuterra.BlockInjector
             var cbObj = CustomBlocks.GetFiles("*.obj", SearchOption.AllDirectories);
             var cbPng = CustomBlocks.GetFiles("*.png", SearchOption.AllDirectories);
 
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
             foreach (FileInfo Png in cbPng)
             {
                 try
@@ -251,6 +257,8 @@ namespace Nuterra.BlockInjector
                     Console.WriteLine("Could not read image " + Png.Name + "\n at " + Png.FullName + "\n" + E.Message + "\n" + E.StackTrace);
                 }
             }
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json images");
+            sw.Restart();
             foreach (FileInfo Obj in cbObj)
             {
                 try
@@ -263,8 +271,10 @@ namespace Nuterra.BlockInjector
                     Console.WriteLine("Could not read mesh " + Obj.Name + "\n at " + Obj.FullName + "\n" + E.Message + "\n" + E.StackTrace);
                 }
             }
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json models");
             foreach (FileInfo Json in cbJson)
             {
+                sw.Restart();
                 try
                 {
                     //Read JSON
@@ -358,6 +368,18 @@ namespace Nuterra.BlockInjector
                     {
                         if (!BlockAlreadyExists)
                             blockbuilder.SetHP(100);
+                    }
+
+                    //Set DamageableType
+                    if (buildablock.DamageableType.HasValue)
+                    {
+                        blockbuilder.SetDamageableType((ManDamage.DamageableType)buildablock.DamageableType.Value);
+                    }
+
+                    //Set DetachFragility
+                    if (buildablock.Fragility.HasValue)
+                    {
+                        blockbuilder.SetDetachFragility(buildablock.Fragility.Value);
                     }
 
                     //Set Icon
@@ -477,7 +499,14 @@ namespace Nuterra.BlockInjector
                                 childT.parent = tr;
                                 childT.localPosition = Vector3.zero;
                                 childT.localRotation = Quaternion.identity;
-                                childG.layer = Globals.inst.layerTank;
+                                if (sub.Layer.HasValue)
+                                {
+                                    childG.layer = sub.Layer.Value;
+                                }
+                                else
+                                {
+                                    childG.layer = Globals.inst.layerTank;
+                                }
                                 New = true;
                             }
                             //-Offset
@@ -582,6 +611,12 @@ namespace Nuterra.BlockInjector
                                     bc.size = Vector3.one;
                                     bc.center = Vector3.zero;
                                 }
+                            }
+                            if (sub.MakeSphereCollider)
+                            {
+                                    var bc = childG.EnsureComponent<SphereCollider>();
+                                    bc.radius = 0.5f;
+                                    bc.center = Vector3.zero;
                             }
                             if (sub.SubScale.HasValue && sub.SubScale != Vector3.zero)
                             {
@@ -720,7 +755,9 @@ namespace Nuterra.BlockInjector
                     Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\n" + E.Message + "\n" + E.StackTrace);
                     BlockLoader.Timer.blocks += $"\nCould not read #{Json.Name} - \"{E.Message}\"";
                 }
+                Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate json block");
             }
+            sw.Stop();
         }
 
         private static string GetPath(this Transform transform, Transform targetParent = null)

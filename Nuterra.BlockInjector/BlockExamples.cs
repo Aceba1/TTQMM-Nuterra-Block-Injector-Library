@@ -16,6 +16,8 @@ namespace Nuterra.BlockInjector
             Material mat = GameObjectJSON.MaterialFromShader();
             mat.mainTexture = GameObjectJSON.ImageFromFile(Properties.Resources.bacon_material_png);
             Material GSOMain = GameObjectJSON.GetObjectFromGameResources<Material>("GSO_Main");
+
+
             {
 
                 new BlockPrefabBuilder(/*"GSOBlock(111)", true*/)
@@ -61,7 +63,8 @@ namespace Nuterra.BlockInjector
                     .RegisterLater();
 
             }
-
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate block");
+            sw.Restart();
             {
 
                 var banagun = new BlockPrefabBuilder("GSOMGunFixed(111)", false);
@@ -131,7 +134,8 @@ namespace Nuterra.BlockInjector
                     .RegisterLater();
 
             }
-
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate block");
+            sw.Restart();
             {
 
                 var cockpit_s = new BlockPrefabBuilder("GSOLightStud(111)", true)
@@ -153,7 +157,8 @@ namespace Nuterra.BlockInjector
                 cockpit_s.RegisterLater();
 
             }
-
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate block");
+            sw.Restart();
             {
 
                 var cockpit_s2 = new BlockPrefabBuilder("GSOLightStud(111)", true)
@@ -186,7 +191,8 @@ namespace Nuterra.BlockInjector
             //        .SetDescription("A colour block for making BEES!\n\n\"According to all known laws of aviation, there is no way that a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyways. Because bees don't care what humans think is impossible.\"")
             //        .RegisterLater();
             //}
-
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate block");
+            sw.Restart();
             {
 
                 var cockpit_l = new BlockPrefabBuilder("GSOLightStud(111)", Vector3.one * 0.5f, true)
@@ -210,7 +216,8 @@ namespace Nuterra.BlockInjector
                 cockpit_l.RegisterLater();
 
             }
-
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate block");
+            sw.Restart();
             {
 
                 var cockpit_ven = new BlockPrefabBuilder("VENLightStud(111)", Vector3.forward * 0.5f, true)
@@ -234,10 +241,10 @@ namespace Nuterra.BlockInjector
                 cockpit_ven.RegisterLater();
 
             }
-
+            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate block");
+            //sw.Restart();
             #endregion
-            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate example blocks");
-            sw.Restart();
+            sw.Stop();
             #region Recipes
 
             CustomRecipe.RegisterRecipe(
@@ -325,7 +332,6 @@ namespace Nuterra.BlockInjector
             //}.Register);
 
             #endregion
-            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate example block recipes");
 
             var thng = new GameObject();
             var thnng = thng.AddComponent<FirstPersonCamera>();

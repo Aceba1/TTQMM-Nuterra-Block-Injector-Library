@@ -276,23 +276,38 @@ namespace Nuterra.BlockInjector
         {
             Type type;
             if (stringtypecache.TryGetValue(Name, out type)) return type;
-            type = Type.GetType(Name);
+            type = Type.GetType(Name, new Func<AssemblyName, Assembly>(AssemblyResolver), new Func<Assembly, string, bool, Type>(TypeResolver), false, true);
             if (type == null)
             {
-                type = Type.GetType(Name + ", " + typeof(TankBlock).Assembly.FullName);
-                if (type == null)
-                {
-                    type = Type.GetType(Name + ", " + typeof(GameObject).Assembly.FullName);
-                    if (type == null)
-                    {
-                        Console.WriteLine(Name + " is not a known type! If you are using a Unity type, you might need to prefix the class with \"UnityEngine.\", for example, \"UnityEngine.LineRenderer\". If it is not from Unity or the game itself, it needs the class's Assembly's `FullName`, for example: \"" + typeof(TankBlock).Assembly.FullName + "\", in which it'd be used as \"" + typeof(TankBlock).AssemblyQualifiedName + "\"");
-                        stringtypecache.Add(Name, null);
-                        return null;
-                    }
-                }
+                //type = Type.GetType(Name + ", " + typeof(TankBlock).Assembly.FullName);
+                //if (type == null)
+                //{
+                //    type = Type.GetType(Name + ", " + typeof(GameObject).Assembly.FullName);
+                //    if (type == null)
+                //    {
+                Console.WriteLine(Name + " is not a known type! If you are using a Unity type, you might need to prefix the class with \"UnityEngine.\", for example, \"UnityEngine.LineRenderer\". If it is not from Unity or the game itself, it needs the class's Assembly's `FullName`, for example: \"" + typeof(TankBlock).Assembly.FullName + "\", in which it'd be used as \"" + typeof(TankBlock).AssemblyQualifiedName + "\"");
+                stringtypecache.Add(Name, null);
+                return null;
+                //    }
+                //}
             }
             stringtypecache.Add(Name, type);
             return type;
+        }
+
+        private static Type TypeResolver(Assembly arg1, string arg2, bool arg3)
+        {
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var type = assembly.GetType(arg2, false, arg3);
+                if (type != null) return type;
+            }
+            return null;
+        }
+
+        private static Assembly AssemblyResolver(AssemblyName arg)
+        {
+            return typeof(GameObject).Assembly;
         }
 
         public static GameObject CreateGameObject(string json)
@@ -302,6 +317,8 @@ namespace Nuterra.BlockInjector
 
         public static GameObject CreateGameObject(JObject json, GameObject GameObjectToPopulate = null, string Spacing = "")
         {
+            System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
             GameObject result;
             if (GameObjectToPopulate == null)
             {
@@ -313,7 +330,8 @@ namespace Nuterra.BlockInjector
             {
                 try
                 {
-                    if (property.Name.StartsWith("GameObject") || property.Name.StartsWith("UnityEngine.GameObject"))
+                    bool Duplicate = property.Name.StartsWith("Duplicate");
+                    if (Duplicate || property.Name.StartsWith("GameObject") || property.Name.StartsWith("UnityEngine.GameObject"))
                     {
                         string name = "Object Child";
                         int GetCustomName = property.Name.IndexOf('|');
@@ -325,7 +343,15 @@ namespace Nuterra.BlockInjector
                         GameObject newGameObject = result.transform.Find(name)?.gameObject;
                         if (!newGameObject)
                         {
+                            Duplicate = false;
                             newGameObject = new GameObject(name);
+                            newGameObject.transform.parent = result.transform;
+                        }
+                        else if (Duplicate)
+                        {
+                            bool Active = newGameObject.activeInHierarchy;
+                            newGameObject = GameObject.Instantiate(newGameObject);
+                            newGameObject.name = name + "_copy";
                             newGameObject.transform.parent = result.transform;
                         }
                         CreateGameObject(property.Value as JObject, newGameObject, Spacing +  m_tab);
@@ -335,18 +361,31 @@ namespace Nuterra.BlockInjector
                         Type componentType = GetType(property.Name);
                         if (componentType == null) continue;
                         object component = result.GetComponent(componentType);
-                        if (component as Component == null)
+                        if (property.Value == null)
                         {
-                            component = result.AddComponent(componentType);
-                            if (component == null)
+                            Component c = component as Component;
+                            if (c != null)
                             {
-                                Console.WriteLine(property.Name + " is a null component, but does not throw an exception...");
-                                continue;
+                                Component.DestroyImmediate(c);
+                                Console.WriteLine(Spacing + "Nullified " + property.Name);
                             }
-                            Console.WriteLine(Spacing+"Created " + property.Name);
+                            else Console.WriteLine(Spacing + "Component " + property.Name + " is already null");
                         }
-                        ApplyValues(component, componentType, property.Value as JObject, Spacing);
-                        Console.WriteLine(Spacing+"Set values of " + property.Name);
+                        else
+                        {
+                            if (component as Component == null)
+                            {
+                                component = result.AddComponent(componentType);
+                                if (component == null)
+                                {
+                                    Console.WriteLine(property.Name + " is a null component, but does not throw an exception...");
+                                    continue;
+                                }
+                                Console.WriteLine(Spacing + "Created " + property.Name);
+                            }
+                            ApplyValues(component, componentType, property.Value as JObject, Spacing);
+                            Console.WriteLine(Spacing + "Set values of " + property.Name);
+                        }
                     }
                 }
                 catch (Exception E)
@@ -354,6 +393,8 @@ namespace Nuterra.BlockInjector
                     Console.WriteLine(E.Message + "\n" + E.StackTrace);
                 }
             }
+            Console.WriteLine($"Took {stopwatch.ElapsedMilliseconds} ms to pass {result.name} through JSON parser");
+            stopwatch.Stop();
 
             return result;
         }
@@ -370,12 +411,11 @@ namespace Nuterra.BlockInjector
                     string name = property.Name;
                     Console.WriteLine(Spacing + m_tab + property.Name);
                     int GetCustomName = property.Name.IndexOf('|');
-                    bool Wipe = false, Instantiate = false, Duplicate = false;
+                    bool Wipe = false, Instantiate = false;
                     if (GetCustomName != -1)
                     {
                         Wipe = name.StartsWith("Wipe");
                         Instantiate = name.StartsWith("Instantiate");
-                        Duplicate = name.StartsWith("Duplicate");
                         name = property.Name.Substring(GetCustomName + 1);
                     }
                     FieldInfo tField = instanceType.GetField(name, bind);
@@ -399,7 +439,7 @@ namespace Nuterra.BlockInjector
                             if (!Wipe)
                             {
                                 original = tField.GetValue(instance);
-                                if (Instantiate || Duplicate)
+                                if (Instantiate)
                                 {
                                     bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
                                     var nObj = Component.Instantiate(original as Component);
@@ -486,6 +526,7 @@ namespace Nuterra.BlockInjector
                                 targetName = cache;
                             }
                             UnityEngine.Object searchresult = null;
+                            // TODO: Allow setting objects from hierarchy as value
                             if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
                             {
                                 searchresult = LoadedResources[type][targetName];
