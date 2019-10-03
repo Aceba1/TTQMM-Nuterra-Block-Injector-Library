@@ -489,6 +489,10 @@ namespace Nuterra.BlockInjector
                             if (childT != null)
                             {
                                 childG = childT.gameObject;
+                                if (sub.Layer.HasValue)
+                                {
+                                    childG.layer = sub.Layer.Value;
+                                }
                             }
                             else
                             {
