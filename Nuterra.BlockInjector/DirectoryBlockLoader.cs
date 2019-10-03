@@ -36,7 +36,7 @@ namespace Nuterra.BlockInjector
             public int? DamageableType;
             public float? Fragility;
             public float Mass;
-            public IntVector3 BlockExtents;
+            public IntVector3? BlockExtents;
             public bool APsOnlyAtBottom;
             public IntVector3[] Cells;
             public Vector3[] APs;
@@ -447,16 +447,16 @@ namespace Nuterra.BlockInjector
                         {
                             mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, buildablock.MeshName);
                         }
-                        if (mesh == null && !HasSubObjs && !BlockAlreadyExists)
-                        {
-                            mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>(MeshT, "Cube");
-                            if (mesh == null)
-                            {
-                                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                                mesh = go.GetComponent<MeshFilter>().mesh;
-                                GameObject.Destroy(go);
-                            }
-                        }
+                        //if (mesh == null && !HasSubObjs && !BlockAlreadyExists)
+                        //{
+                        //    mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>(MeshT, "Cube");
+                        //    if (mesh == null)
+                        //    {
+                        //        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        //        mesh = go.GetComponent<MeshFilter>().mesh;
+                        //        GameObject.Destroy(go);
+                        //    }
+                        //}
                         //-Get Collider
                         Mesh colliderMesh = null;
                         if (buildablock.ColliderMeshName != null && buildablock.ColliderMeshName != "")
@@ -663,14 +663,9 @@ namespace Nuterra.BlockInjector
                         {
                             blockbuilder.SetSizeManual(buildablock.Cells);
                         }
-                        else
+                        else if (buildablock.BlockExtents.HasValue)
                         {
-                            IntVector3 extents = buildablock.BlockExtents;
-                            if (extents == null)
-                            {
-                                extents = IntVector3.one;
-                            }
-                            blockbuilder.SetSize(extents, (buildablock.APsOnlyAtBottom ? BlockPrefabBuilder.AttachmentPoints.Bottom : BlockPrefabBuilder.AttachmentPoints.All));
+                            blockbuilder.SetSize(buildablock.BlockExtents.Value, (buildablock.APsOnlyAtBottom ? BlockPrefabBuilder.AttachmentPoints.Bottom : BlockPrefabBuilder.AttachmentPoints.All));
                         }
                         if (buildablock.APs != null)
                         {
