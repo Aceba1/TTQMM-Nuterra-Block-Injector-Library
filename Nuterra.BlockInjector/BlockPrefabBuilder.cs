@@ -509,7 +509,7 @@ namespace Nuterra.BlockInjector
         public BlockPrefabBuilder SetModel(Mesh Mesh, bool CreateBoxCollider, Material Material = null)
         {
             ThrowIfFinished();
-            GameObject model = new GameObject("");
+            GameObject model = new GameObject("m_CustomBlockRenderer");
             model.AddComponent<MeshFilter>().sharedMesh = Mesh;
             Material _Material = Material;
             if (_Material == null) _Material = GameObjectJSON.MaterialFromShader();
@@ -528,7 +528,7 @@ namespace Nuterra.BlockInjector
         public BlockPrefabBuilder SetModel(Mesh Mesh, Mesh ColliderMesh = null, bool ConvexCollider = true, Material Material = null)
         {
             ThrowIfFinished();
-            GameObject model = new GameObject("");
+            GameObject model = new GameObject("m_CustomBlockRenderer");
             model.AddComponent<MeshFilter>().sharedMesh = Mesh;
             Material _Material = Material;
             if (_Material == null) _Material = GameObjectJSON.MaterialFromShader();
