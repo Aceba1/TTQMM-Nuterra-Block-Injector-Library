@@ -274,6 +274,7 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             _moduleDamage.maxHealth = HealthPoints;
+            _damageable.SetMaxHealth((float)HealthPoints);
             return this;
         }
 

@@ -70,8 +70,12 @@ namespace Nuterra.BlockInjector
                     //    dict.Remove(blockID);
                     //}
                     //Patches.Catching = true;
-                    typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance).Invoke(spawnManager, new object[] { block.Prefab });
-                    var m_BlockPriceLookup = (typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(RecipeManager.inst) as Dictionary<int, int>);
+                    AddBlockToDictionary.Invoke(spawnManager, new object[] { block.Prefab });
+
+                    (LoadedBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)block.BlockID);
+                    (LoadedActiveBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)block.BlockID);
+
+                    var m_BlockPriceLookup = BlockPriceLookup.GetValue(RecipeManager.inst) as Dictionary<int, int>;
                     if (m_BlockPriceLookup.ContainsKey(blockID)) m_BlockPriceLookup[blockID] = block.Price;
                     else m_BlockPriceLookup.Add(blockID, block.Price);
                     return true;
@@ -99,6 +103,10 @@ namespace Nuterra.BlockInjector
                 return false;
             }
         }
+        static FieldInfo LoadedBlocks = typeof(ManSpawn).GetField("m_LoadedBlocks", System.Reflection.BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+        static FieldInfo LoadedActiveBlocks = typeof(ManSpawn).GetField("m_LoadedActiveBlocks", System.Reflection.BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+        static MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        static FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
         private static bool Ready = false;
         private static event Action PostStartEvent;
