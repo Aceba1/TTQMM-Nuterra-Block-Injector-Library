@@ -388,14 +388,14 @@
     <PostBuildEvent>del *.pdb
 @setlocal enableextensions enabledelayedexpansion
 
-set modpath="C:\Program Files (x86)\Steam\steamapps\common\TerraTech\QMods\$(TargetName)\"
+set modpath="C:\Program Files (x86)\Steam\steamapps\common\TerraTech\QMods\"
 
 if not exist !modpath! (
 echo Creating mod folder
 mkdir !modpath!
 )
 echo Copying to game
-set e=$(TargetDir)&gt;nul
+set e=$(TargetDir)..\&gt;nul
 xcopy /S /Y /R "!e:~0,-1!" !modpath!</PostBuildEvent>
   </PropertyGroup>
 </Project>
