@@ -41,6 +41,7 @@ namespace Nuterra.BlockInjector
             public IntVector3[] Cells;
             public Vector3[] APs;
             public Vector3? ReferenceOffset;
+            public Vector3? ReferenceScale;
             public Vector3? ReferenceRotationOffset;
             public string Recipe;
             public SubObj[] SubObjects;
@@ -286,7 +287,7 @@ namespace Nuterra.BlockInjector
                     bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Length != 0;
 
                     const bool BlockAlreadyExists = false;//ManSpawn.inst.IsValidBlockToSpawn((BlockTypes)buildablock.ID);
-                    bool Prefabbed = buildablock.GamePrefabReference != null && buildablock.GamePrefabReference != "";
+                    bool Prefabbed = !string.IsNullOrEmpty(buildablock.GamePrefabReference);
                     /*
                     if (BlockAlreadyExists)
                     { // BLOCK ALREADY EXISTS
@@ -317,6 +318,17 @@ namespace Nuterra.BlockInjector
                             {
                                 //Add Rotation
                                 blockbuilder.Prefab.transform.RotateChildren(buildablock.ReferenceRotationOffset.Value);
+                            }
+
+                            if (buildablock.ReferenceScale.HasValue && buildablock.ReferenceScale != Vector3.zero)
+                            {
+                                for (int ti = 0; ti < blockbuilder.Prefab.transform.childCount; ti++)
+                                {
+                                    var chi = blockbuilder.Prefab.transform.GetChild(ti);
+                                    //Stretch
+                                    chi.localPosition = Vector3.Scale(chi.localPosition, buildablock.ReferenceScale.Value);
+                                    chi.localScale = Vector3.Scale(chi.localScale, buildablock.ReferenceScale.Value);
+                                }
                             }
                         }
                     }
