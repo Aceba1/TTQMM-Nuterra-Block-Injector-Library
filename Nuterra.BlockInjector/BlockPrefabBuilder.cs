@@ -212,17 +212,19 @@ namespace Nuterra.BlockInjector
             }
             for (int i1 = 0; i1 < typesToRemove.Length; i1++)
             {
-                Component c = _search.GetComponent(typesToRemove[i1]);
-                if (c != null)
+                foreach (Component c in _search.GetComponents(typesToRemove[i1]))
                 {
-                    if (RemoveJustComponent)
+                    if (c != null)
                     {
-                        Component.DestroyImmediate(c);
-                    }
-                    else
-                    {
-                        GameObject.DestroyImmediate(_search.gameObject);
-                        return this;
+                        if (RemoveJustComponent)
+                        {
+                            Component.DestroyImmediate(c);
+                        }
+                        else
+                        {
+                            GameObject.DestroyImmediate(_search.gameObject);
+                            return this;
+                        }
                     }
                 }
             }
