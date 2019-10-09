@@ -30,8 +30,8 @@
   /*  OR  */
   "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GC_Main", "VEN_Main", "BF_Main", and "HE_Main",. This material flashes and everything! (You can use this in combination with the above)
 
-  "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make a box collider relative to the mesh
-  "SupressBoxColliderFallback": false, //Disable creation of BoxCollider. Useful for if SubObjects is being used for it
+  "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make an upright box collider relative to the mesh's extents
+  "SupressBoxColliderFallback": false, //Disable creation of BoxCollider. Useful for if a collider will be already provided
 
   // X is right and left, Y is up and down, and Z is forward and backward
 
@@ -101,13 +101,20 @@
     "x": 0,
     "y": 0,
     "z": 0
-  } //Shift the subobjects of the block prefab by x, y and z
+  }, //Shift the subobjects of the block prefab by x, y and z
   /*
   "ReferenceRotationOffset": {
     "x": 0, // Pitch
     "y": 0, // Yaw
     "z": 0  // Roll
-  }, //Rotate the subobjects of the block prefab
+  }, //Rotate the subobjects of the block prefab by the origin
+  */
+  /*
+  "ReferenceScale": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  }, //Scale all the subobjects of the block prefab by the origin
   */
 
   // Sub Objects can modify existing sub gameobjects on a prefab reference. Properties can be omitted as necessary
