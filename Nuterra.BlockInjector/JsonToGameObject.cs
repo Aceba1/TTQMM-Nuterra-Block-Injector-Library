@@ -343,16 +343,30 @@ namespace Nuterra.BlockInjector
                         GameObject newGameObject = result.transform.Find(name)?.gameObject;
                         if (!newGameObject)
                         {
+                            if (property.Value == null)
+                            {
+                                Console.WriteLine(Spacing + "Could not find object " + property.Name + " to delete");
+                                continue;
+                            }
                             Duplicate = false;
                             newGameObject = new GameObject(name);
                             newGameObject.transform.parent = result.transform;
                         }
-                        else if (Duplicate)
+                        else
                         {
-                            bool Active = newGameObject.activeInHierarchy;
-                            newGameObject = GameObject.Instantiate(newGameObject);
-                            newGameObject.name = name + "_copy";
-                            newGameObject.transform.parent = result.transform;
+                            if (property.Value == null)
+                            {
+                                GameObject.DestroyImmediate(newGameObject);
+                                Console.WriteLine(Spacing + "Deleted " + property.Name);
+                                continue;
+                            }
+                            if (Duplicate)
+                            {
+                                bool Active = newGameObject.activeInHierarchy;
+                                newGameObject = GameObject.Instantiate(newGameObject);
+                                newGameObject.name = name + "_copy";
+                                newGameObject.transform.parent = result.transform;
+                            }
                         }
                         CreateGameObject(property.Value as JObject, newGameObject, Spacing +  m_tab);
                     }
@@ -367,9 +381,9 @@ namespace Nuterra.BlockInjector
                             if (c != null)
                             {
                                 Component.DestroyImmediate(c);
-                                Console.WriteLine(Spacing + "Nullified " + property.Name);
+                                Console.WriteLine(Spacing + "Deleted " + property.Name);
                             }
-                            else Console.WriteLine(Spacing + "Component " + property.Name + " is already null");
+                            else Console.WriteLine(Spacing + "Could not find component " + property.Name + " to delete");
                         }
                         else
                         {
