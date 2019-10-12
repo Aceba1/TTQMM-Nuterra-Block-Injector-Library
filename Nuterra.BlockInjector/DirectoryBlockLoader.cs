@@ -787,22 +787,25 @@ namespace Nuterra.BlockInjector
         private static Transform RecursiveFind(this Transform transform, string NameOfChild, string HierarchyBuildup = "")
         {
             string cName = NameOfChild.Substring(NameOfChild.LastIndexOf('/') + 1);
-            var child = transform.Find(cName);
-            if (child == null)
+            for (int i = 0; i < transform.childCount; i++)
             {
-                for (int i = 0; i < transform.childCount; i++)
+                var child = transform.GetChild(i);
+                //Console.WriteLine(child.name);
+                if (child.name == cName)
                 {
-                    child = RecursiveFind(transform.GetChild(i), NameOfChild, HierarchyBuildup + "/" + transform.name);
-                    if (child != null)
+                    HierarchyBuildup += "/" + cName;
+                    //Console.WriteLine(HierarchyBuildup + "  " + NameOfChild);
+                    if (HierarchyBuildup.EndsWith(NameOfChild))
                     {
                         return child;
                     }
                 }
             }
-            else
+            for (int i = 0; i < transform.childCount; i++)
             {
-                HierarchyBuildup += "/" + cName;
-                if (HierarchyBuildup.EndsWith(NameOfChild))
+                var c = transform.GetChild(i);
+                var child = RecursiveFind(c, NameOfChild, HierarchyBuildup + "/" + c.name);
+                if (child != null)
                 {
                     return child;
                 }
