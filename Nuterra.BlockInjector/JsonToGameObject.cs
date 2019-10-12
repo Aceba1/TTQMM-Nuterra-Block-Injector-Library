@@ -364,7 +364,13 @@ namespace Nuterra.BlockInjector
                             {
                                 bool Active = newGameObject.activeInHierarchy;
                                 newGameObject = GameObject.Instantiate(newGameObject);
-                                newGameObject.name = name + "_copy";
+                                string newName = name + "_copy";
+                                int count = 1;
+                                while (result.transform.Find(newName))
+                                {
+                                    newName = name + "_copy_" + (++count).ToString(); 
+                                }
+                                newGameObject.name = newName;
                                 newGameObject.transform.parent = result.transform;
                             }
                         }
