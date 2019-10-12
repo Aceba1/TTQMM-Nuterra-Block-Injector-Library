@@ -786,9 +786,9 @@ namespace Nuterra.BlockInjector
 
         private static Transform RecursiveFind(this Transform transform, string NameOfChild, string HierarchyBuildup = "")
         {
-
-            var child = transform.Find(NameOfChild.Substring(NameOfChild.LastIndexOf('/') + 1));
-            if ((child == null || HierarchyBuildup.EndsWith(NameOfChild)) && transform.childCount > 0)
+            string cName = NameOfChild.Substring(NameOfChild.LastIndexOf('/') + 1);
+            var child = transform.Find(cName);
+            if (child == null)
             {
                 for (int i = 0; i < transform.childCount; i++)
                 {
@@ -799,7 +799,15 @@ namespace Nuterra.BlockInjector
                     }
                 }
             }
-            return child;
+            else
+            {
+                HierarchyBuildup += "/" + cName;
+                if (HierarchyBuildup.EndsWith(NameOfChild))
+                {
+                    return child;
+                }
+            }
+            return null;
         }
 
         private static void RotateChildren(this Transform transform, Vector3 Rotation)
