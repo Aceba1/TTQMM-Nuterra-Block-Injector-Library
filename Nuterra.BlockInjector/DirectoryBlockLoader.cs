@@ -216,7 +216,9 @@ namespace Nuterra.BlockInjector
                 try
                 {
                     Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
-                    GameObjectJSON.AddObjectToUserResources(tex, Png.Name);
+                    GameObjectJSON.AddObjectToUserResources<Texture2D>(tex, Png.Name);
+                    GameObjectJSON.AddObjectToUserResources<Texture>(tex, Png.Name);
+                    GameObjectJSON.AddObjectToUserResources<Sprite>(GameObjectJSON.SpriteFromImage(tex), Png.Name);
                     //Console.WriteLine("Added " + Png.Name + "\n from " + Png.FullName);
                     //if (Png.Name.Length > 7)
                     //{
@@ -276,146 +278,147 @@ namespace Nuterra.BlockInjector
             foreach (FileInfo Json in cbJson)
             {
                 sw.Restart();
-                try
+                CreateJSONBlock(Json);
+                Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate json block");
+            }
+            sw.Stop();
+        }
+
+        private static void CreateJSONBlock(FileInfo Json)
+        {
+            try
+            {
+                //Read JSON
+                JObject jObject = JObject.Parse(StripComments(File.ReadAllText(Json.FullName)));
+                BlockBuilder jBlock = jObject.ToObject<BlockBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
+                BlockPrefabBuilder blockbuilder;
+                bool JSONParser = jBlock.JSONBLOCK != null;
+
+                bool HasSubObjs = jBlock.SubObjects != null && jBlock.SubObjects.Length != 0;
+
+                bool BlockAlreadyExists = BlockLoader.CustomBlocks.TryGetValue(jBlock.ID, out var ExistingJSONBlock);
+                bool Prefabbed = !string.IsNullOrEmpty(jBlock.GamePrefabReference);
+                if (BlockAlreadyExists)
+                { // BLOCK ALREADY EXISTS
+                    blockbuilder = new BlockPrefabBuilder(ExistingJSONBlock.Prefab, false);
+                }
+                else
                 {
-                    //Read JSON
-                    JObject jObject = JObject.Parse(StripComments(File.ReadAllText(Json.FullName)));
-                    var buildablock = jObject.ToObject<BlockBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
-                    BlockPrefabBuilder blockbuilder;
-                    bool BlockJSON = buildablock.JSONBLOCK != null;
-
-                    bool HasSubObjs = buildablock.SubObjects != null && buildablock.SubObjects.Length != 0;
-
-                    const bool BlockAlreadyExists = false;//ManSpawn.inst.IsValidBlockToSpawn((BlockTypes)buildablock.ID);
-                    bool Prefabbed = !string.IsNullOrEmpty(buildablock.GamePrefabReference);
-                    /*
-                    if (BlockAlreadyExists)
-                    { // BLOCK ALREADY EXISTS
-                        blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, false);
-                    }
-                    else
-                    */
+                    //Prefab reference
+                    if (!Prefabbed)
                     {
-                        //Prefab reference
-                        if (!Prefabbed)
-                        {
-                            blockbuilder = new BlockPrefabBuilder();
-                        }
-                        else
-                        {
-                            Prefabbed = true;
-                            if (buildablock.ReferenceOffset.HasValue && buildablock.ReferenceOffset != Vector3.zero)
-                            {
-                                //Offset Prefab
-                                blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, buildablock.ReferenceOffset.Value, !buildablock.KeepReferenceRenderers);
-                            }
-                            else
-                            {
-                                blockbuilder = new BlockPrefabBuilder(buildablock.GamePrefabReference, !buildablock.KeepReferenceRenderers);
-                            }
-
-                            if (buildablock.ReferenceRotationOffset.HasValue && buildablock.ReferenceRotationOffset != Vector3.zero)
-                            {
-                                //Add Rotation
-                                blockbuilder.Prefab.transform.RotateChildren(buildablock.ReferenceRotationOffset.Value);
-                            }
-
-                            if (buildablock.ReferenceScale.HasValue && buildablock.ReferenceScale != Vector3.zero)
-                            {
-                                for (int ti = 0; ti < blockbuilder.Prefab.transform.childCount; ti++)
-                                {
-                                    var chi = blockbuilder.Prefab.transform.GetChild(ti);
-                                    //Stretch
-                                    chi.localPosition = Vector3.Scale(chi.localPosition, buildablock.ReferenceScale.Value);
-                                    chi.localScale = Vector3.Scale(chi.localScale, buildablock.ReferenceScale.Value);
-                                }
-                            }
-                        }
-                    }
-
-                    //If gameobjectJSON exists, use it
-                    if (BlockJSON)
-                    {
-                        GameObjectJSON.CreateGameObject(jObject.Property("JSONBLOCK").Value.ToObject<JObject>(), blockbuilder.Prefab);
-                    }
-
-                    //Set IP
-                    if (!BlockAlreadyExists)
-                    {
-                        blockbuilder.SetBlockID(buildablock.ID);
-                    }
-
-                    //Set Category
-                    if (!BlockAlreadyExists)
-                        if (buildablock.Category != 0)
-                        {
-                            blockbuilder.SetCategory((BlockCategories)buildablock.Category);
-                        }
-                        else
-                        {
-                            blockbuilder.SetCategory(BlockCategories.Standard);
-                        }
-
-                    //Set Faction (Corp)
-                    if (!BlockAlreadyExists)
-                        if (buildablock.Faction != 0)
-                        {
-                            blockbuilder.SetFaction((FactionSubTypes)buildablock.Faction);
-                        }
-                        else
-                        {
-                            blockbuilder.SetFaction(FactionSubTypes.GSO);
-                        }
-
-                    //Set Block Grade
-                    if (!BlockAlreadyExists)
-                        blockbuilder.SetGrade(buildablock.Grade);
-
-                    //Set HP
-                    if (buildablock.HP != 0)
-                    {
-                        blockbuilder.SetHP(buildablock.HP);
+                        blockbuilder = new BlockPrefabBuilder();
                     }
                     else
                     {
-                        if (!BlockAlreadyExists)
-                            blockbuilder.SetHP(100);
+                        Prefabbed = true;
+                        if (jBlock.ReferenceOffset.HasValue && jBlock.ReferenceOffset != Vector3.zero)
+                        {
+                            //Offset Prefab
+                            blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, jBlock.ReferenceOffset.Value, !jBlock.KeepReferenceRenderers);
+                        }
+                        else
+                        {
+                            blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, !jBlock.KeepReferenceRenderers);
+                        }
+
+                        if (jBlock.ReferenceRotationOffset.HasValue && jBlock.ReferenceRotationOffset != Vector3.zero)
+                        {
+                            //Add Rotation
+                            blockbuilder.Prefab.transform.RotateChildren(jBlock.ReferenceRotationOffset.Value);
+                        }
+
+                        if (jBlock.ReferenceScale.HasValue && jBlock.ReferenceScale != Vector3.zero)
+                        {
+                            for (int ti = 0; ti < blockbuilder.Prefab.transform.childCount; ti++)
+                            {
+                                var chi = blockbuilder.Prefab.transform.GetChild(ti);
+                                //Stretch
+                                chi.localPosition = Vector3.Scale(chi.localPosition, jBlock.ReferenceScale.Value);
+                                chi.localScale = Vector3.Scale(chi.localScale, jBlock.ReferenceScale.Value);
+                            }
+                        }
+                    }
+                }
+
+                //If gameobjectJSON exists, use it
+                if (JSONParser)
+                {
+                    GameObjectJSON.CreateGameObject(jObject.Property("JSONBLOCK").Value.ToObject<JObject>(), blockbuilder.Prefab);
+                }
+
+                //Set IP
+                if (!BlockAlreadyExists)
+                {
+                    blockbuilder.SetBlockID(jBlock.ID);
+                }
+
+                //Set Category
+                if (!BlockAlreadyExists)
+                    if (jBlock.Category != 0)
+                    {
+                        blockbuilder.SetCategory((BlockCategories)jBlock.Category);
+                    }
+                    else
+                    {
+                        blockbuilder.SetCategory(BlockCategories.Standard);
                     }
 
-                    //Set DamageableType
-                    if (buildablock.DamageableType.HasValue)
+                //Set Faction (Corp)
+                if (!BlockAlreadyExists)
+                    if (jBlock.Faction != 0)
                     {
-                        blockbuilder.SetDamageableType((ManDamage.DamageableType)buildablock.DamageableType.Value);
+                        blockbuilder.SetFaction((FactionSubTypes)jBlock.Faction);
+                    }
+                    else
+                    {
+                        blockbuilder.SetFaction(FactionSubTypes.GSO);
                     }
 
-                    //Set DetachFragility
-                    if (buildablock.Fragility.HasValue)
-                    {
-                        blockbuilder.SetDetachFragility(buildablock.Fragility.Value);
-                    }
+                //Set Block Grade
+                if (!BlockAlreadyExists)
+                    blockbuilder.SetGrade(jBlock.Grade);
 
-                    //Set Icon
-                    if (buildablock.IconName != null && buildablock.IconName != "")
+                //Set HP
+                if (jBlock.HP != 0)
+                {
+                    blockbuilder.SetHP(jBlock.HP);
+                }
+                else
+                {
+                    if (!BlockAlreadyExists)
+                        blockbuilder.SetHP(250);
+                }
+
+                //Set DamageableType
+                if (jBlock.DamageableType.HasValue)
+                {
+                    blockbuilder.SetDamageableType((ManDamage.DamageableType)jBlock.DamageableType.Value);
+                }
+
+                //Set DetachFragility
+                if (jBlock.Fragility.HasValue)
+                {
+                    blockbuilder.SetDetachFragility(jBlock.Fragility.Value);
+                }
+
+                //Set Icon
+                if (jBlock.IconName != null && jBlock.IconName != "")
+                {
+                    var Tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.IconName);
+                    if (Tex == null)
                     {
-                        var Tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.IconName);
+                        Tex = GameObjectJSON.GetObjectFromGameResources<Texture2D>(Texture2DT, jBlock.IconName);
                         if (Tex == null)
                         {
-                            Tex = GameObjectJSON.GetObjectFromGameResources<Texture2D>(Texture2DT, buildablock.IconName);
-                            if (Tex == null)
+                            var Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(jBlock.IconName);
+                            if (Spr == null)
                             {
-                                var Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(buildablock.IconName);
-                                if (Spr == null)
-                                {
-                                    blockbuilder.SetIcon((Sprite)null);
-                                }
-                                else
-                                {
-                                    blockbuilder.SetIcon(Spr);
-                                }
+                                blockbuilder.SetIcon((Sprite)null);
                             }
                             else
                             {
-                                blockbuilder.SetIcon(Tex);
+                                blockbuilder.SetIcon(Spr);
                             }
                         }
                         else
@@ -423,352 +426,353 @@ namespace Nuterra.BlockInjector
                             blockbuilder.SetIcon(Tex);
                         }
                     }
-
-                    Material localmat = null;
-                    //Get Material
-                    if (buildablock.MeshMaterialName != null && buildablock.MeshMaterialName != "")
+                    else
                     {
-                        buildablock.MeshMaterialName.Replace("Venture_", "VEN_");
-                        buildablock.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                        try
+                        blockbuilder.SetIcon(Tex);
+                    }
+                }
+
+                Material localmat = null;
+                //Get Material
+                if (jBlock.MeshMaterialName != null && jBlock.MeshMaterialName != "")
+                {
+                    jBlock.MeshMaterialName.Replace("Venture_", "VEN_");
+                    jBlock.MeshMaterialName.Replace("GeoCorp_", "GC_");
+                    try
+                    {
+                        localmat = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, jBlock.MeshMaterialName);
+                    }
+                    catch { Console.WriteLine(jBlock.MeshMaterialName + " is not a valid Game Material!"); }
+                }
+                if (localmat == null)
+                {
+                    localmat = GameObjectJSON.MaterialFromShader();
+                }
+
+                bool missingflag1 = string.IsNullOrWhiteSpace(jBlock.MeshTextureName),
+                    missingflag2 = string.IsNullOrWhiteSpace(jBlock.MeshGlossTextureName),
+                    missingflag3 = string.IsNullOrWhiteSpace(jBlock.MeshEmissionTextureName);
+                localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
+                    missingflag1 ? null :
+                    GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshTextureName),
+                    missingflag2 ? null :
+                    GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
+                    missingflag3 ? null :
+                    GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
+                //Set Model
+                {
+                    //-Get Mesh
+                    Mesh mesh = null;
+                    if ((jBlock.MeshName != null && jBlock.MeshName != ""))
+                    {
+                        mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.MeshName);
+                    }
+                    //if (mesh == null && !HasSubObjs && !BlockAlreadyExists)
+                    //{
+                    //    mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>(MeshT, "Cube");
+                    //    if (mesh == null)
+                    //    {
+                    //        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    //        mesh = go.GetComponent<MeshFilter>().mesh;
+                    //        GameObject.Destroy(go);
+                    //    }
+                    //}
+                    //-Get Collider
+                    Mesh colliderMesh = null;
+                    if (jBlock.ColliderMeshName != null && jBlock.ColliderMeshName != "")
+                    {
+                        colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.ColliderMeshName);
+                    }
+                    //-Apply
+                    if (mesh != null)
+                    {
+                        if (colliderMesh == null)
                         {
-                            localmat = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, buildablock.MeshMaterialName);
+                            blockbuilder.SetModel(mesh, !jBlock.SupressBoxColliderFallback, localmat);
                         }
-                        catch { Console.WriteLine(buildablock.MeshMaterialName + " is not a valid Game Material!"); }
+                        else
+                        {
+                            blockbuilder.SetModel(mesh, colliderMesh, true, localmat);
+                        }
                     }
-                    if (localmat == null)
+                }
+                if (HasSubObjs) //Set SUB MESHES
+                {
+                    var tr = blockbuilder.Prefab.transform;
+                    foreach (var sub in jBlock.SubObjects) //For each SUB
                     {
-                        localmat = GameObjectJSON.MaterialFromShader();
-                    }
-
-                    bool missingflag1 = string.IsNullOrWhiteSpace(buildablock.MeshTextureName),
-                        missingflag2 = string.IsNullOrWhiteSpace(buildablock.MeshGlossTextureName),
-                        missingflag3 = string.IsNullOrWhiteSpace(buildablock.MeshEmissionTextureName);
-                    localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
-                        missingflag1 ? null :
-                        GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.MeshTextureName),
-                        missingflag2 ? null :
-                        GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.MeshGlossTextureName),
-                        missingflag3 ? null :
-                        GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, buildablock.MeshEmissionTextureName));
-                    //Set Model
-                    {
+                        Transform childT = null;
+                        string LocalPath;
+                        if (sub.SubOverrideName != null && sub.SubOverrideName != "") childT = tr.RecursiveFind(sub.SubOverrideName);
+                        GameObject childG = null;
+                        bool New = false;
+                        if (childT != null)
+                        {
+                            childG = childT.gameObject;
+                            if (sub.Layer.HasValue)
+                            {
+                                childG.layer = sub.Layer.Value;
+                            }
+                        }
+                        else
+                        {
+                            string name = "SubObject_" + (tr.childCount + 1).ToString();
+                            LocalPath = "/" + name;
+                            childG = new GameObject(name);
+                            childT = childG.transform;
+                            childT.parent = tr;
+                            childT.localPosition = Vector3.zero;
+                            childT.localRotation = Quaternion.identity;
+                            if (sub.Layer.HasValue)
+                            {
+                                childG.layer = sub.Layer.Value;
+                            }
+                            else
+                            {
+                                childG.layer = Globals.inst.layerTank;
+                            }
+                            New = true;
+                        }
+                        //-Offset
+                        if (sub.SubPosition.HasValue)
+                        {
+                            childT.localPosition = sub.SubPosition.Value;
+                        }
+                        if (sub.SubRotation.HasValue)
+                        {
+                            childT.localRotation = Quaternion.Euler(sub.SubRotation.Value);
+                        }
+                        //-DestroyCollidersOnObj
+                        if (sub.DestroyExistingColliders)
+                        {
+                            foreach (var collider in childG.GetComponents<Collider>())
+                            {
+                                Component.DestroyImmediate(collider);
+                            }
+                        }
+                        //-DestroyRendersOnObj
+                        if (sub.DestroyExistingRenderer)
+                        {
+                            foreach (var comp1 in childG.GetComponents<MeshRenderer>())
+                            {
+                                Component.DestroyImmediate(comp1);
+                            }
+                            foreach (var comp2 in childG.GetComponents<MeshFilter>())
+                            {
+                                Component.DestroyImmediate(comp2);
+                            }
+                        }
                         //-Get Mesh
                         Mesh mesh = null;
-                        if ((buildablock.MeshName != null && buildablock.MeshName != ""))
+                        if (sub.MeshName != null && sub.MeshName != "")
                         {
-                            mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, buildablock.MeshName);
+                            mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.MeshName);
                         }
-                        //if (mesh == null && !HasSubObjs && !BlockAlreadyExists)
-                        //{
-                        //    mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>(MeshT, "Cube");
-                        //    if (mesh == null)
-                        //    {
-                        //        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        //        mesh = go.GetComponent<MeshFilter>().mesh;
-                        //        GameObject.Destroy(go);
-                        //    }
-                        //}
                         //-Get Collider
                         Mesh colliderMesh = null;
-                        if (buildablock.ColliderMeshName != null && buildablock.ColliderMeshName != "")
+                        if (sub.ColliderMeshName != null && sub.ColliderMeshName != "")
                         {
-                            colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, buildablock.ColliderMeshName);
+                            colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.ColliderMeshName);
                         }
+                        //-Get Material
+                        Material mat = localmat;
+                        if (!New && !sub.DestroyExistingRenderer)
+                        {
+                            var ren = childG.GetComponent<MeshRenderer>();
+                            if (ren != null)
+                            {
+                                mat = ren.material;
+                            }
+                        }
+                        if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
+                        {
+                            sub.MeshMaterialName.Replace("Venture_", "VEN_");
+                            sub.MeshMaterialName.Replace("GeoCorp_", "GC_");
+                            try
+                            {
+                                var mat2 = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName);
+                                if (mat2 == null) Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!");
+                                else mat = mat2;
+                            }
+                            catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
+                        }
+                        mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
+                            string.IsNullOrWhiteSpace(sub.MeshTextureName) ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
+                            string.IsNullOrWhiteSpace(sub.MeshGlossTextureName) ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
+                            string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName) ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
                         //-Apply
                         if (mesh != null)
                         {
-                            if (colliderMesh == null)
-                            {
-                                blockbuilder.SetModel(mesh, !buildablock.SupressBoxColliderFallback, localmat);
-                            }
-                            else
-                            {
-                                blockbuilder.SetModel(mesh, colliderMesh, true, localmat);
-                            }
+                            if (New) childG.AddComponent<MeshFilter>().sharedMesh = mesh;
+                            else childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
                         }
-                    }
-                    if (HasSubObjs) //Set SUB MESHES
-                    {
-                        var tr = blockbuilder.Prefab.transform;
-                        foreach (var sub in buildablock.SubObjects) //For each SUB
+
+                        childG.EnsureComponent<MeshRenderer>().material = mat;
+
+                        if (colliderMesh != null)
                         {
-                            Transform childT = null;
-                            string LocalPath;
-                            if (sub.SubOverrideName != null && sub.SubOverrideName != "") childT = tr.RecursiveFind(sub.SubOverrideName);
-                            GameObject childG = null;
-                            bool New = false;
-                            if (childT != null)
-                            {
-                                childG = childT.gameObject;
-                                if (sub.Layer.HasValue)
-                                {
-                                    childG.layer = sub.Layer.Value;
-                                }
-                            }
-                            else
-                            {
-                                string name = "SubObject_" + (tr.childCount + 1).ToString();
-                                LocalPath = "/" + name;
-                                childG = new GameObject(name);
-                                childT = childG.transform;
-                                childT.parent = tr;
-                                childT.localPosition = Vector3.zero;
-                                childT.localRotation = Quaternion.identity;
-                                if (sub.Layer.HasValue)
-                                {
-                                    childG.layer = sub.Layer.Value;
-                                }
-                                else
-                                {
-                                    childG.layer = Globals.inst.layerTank;
-                                }
-                                New = true;
-                            }
-                            //-Offset
-                            if (sub.SubPosition.HasValue)
-                            {
-                                childT.localPosition = sub.SubPosition.Value;
-                            }
-                            if (sub.SubRotation.HasValue)
-                            {
-                                childT.localRotation = Quaternion.Euler(sub.SubRotation.Value);
-                            }
-                            //-DestroyCollidersOnObj
-                            if (sub.DestroyExistingColliders)
-                            {
-                                foreach (var collider in childG.GetComponents<Collider>())
-                                {
-                                    Component.DestroyImmediate(collider);
-                                }
-                            }
-                            //-DestroyRendersOnObj
-                            if (sub.DestroyExistingRenderer)
-                            {
-                                foreach (var comp1 in childG.GetComponents<MeshRenderer>())
-                                {
-                                    Component.DestroyImmediate(comp1);
-                                }
-                                foreach (var comp2 in childG.GetComponents<MeshFilter>())
-                                {
-                                    Component.DestroyImmediate(comp2);
-                                }
-                            }
-                            //-Get Mesh
-                            Mesh mesh = null;
-                            if (sub.MeshName != null && sub.MeshName != "")
-                            {
-                                mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.MeshName);
-                            }
-                            //-Get Collider
-                            Mesh colliderMesh = null;
-                            if (sub.ColliderMeshName != null && sub.ColliderMeshName != "")
-                            {
-                                colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.ColliderMeshName);
-                            }
-                            //-Get Material
-                            Material mat = localmat;
-                            if (!New && !sub.DestroyExistingRenderer)
-                            {
-                                var ren = childG.GetComponent<MeshRenderer>();
-                                if (ren != null)
-                                {
-                                    mat = ren.material;
-                                }
-                            }
-                            if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
-                            {
-                                sub.MeshMaterialName.Replace("Venture_", "VEN_");
-                                sub.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                                try
-                                {
-                                    var mat2 = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName);
-                                    if (mat2 == null) Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!");
-                                    else mat = mat2;
-                                }
-                                catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
-                            }
-                            mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
-                                string.IsNullOrWhiteSpace(sub.MeshTextureName) ? null :
-                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
-                                string.IsNullOrWhiteSpace(sub.MeshGlossTextureName) ? null :
-                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
-                                string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName) ? null :
-                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
-                            //-Apply
+                            MeshCollider mc;
+                            if (New) mc = childG.AddComponent<MeshCollider>();
+                            else mc = childG.EnsureComponent<MeshCollider>();
+                            mc.convex = true;
+                            mc.sharedMesh = colliderMesh;
+                        }
+                        if (sub.MakeBoxCollider)
+                        {
                             if (mesh != null)
                             {
-                                if (New) childG.AddComponent<MeshFilter>().sharedMesh = mesh;
-                                else childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
-                            }
-
-                            childG.EnsureComponent<MeshRenderer>().material = mat;
-
-                            if (colliderMesh != null)
-                            {
-                                MeshCollider mc;
-                                if (New) mc = childG.AddComponent<MeshCollider>();
-                                else mc = childG.EnsureComponent<MeshCollider>();
-                                mc.convex = true;
-                                mc.sharedMesh = colliderMesh;
-                            }
-                            if (sub.MakeBoxCollider)
-                            {
-                                if (mesh != null)
-                                { 
-                                    mesh.RecalculateBounds();
-                                    var bc = childG.EnsureComponent<BoxCollider>();
-                                    bc.size = mesh.bounds.size - Vector3.one * 0.2f;
-                                    bc.center = mesh.bounds.center;
-                                }
-                                else
-                                {
-                                    var bc = childG.EnsureComponent<BoxCollider>();
-                                    bc.size = Vector3.one;
-                                    bc.center = Vector3.zero;
-                                }
-                            }
-                            if (sub.MakeSphereCollider)
-                            {
-                                    var bc = childG.EnsureComponent<SphereCollider>();
-                                    bc.radius = 0.5f;
-                                    bc.center = Vector3.zero;
-                            }
-                            if (sub.SubScale.HasValue && sub.SubScale != Vector3.zero)
-                            {
-                                childT.localScale = sub.SubScale.Value;
-                            }
-                            //-Animation
-                            if (sub.Animation != null)
-                            {
-                                Console.WriteLine("Animation block detected");
-                                var mA = tr.GetComponentsInChildren<Animator>(true);
-                                if (mA.Length != 0)
-                                {
-                                    var Animator = mA[0];
-                                    GameObjectJSON.DumpAnimation(Animator);
-                                    foreach (var anim in sub.Animation)
-                                    {
-                                        GameObjectJSON.ModifyAnimation(Animator, anim.ClipName, childT.GetPath(Animator.transform), GameObjectJSON.AnimationCurveStruct.ConvertToStructArray(anim.Curves));
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    //Set Name
-                    blockbuilder.SetName(buildablock.Name);
-
-                    //Set Desc
-                    blockbuilder.SetDescription(buildablock.Description);
-
-                    //Set Price
-                    if (buildablock.Price != 0)
-                    {
-                        blockbuilder.SetPrice(buildablock.Price);
-                    }
-                    else
-                    {
-                        blockbuilder.SetPrice(500);
-                    }
-
-                    //Set Size
-                    if (!BlockAlreadyExists)
-                    {
-                        if (buildablock.Cells != null && buildablock.Cells.Length != 0)
-                        {
-                            blockbuilder.SetSizeManual(buildablock.Cells);
-                        }
-                        else if (buildablock.BlockExtents.HasValue)
-                        {
-                            blockbuilder.SetSize(buildablock.BlockExtents.Value, (buildablock.APsOnlyAtBottom ? BlockPrefabBuilder.AttachmentPoints.Bottom : BlockPrefabBuilder.AttachmentPoints.All));
-                        }
-                        if (buildablock.APs != null)
-                        {
-                            blockbuilder.SetAPsManual(buildablock.APs);
-                        }
-                    }
-
-                    //Set Mass
-                    if (buildablock.Mass != 0f)
-                    {
-                        blockbuilder.SetMass(buildablock.Mass);
-                    }
-                    else
-                    {
-                        blockbuilder.SetMass(1f);
-                    }
-
-                    // REGISTER
-                    blockbuilder.RegisterLater(6);
-
-                    //Recipe
-                    if (!BlockAlreadyExists && buildablock.Recipe != null && buildablock.Recipe != "")
-                    {
-                        Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
-                        Type cT = typeof(ChunkTypes);
-                        string[] recipes = buildablock.Recipe.Replace(" ", "").Split(',');
-                        foreach (string recipe in recipes)
-                        {
-                            int chunk = (int)ChunkTypes.Null;
-                            try
-                            {
-                                chunk = (int)(ChunkTypes)Enum.Parse(cT, recipe, true);
-                            }
-                            catch
-                            {
-                                if (int.TryParse(recipe, out int result))
-                                {
-                                    chunk = result;
-                                }
-                            }
-                            if (chunk != (int)ChunkTypes.Null)
-                            {
-                                if (!RecipeBuilder.ContainsKey(chunk))
-                                {
-                                    RecipeBuilder.Add(chunk, 1);
-                                }
-                                else
-                                {
-                                    RecipeBuilder[chunk]++;
-                                }
+                                mesh.RecalculateBounds();
+                                var bc = childG.EnsureComponent<BoxCollider>();
+                                bc.size = mesh.bounds.size - Vector3.one * 0.2f;
+                                bc.center = mesh.bounds.center;
                             }
                             else
                             {
-                                Console.WriteLine("No ChunkTypes found matching given name, nor could parse as ID (int): " + recipe);
+                                var bc = childG.EnsureComponent<BoxCollider>();
+                                bc.size = Vector3.one;
+                                bc.center = Vector3.zero;
                             }
                         }
-
-                        var Input = new CustomRecipe.RecipeInput[RecipeBuilder.Count];
-                        int ite = 0;
-                        foreach (var pair in RecipeBuilder)
+                        if (sub.MakeSphereCollider)
                         {
-                            Input[ite] = new CustomRecipe.RecipeInput(pair.Key, pair.Value);
-                            ite++;
+                            var bc = childG.EnsureComponent<SphereCollider>();
+                            bc.radius = 0.5f;
+                            bc.center = Vector3.zero;
                         }
-
-                        string fab = "gsofab";
-                        switch ((FactionSubTypes)buildablock.Faction)
+                        if (sub.SubScale.HasValue && sub.SubScale != Vector3.zero)
                         {
-                            case FactionSubTypes.GC: fab = "gcfab"; break;
-                            case FactionSubTypes.VEN: fab = "venfab"; break;
-                            case FactionSubTypes.HE: fab = "hefab"; break;
-                            case FactionSubTypes.BF: fab = "bffab"; break;
+                            childT.localScale = sub.SubScale.Value;
                         }
-
-                        CustomRecipe.RegisterRecipe(Input, new CustomRecipe.RecipeOutput[1] {
-                                new CustomRecipe.RecipeOutput(buildablock.ID)
-                            }, RecipeTable.Recipe.OutputType.Items, fab);
+                        //-Animation
+                        if (sub.Animation != null)
+                        {
+                            Console.WriteLine("Animation block detected");
+                            var mA = tr.GetComponentsInChildren<Animator>(true);
+                            if (mA.Length != 0)
+                            {
+                                var Animator = mA[0];
+                                GameObjectJSON.DumpAnimation(Animator);
+                                foreach (var anim in sub.Animation)
+                                {
+                                    GameObjectJSON.ModifyAnimation(Animator, anim.ClipName, childT.GetPath(Animator.transform), GameObjectJSON.AnimationCurveStruct.ConvertToStructArray(anim.Curves));
+                                }
+                            }
+                        }
                     }
                 }
-                catch (Exception E)
+
+                //Set Name
+                blockbuilder.SetName(jBlock.Name);
+
+                //Set Desc
+                blockbuilder.SetDescription(jBlock.Description);
+
+                //Set Price
+                if (jBlock.Price != 0)
                 {
-                    Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\n" + E.Message + "\n" + E.StackTrace);
-                    BlockLoader.Timer.blocks += $"\nCould not read #{Json.Name} - \"{E.Message}\"";
+                    blockbuilder.SetPrice(jBlock.Price);
                 }
-                Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate json block");
+                else
+                {
+                    blockbuilder.SetPrice(500);
+                }
+
+                if (jBlock.Cells != null && jBlock.Cells.Length != 0)
+                {
+                    blockbuilder.SetSizeManual(jBlock.Cells);
+                }
+                else if (jBlock.BlockExtents.HasValue)
+                {
+                    blockbuilder.SetSize(jBlock.BlockExtents.Value, (jBlock.APsOnlyAtBottom ? BlockPrefabBuilder.AttachmentPoints.Bottom : BlockPrefabBuilder.AttachmentPoints.All));
+                }
+                if (jBlock.APs != null)
+                {
+                    blockbuilder.SetAPsManual(jBlock.APs);
+                }
+
+                //Set Mass
+                if (jBlock.Mass != 0f)
+                {
+                    blockbuilder.SetMass(jBlock.Mass);
+                }
+                else
+                {
+                    blockbuilder.SetMass(1f);
+                }
+
+                // REGISTER
+                if (BlockAlreadyExists)
+                    blockbuilder.Prefab.SetActive(false);
+                else
+                    blockbuilder.RegisterLater(6);
+
+                //Recipe
+                if (!BlockAlreadyExists && jBlock.Recipe != null && jBlock.Recipe != "")
+                {
+                    Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
+                    Type cT = typeof(ChunkTypes);
+                    string[] recipes = jBlock.Recipe.Replace(" ", "").Split(',');
+                    foreach (string recipe in recipes)
+                    {
+                        int chunk = (int)ChunkTypes.Null;
+                        try
+                        {
+                            chunk = (int)(ChunkTypes)Enum.Parse(cT, recipe, true);
+                        }
+                        catch
+                        {
+                            if (int.TryParse(recipe, out int result))
+                            {
+                                chunk = result;
+                            }
+                        }
+                        if (chunk != (int)ChunkTypes.Null)
+                        {
+                            if (!RecipeBuilder.ContainsKey(chunk))
+                            {
+                                RecipeBuilder.Add(chunk, 1);
+                            }
+                            else
+                            {
+                                RecipeBuilder[chunk]++;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("No ChunkTypes found matching given name, nor could parse as ID (int): " + recipe);
+                        }
+                    }
+
+                    var Input = new CustomRecipe.RecipeInput[RecipeBuilder.Count];
+                    int ite = 0;
+                    foreach (var pair in RecipeBuilder)
+                    {
+                        Input[ite] = new CustomRecipe.RecipeInput(pair.Key, pair.Value);
+                        ite++;
+                    }
+
+                    string fab = "gsofab";
+                    switch ((FactionSubTypes)jBlock.Faction)
+                    {
+                        case FactionSubTypes.GC: fab = "gcfab"; break;
+                        case FactionSubTypes.VEN: fab = "venfab"; break;
+                        case FactionSubTypes.HE: fab = "hefab"; break;
+                        case FactionSubTypes.BF: fab = "bffab"; break;
+                    }
+
+                    CustomRecipe.RegisterRecipe(Input, new CustomRecipe.RecipeOutput[1] {
+                                new CustomRecipe.RecipeOutput(jBlock.ID)
+                            }, RecipeTable.Recipe.OutputType.Items, fab);
+                }
             }
-            sw.Stop();
+            catch (Exception E)
+            {
+                Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\n" + E.Message + "\n" + E.StackTrace);
+                BlockLoader.Timer.blocks += $"\nCould not read #{Json.Name} - \"{E.Message}\"";
+            }
         }
 
         private static string GetPath(this Transform transform, Transform targetParent = null)

@@ -15,7 +15,7 @@ namespace Nuterra.BlockInjector
 
         const string m_tab = "  ";
 
-        public static Material MaterialFromShader(string ShaderName = "Standard")
+        public static Material MaterialFromShader(string ShaderName = "StandardTankBlock")
         {
             var shader = Shader.Find(ShaderName);
             return new Material(shader);
@@ -518,7 +518,6 @@ namespace Nuterra.BlockInjector
                             }
                             else
                             {
-                                Console.WriteLine(Spacing + m_tab + ">Setting value");
                                 if (UseField)
                                 {
                                     tField.SetValue(_instance, property.Value.ToObject(tField.FieldType));
@@ -527,6 +526,7 @@ namespace Nuterra.BlockInjector
                                 {
                                     tProp.SetValue(_instance, property.Value.ToObject(tProp.PropertyType), null);
                                 }
+                                Console.WriteLine(Spacing + m_tab + ">Setting value");
                             }
                         }
                         catch
