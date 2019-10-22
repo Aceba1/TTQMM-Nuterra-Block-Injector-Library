@@ -357,7 +357,7 @@ namespace Nuterra.BlockInjector
                             if (property.Value == null)
                             {
                                 GameObject.DestroyImmediate(newGameObject);
-                                Console.WriteLine(Spacing + "Deleted " + property.Name);
+                               //Console.WriteLine(Spacing + "Deleted " + property.Name);
                                 continue;
                             }
                             if (Duplicate)
@@ -387,7 +387,7 @@ namespace Nuterra.BlockInjector
                             if (c != null)
                             {
                                 Component.DestroyImmediate(c);
-                                Console.WriteLine(Spacing + "Deleted " + property.Name);
+                               //Console.WriteLine(Spacing + "Deleted " + property.Name);
                             }
                             else Console.WriteLine(Spacing + "Could not find component " + property.Name + " to delete");
                         }
@@ -401,10 +401,10 @@ namespace Nuterra.BlockInjector
                                     Console.WriteLine(property.Name + " is a null component, but does not throw an exception...");
                                     continue;
                                 }
-                                Console.WriteLine(Spacing + "Created " + property.Name);
+                               //Console.WriteLine(Spacing + "Created " + property.Name);
                             }
                             ApplyValues(component, componentType, property.Value as JObject, Spacing);
-                            Console.WriteLine(Spacing + "Set values of " + property.Name);
+                           //Console.WriteLine(Spacing + "Set values of " + property.Name);
                         }
                     }
                 }
@@ -413,7 +413,7 @@ namespace Nuterra.BlockInjector
                     Console.WriteLine(E.Message + "\n" + E.StackTrace);
                 }
             }
-            Console.WriteLine($"Took {stopwatch.ElapsedMilliseconds} ms to pass {result.name} through JSON parser");
+           //Console.WriteLine($"Took {stopwatch.ElapsedMilliseconds} ms to pass {result.name} through JSON parser");
             stopwatch.Stop();
 
             return result;
@@ -421,7 +421,7 @@ namespace Nuterra.BlockInjector
 
         public static object ApplyValues(object instance, Type instanceType, JObject json, string Spacing)
         {
-            Console.WriteLine(Spacing+"Going down");
+           //Console.WriteLine(Spacing+"Going down");
             object _instance = instance;
             BindingFlags bind = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             foreach (JProperty property in json.Properties())
@@ -429,7 +429,7 @@ namespace Nuterra.BlockInjector
                 try
                 {
                     string name = property.Name;
-                    Console.WriteLine(Spacing + m_tab + property.Name);
+                   //Console.WriteLine(Spacing + m_tab + property.Name);
                     int GetCustomName = property.Name.IndexOf('|');
                     bool Wipe = false, Instantiate = false;
                     if (GetCustomName != -1)
@@ -447,7 +447,7 @@ namespace Nuterra.BlockInjector
                     {
                         if (tField == null)
                         {
-                            Console.WriteLine(Spacing + m_tab + "skipping...");
+                           //Console.WriteLine(Spacing + m_tab + "skipping...");
                             continue;
                         }
                     }
@@ -464,7 +464,7 @@ namespace Nuterra.BlockInjector
                                     bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
                                     var nObj = Component.Instantiate(original as Component);
                                     nObj.gameObject.SetActive(isActive);
-                                    Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                                   //Console.WriteLine(Spacing + m_tab + ">Instantiating");
                                     CreateGameObject(property.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
                                     Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
                                     rewrite = nObj;
@@ -489,7 +489,7 @@ namespace Nuterra.BlockInjector
                                     bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
                                     var nObj = Component.Instantiate(original as Component);
                                     nObj.gameObject.SetActive(isActive);
-                                    Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                                   //Console.WriteLine(Spacing + m_tab + ">Instantiating");
                                     CreateGameObject(property.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
                                     Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
                                     rewrite = nObj;
@@ -511,7 +511,7 @@ namespace Nuterra.BlockInjector
                         {
                             if (UseMethod)
                             {
-                                Console.WriteLine(Spacing + m_tab + ">Calling method (No parameters)");
+                               //Console.WriteLine(Spacing + m_tab + ">Calling method (No parameters)");
 
                                 var value = property.Value;
                                 tMethod.Invoke(_instance, null);
@@ -526,7 +526,7 @@ namespace Nuterra.BlockInjector
                                 {
                                     tProp.SetValue(_instance, property.Value.ToObject(tProp.PropertyType), null);
                                 }
-                                Console.WriteLine(Spacing + m_tab + ">Setting value");
+                               //Console.WriteLine(Spacing + m_tab + ">Setting value");
                             }
                         }
                         catch
@@ -550,7 +550,7 @@ namespace Nuterra.BlockInjector
                             if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
                             {
                                 searchresult = LoadedResources[type][targetName];
-                                Console.WriteLine(Spacing + m_tab + ">Setting value from user resource reference");
+                               //Console.WriteLine(Spacing + m_tab + ">Setting value from user resource reference");
                             }
                             else
                             {
@@ -561,7 +561,7 @@ namespace Nuterra.BlockInjector
                                     if (search[i].name == targetName)
                                     {
                                         searchresult = search[i];
-                                        Console.WriteLine(Spacing + m_tab + ">Setting value from existing resource reference");
+                                       //Console.WriteLine(Spacing + m_tab + ">Setting value from existing resource reference");
                                         break;
                                     }
                                     failedsearch += "(" + search[i].name + ") ";
@@ -584,7 +584,7 @@ namespace Nuterra.BlockInjector
                 }
                 catch (Exception E) { Console.WriteLine(Spacing + "!!!" + E.Message/*+"\n"+E.StackTrace*/); }
             }
-            Console.WriteLine(Spacing+"Going up");
+           //Console.WriteLine(Spacing+"Going up");
             return _instance;
         }
         public static string LogAllComponents(Transform SearchIn, bool Reflection = false, string Indenting = "")
