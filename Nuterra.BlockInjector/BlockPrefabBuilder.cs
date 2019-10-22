@@ -428,13 +428,13 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             List<IntVector3> cells = new List<IntVector3>();
-            for (int x = 0; x < size.x; x++)
+            for (int x = 0; x < Math.Abs(size.x); x++)
             {
-                for (int y = 0; y < size.y; y++)
+                for (int y = 0; y < Math.Abs(size.y); y++)
                 {
-                    for (int z = 0; z < size.z; z++)
+                    for (int z = 0; z < Math.Abs(size.z); z++)
                     {
-                        cells.Add(new Vector3(x, y, z));
+                        cells.Add(new Vector3(Math.Sign(size.x) * x, Math.Sign(size.y) * y, Math.Sign(size.z) * z));
                     }
                 }
             }

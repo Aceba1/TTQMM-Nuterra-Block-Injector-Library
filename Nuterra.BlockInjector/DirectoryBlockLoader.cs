@@ -311,7 +311,6 @@ namespace Nuterra.BlockInjector
                     }
                     else
                     {
-                        Prefabbed = true;
                         if (jBlock.ReferenceOffset.HasValue && jBlock.ReferenceOffset != Vector3.zero)
                         {
                             //Offset Prefab
@@ -682,7 +681,7 @@ namespace Nuterra.BlockInjector
 
                 if (jBlock.Cells != null && jBlock.Cells.Length != 0)
                 {
-                    blockbuilder.SetSizeManual(jBlock.Cells);
+                    blockbuilder.SetSizeManual(jBlock.Cells, true);
                 }
                 else if (jBlock.BlockExtents.HasValue)
                 {
