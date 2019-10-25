@@ -10,6 +10,7 @@ namespace Nuterra.BlockInjector
         public int Price { get; internal set; }
         public FactionSubTypes Faction { get; internal set; } = FactionSubTypes.EXP;
         public BlockCategories Category { get; internal set; } = BlockCategories.Standard;
+        public BlockRarity Rarity { get; internal set; } = BlockRarity.Common;
         public GameObject Prefab { get; internal set; }
         public Sprite DisplaySprite { get; internal set; }
         public int Grade { get; internal set; }

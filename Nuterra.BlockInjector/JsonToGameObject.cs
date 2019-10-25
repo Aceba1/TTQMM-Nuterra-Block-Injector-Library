@@ -55,6 +55,7 @@ namespace Nuterra.BlockInjector
             }
             return null;
         }
+        public static bool UserResourcesContains(Type t, string targetName) => LoadedResources.ContainsKey(t) && LoadedResources[t].ContainsKey(targetName);
 
         internal static Type ManSpawnT = typeof(ManSpawn);
 

@@ -33,7 +33,7 @@ namespace Nuterra.BlockInjector
             {
                 customBlock.Prefab.SetActive(false);
                 if (Passed)
-                BlockLoader.FixBlockUnlockTable(customBlock);
+                    BlockLoader.FixBlockUnlockTable(customBlock);
                 UnityEngine.GameObject.Destroy(this.gameObject);
             }
         }
@@ -339,6 +339,13 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             _customBlock.Faction = faction;
+            return this;
+        }
+
+        public BlockPrefabBuilder SetRarity(BlockRarity rarity)
+        {
+            ThrowIfFinished();
+            _customBlock.Rarity = rarity;
             return this;
         }
 

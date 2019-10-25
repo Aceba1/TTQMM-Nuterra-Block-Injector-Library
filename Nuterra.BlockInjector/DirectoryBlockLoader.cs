@@ -34,6 +34,7 @@ namespace Nuterra.BlockInjector
             public int Price;
             public int HP;
             public int? DamageableType;
+            public int Rarity;
             public float? Fragility;
             public float Mass;
             public IntVector3? BlockExtents;
@@ -183,7 +184,9 @@ namespace Nuterra.BlockInjector
             }
         }
         */
-
+        static readonly Type ttx2d = typeof(Texture2D),
+            ttx = typeof(Texture),
+            tsp = typeof(Sprite);
         public static void LoadBlocks()
         {
             var dir = new DirectoryInfo(Path.Combine(System.Reflection.Assembly.GetExecutingAssembly().Location, "../../../"));
@@ -216,44 +219,9 @@ namespace Nuterra.BlockInjector
                 try
                 {
                     Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
-                    GameObjectJSON.AddObjectToUserResources<Texture2D>(tex, Png.Name);
-                    GameObjectJSON.AddObjectToUserResources<Texture>(tex, Png.Name);
-                    GameObjectJSON.AddObjectToUserResources<Sprite>(GameObjectJSON.SpriteFromImage(tex), Png.Name);
-                    //Console.WriteLine("Added " + Png.Name + "\n from " + Png.FullName);
-                    //if (Png.Name.Length > 7)
-                    //{
-                    //    string mat = Png.Name.Substring(0, Png.Name.Length - 6);
-                    //    try
-                    //    {
-                    //        if (mat == "Corp")
-                    //        {
-                    //            ApplyTexToMultiple(Png.Name, "Corp_", tex);
-                    //            Texture2D gso_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0f, 0.5f, 0.5f));
-                    //            ApplyTexToMultiple(Png.Name, "GSO_", gso_tex);
-
-                    //            Texture2D gc_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0f, 0.5f, 0.5f));
-                    //            ApplyTexToMultiple(Png.Name, "GC_", gc_tex);
-
-                    //            Texture2D ven_tex = GameObjectJSON.CropImage(tex, new Rect(0f, 0.5f, 0.5f, 0.5f));
-                    //            ApplyTexToMultiple(Png.Name, "VEN_", ven_tex);
-
-                    //            Texture2D he_tex = GameObjectJSON.CropImage(tex, new Rect(0.5f, 0.5f, 0.5f, 0.5f));
-                    //            ApplyTexToMultiple(Png.Name, "HE_", he_tex);
-                    //        }
-                    //        else if (mat.EndsWith("$"))
-                    //        {
-                    //            ApplyTexToMultiple(Png.Name, mat.Substring(0, mat.Length - 1), tex);
-                    //        }
-                    //        else
-                    //        {
-                    //            ApplyTex(Png.Name, mat, tex);
-                    //        }
-                    //    }
-                    //    catch
-                    //    {
-                    //        Console.WriteLine("Could not apply texture to game material " + mat);
-                    //    }
-                    //}
+                    GameObjectJSON.AddObjectToUserResources<Texture2D>(ttx2d, tex, Png.Name);
+                    GameObjectJSON.AddObjectToUserResources<Texture>(ttx, tex, Png.Name);
+                    GameObjectJSON.AddObjectToUserResources<Sprite>(tsp, GameObjectJSON.SpriteFromImage(tex), Png.Name);
                 }
                 catch (Exception E)
                 {
@@ -298,44 +266,37 @@ namespace Nuterra.BlockInjector
 
                 bool BlockAlreadyExists = BlockLoader.CustomBlocks.TryGetValue(jBlock.ID, out var ExistingJSONBlock);
                 bool Prefabbed = !string.IsNullOrEmpty(jBlock.GamePrefabReference);
-                if (BlockAlreadyExists)
-                { // BLOCK ALREADY EXISTS
-                    blockbuilder = new BlockPrefabBuilder(ExistingJSONBlock.Prefab, false);
+                //Prefab reference
+                if (!Prefabbed)
+                {
+                    blockbuilder = new BlockPrefabBuilder();
                 }
                 else
                 {
-                    //Prefab reference
-                    if (!Prefabbed)
+                    if (jBlock.ReferenceOffset.HasValue && jBlock.ReferenceOffset != Vector3.zero)
                     {
-                        blockbuilder = new BlockPrefabBuilder();
+                        //Offset Prefab
+                        blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, jBlock.ReferenceOffset.Value, !jBlock.KeepReferenceRenderers);
                     }
                     else
                     {
-                        if (jBlock.ReferenceOffset.HasValue && jBlock.ReferenceOffset != Vector3.zero)
-                        {
-                            //Offset Prefab
-                            blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, jBlock.ReferenceOffset.Value, !jBlock.KeepReferenceRenderers);
-                        }
-                        else
-                        {
-                            blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, !jBlock.KeepReferenceRenderers);
-                        }
+                        blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, !jBlock.KeepReferenceRenderers);
+                    }
 
-                        if (jBlock.ReferenceRotationOffset.HasValue && jBlock.ReferenceRotationOffset != Vector3.zero)
-                        {
-                            //Add Rotation
-                            blockbuilder.Prefab.transform.RotateChildren(jBlock.ReferenceRotationOffset.Value);
-                        }
+                    if (jBlock.ReferenceRotationOffset.HasValue && jBlock.ReferenceRotationOffset != Vector3.zero)
+                    {
+                        //Add Rotation
+                        blockbuilder.Prefab.transform.RotateChildren(jBlock.ReferenceRotationOffset.Value);
+                    }
 
-                        if (jBlock.ReferenceScale.HasValue && jBlock.ReferenceScale != Vector3.zero)
+                    if (jBlock.ReferenceScale.HasValue && jBlock.ReferenceScale != Vector3.zero)
+                    {
+                        for (int ti = 0; ti < blockbuilder.Prefab.transform.childCount; ti++)
                         {
-                            for (int ti = 0; ti < blockbuilder.Prefab.transform.childCount; ti++)
-                            {
-                                var chi = blockbuilder.Prefab.transform.GetChild(ti);
-                                //Stretch
-                                chi.localPosition = Vector3.Scale(chi.localPosition, jBlock.ReferenceScale.Value);
-                                chi.localScale = Vector3.Scale(chi.localScale, jBlock.ReferenceScale.Value);
-                            }
+                            var chi = blockbuilder.Prefab.transform.GetChild(ti);
+                            //Stretch
+                            chi.localPosition = Vector3.Scale(chi.localPosition, jBlock.ReferenceScale.Value);
+                            chi.localScale = Vector3.Scale(chi.localScale, jBlock.ReferenceScale.Value);
                         }
                     }
                 }
@@ -347,36 +308,30 @@ namespace Nuterra.BlockInjector
                 }
 
                 //Set IP
-                if (!BlockAlreadyExists)
-                {
-                    blockbuilder.SetBlockID(jBlock.ID);
-                }
+                blockbuilder.SetBlockID(jBlock.ID);
 
                 //Set Category
-                if (!BlockAlreadyExists)
-                    if (jBlock.Category != 0)
-                    {
-                        blockbuilder.SetCategory((BlockCategories)jBlock.Category);
-                    }
-                    else
-                    {
-                        blockbuilder.SetCategory(BlockCategories.Standard);
-                    }
+                if (jBlock.Category != 0)
+                {
+                    blockbuilder.SetCategory((BlockCategories)jBlock.Category);
+                }
+                else
+                {
+                    blockbuilder.SetCategory(BlockCategories.Standard);
+                }
 
                 //Set Faction (Corp)
-                if (!BlockAlreadyExists)
-                    if (jBlock.Faction != 0)
-                    {
-                        blockbuilder.SetFaction((FactionSubTypes)jBlock.Faction);
-                    }
-                    else
-                    {
-                        blockbuilder.SetFaction(FactionSubTypes.GSO);
-                    }
+                if (jBlock.Faction != 0)
+                {
+                    blockbuilder.SetFaction((FactionSubTypes)jBlock.Faction);
+                }
+                else
+                {
+                    blockbuilder.SetFaction(FactionSubTypes.GSO);
+                }
 
                 //Set Block Grade
-                if (!BlockAlreadyExists)
-                    blockbuilder.SetGrade(jBlock.Grade);
+                blockbuilder.SetGrade(jBlock.Grade);
 
                 //Set HP
                 if (jBlock.HP != 0)
@@ -385,8 +340,7 @@ namespace Nuterra.BlockInjector
                 }
                 else
                 {
-                    if (!BlockAlreadyExists)
-                        blockbuilder.SetHP(250);
+                    blockbuilder.SetHP(250);
                 }
 
                 //Set DamageableType
@@ -400,6 +354,9 @@ namespace Nuterra.BlockInjector
                 {
                     blockbuilder.SetDetachFragility(jBlock.Fragility.Value);
                 }
+
+                //Set Rarity
+                blockbuilder.SetRarity((BlockRarity)jBlock.Rarity);
 
                 //Set Icon
                 if (jBlock.IconName != null && jBlock.IconName != "")
@@ -466,7 +423,7 @@ namespace Nuterra.BlockInjector
                     {
                         mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.MeshName);
                     }
-                    //if (mesh == null && !HasSubObjs && !BlockAlreadyExists)
+                    //if (mesh == null && !HasSubObjs)
                     //{
                     //    mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>(MeshT, "Cube");
                     //    if (mesh == null)
@@ -703,8 +660,11 @@ namespace Nuterra.BlockInjector
                 }
 
                 // REGISTER
-                if (BlockAlreadyExists)
+                if (BlockAlreadyExists && BlockLoader.AcceptOverwrite)
+                {
+                    BlockLoader.Register(blockbuilder.Build());
                     blockbuilder.Prefab.SetActive(false);
+                }
                 else
                     blockbuilder.RegisterLater(6);
 
@@ -822,6 +782,7 @@ namespace Nuterra.BlockInjector
             {
                 Transform Child = transform.GetChild(i);
                 Child.Rotate(Rotation, Space.Self);
+                Child.localPosition = Quaternion.Euler(Rotation) * Child.localPosition;
             }
         }
         public static string StripComments(string input)

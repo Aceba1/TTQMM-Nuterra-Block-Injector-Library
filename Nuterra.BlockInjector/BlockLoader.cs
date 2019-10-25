@@ -34,6 +34,24 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        internal class OverrideInputHandler : MonoBehaviour
+        {
+            void Update()
+            {
+                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.B))
+                {
+                    DirectoryBlockLoader.LoadBlocks();
+                }
+            }
+            internal static void INIT()
+            {
+                new GameObject().AddComponent<OverrideInputHandler>();
+                AcceptOverwrite = true;
+            }
+        }
+
+        public static bool AcceptOverwrite;
+
         public static readonly Dictionary<int, CustomBlock> CustomBlocks = new Dictionary<int, CustomBlock>();
         public static readonly Dictionary<int, CustomChunk> CustomChunks = new Dictionary<int, CustomChunk>();
 
@@ -41,39 +59,49 @@ namespace Nuterra.BlockInjector
         {
             try
             {
-                Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
-                Timer.blocks += $"\n - #{block.BlockID} - \"{block.Name}\"";
                 int blockID = block.BlockID;
+                bool Overwriting = AcceptOverwrite && CustomBlocks.ContainsKey(blockID);
+                Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
+                Timer.blocks += $"\n - #{blockID} - \"{block.Name}\"";
                 ManSpawn spawnManager = ManSpawn.inst;
-                if (CustomBlocks.ContainsKey(blockID))
+                if (!Overwriting)
                 {
-                    Timer.blocks += " - FAILED: Custom Block already exists!";
-                    Console.WriteLine("Registering block failed: A block with the same ID already exists");
-                    return false;
+                    if (CustomBlocks.ContainsKey(blockID))
+                    {
+                        Timer.blocks += " - FAILED: Custom Block already exists!";
+                        Console.WriteLine("Registering block failed: A block with the same ID already exists");
+                        return false;
+                    }
+                    bool BlockExists = spawnManager.IsValidBlockToSpawn((BlockTypes)blockID);
+                    if (BlockExists)
+                    {
+                        Timer.blocks += " - ID already exists";
+                        Console.WriteLine("Registering block incomplete: A block with the same ID already exists");
+                        return false;
+                    }
+                    CustomBlocks.Add(blockID, block);
                 }
-                CustomBlocks.Add(blockID, block);
-                bool BlockExists = spawnManager.IsValidBlockToSpawn((BlockTypes)blockID);
-                if (BlockExists)
+                else
                 {
-                    Timer.blocks += " - ID already exists";
-                    Console.WriteLine("Registering block incomplete: A block with the same ID already exists");
-                    return false;
+                    CustomBlocks[blockID] = block;
                 }
                 int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
                 spawnManager.VisibleTypeInfo.SetDescriptor<FactionSubTypes>(hashCode, block.Faction);
                 spawnManager.VisibleTypeInfo.SetDescriptor<BlockCategories>(hashCode, block.Category);
+                spawnManager.VisibleTypeInfo.SetDescriptor<BlockRarity>(hashCode, block.Rarity);
                 try
                 {
-                    //if (BlockExists)
-                    //{
-                    //    System.Collections.IDictionary dict = (System.Collections.IDictionary)typeof(ManSpawn).GetField("m_BlockPrefabs", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).GetValue(spawnManager);
-                    //    dict.Remove(blockID);
-                    //}
-                    //Patches.Catching = true;
-                    AddBlockToDictionary.Invoke(spawnManager, new object[] { block.Prefab });
-
-                    (LoadedBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)block.BlockID);
-                    (LoadedActiveBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)block.BlockID);
+                    if (Overwriting)
+                    {
+                        var prefabs = (BlockPrefabs.GetValue(ManSpawn.inst) as Dictionary<int, Transform>);
+                        prefabs[blockID] = block.Prefab.transform;
+                    }
+                    else
+                    {
+                        AddBlockToDictionary.Invoke(spawnManager, new object[] { block.Prefab });
+                        (LoadedBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)block.BlockID);
+                        (LoadedActiveBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)block.BlockID);
+                    }
 
                     var m_BlockPriceLookup = BlockPriceLookup.GetValue(RecipeManager.inst) as Dictionary<int, int>;
                     if (m_BlockPriceLookup.ContainsKey(blockID)) m_BlockPriceLookup[blockID] = block.Price;
@@ -103,10 +131,11 @@ namespace Nuterra.BlockInjector
                 return false;
             }
         }
-        static FieldInfo LoadedBlocks = typeof(ManSpawn).GetField("m_LoadedBlocks", System.Reflection.BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-        static FieldInfo LoadedActiveBlocks = typeof(ManSpawn).GetField("m_LoadedActiveBlocks", System.Reflection.BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-        static MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        static FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        static readonly FieldInfo LoadedBlocks = typeof(ManSpawn).GetField("m_LoadedBlocks", System.Reflection.BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+        static readonly FieldInfo LoadedActiveBlocks = typeof(ManSpawn).GetField("m_LoadedActiveBlocks", System.Reflection.BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+        static readonly MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        static readonly FieldInfo BlockPrefabs = typeof(ManSpawn).GetField("m_BlockPrefabs", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        static readonly FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
         private static bool Ready = false;
         private static event Action PostStartEvent;
@@ -150,6 +179,7 @@ namespace Nuterra.BlockInjector
             var harmony = HarmonyInstance.Create("nuterra.block.injector");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             PostStartEvent += NetHandler.Patches.INIT;
+            PostStartEvent += OverrideInputHandler.INIT;
         }
 
         internal class Patches
