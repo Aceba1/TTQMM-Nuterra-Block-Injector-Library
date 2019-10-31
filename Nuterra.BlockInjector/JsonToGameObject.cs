@@ -58,10 +58,11 @@ namespace Nuterra.BlockInjector
         public static bool UserResourcesContains(Type t, string targetName) => LoadedResources.ContainsKey(t) && LoadedResources[t].ContainsKey(targetName);
 
         internal static Type ManSpawnT = typeof(ManSpawn);
+        static FieldInfo m_BlockTable = ManSpawnT.GetField("m_BlockTable", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
 
         public static GameObject GetBlockFromAssetTable(string NameOfBlock)
         {
-            var allblocks = ((BlockTable)ManSpawnT.GetField("m_BlockTable", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic).GetValue(ManSpawn.inst)).m_Blocks;
+            var allblocks = ((BlockTable)m_BlockTable.GetValue(ManSpawn.inst)).m_Blocks;
             foreach (var block in allblocks)
             {
                 if (block.name.StartsWith(NameOfBlock))
