@@ -134,6 +134,9 @@ namespace Nuterra.BlockInjector
             RemoveChildrenWithComponent(true, null, typeof(ColliderSwapper), typeof(TTNetworkTransform));
         }
 
+        const BindingFlags b = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
+        static readonly PropertyInfo visible = typeof(TankBlock).GetProperty("visible", b);
+        static readonly FieldInfo m_VisibleComponent = typeof(Visible).GetField("m_VisibleComponent", b);
         private void Initialize(GameObject prefab, bool clearGridInfo)
         {
             _customBlock = new CustomBlock();
@@ -155,9 +158,8 @@ namespace Nuterra.BlockInjector
 //            _netid = _customBlock.Prefab.EnsureComponent<UnityEngine.Networking.NetworkIdentity>();
 //            _netblock = _customBlock.Prefab.EnsureComponent<NetBlock>();
 
-            BindingFlags b = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
-            typeof(TankBlock).GetProperty("visible", b).SetValue(TankBlock, _visible, null);
-            typeof(Visible).GetField("m_VisibleComponent", b).SetValue(_visible, TankBlock as Component);
+            visible.SetValue(TankBlock, _visible, null);
+            m_VisibleComponent.SetValue(_visible, TankBlock as Component);
             if (clearGridInfo)
             {
                 TankBlock.attachPoints = new Vector3[] { };
@@ -287,7 +289,7 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
-        static FieldInfo m_DamageableType = typeof(Damageable).GetField("m_DamageableType", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+        static FieldInfo m_DamageableType = typeof(Damageable).GetField("m_DamageableType", b);
 
         public BlockPrefabBuilder SetDamageableType(ManDamage.DamageableType type)
         {
@@ -317,7 +319,7 @@ namespace Nuterra.BlockInjector
         {
             SetBlockID(id);
             //if (Net128HashHex != "")
-            //    typeof(UnityEngine.Networking.NetworkIdentity).GetField("m_AssetId", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(_netid, UnityEngine.Networking.NetworkHash128.Parse(Net128HashHex
+            //    typeof(UnityEngine.Networking.NetworkIdentity).GetField("m_AssetId", b).SetValue(_netid, UnityEngine.Networking.NetworkHash128.Parse(Net128HashHex
             return this;
         }
 
@@ -342,18 +344,23 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        static FieldInfo m_BlockRarity = typeof(TankBlock).GetField("m_BlockRarity", b);
+
         public BlockPrefabBuilder SetRarity(BlockRarity rarity)
         {
             ThrowIfFinished();
             _customBlock.Rarity = rarity;
+            m_BlockRarity.SetValue(TankBlock, rarity);
             return this;
         }
+
+        static FieldInfo m_BlockCategory = typeof(TankBlock).GetField("m_BlockCategory", b);
 
         public BlockPrefabBuilder SetCategory(BlockCategories category)
         {
             ThrowIfFinished();
             _customBlock.Category = category;
-            typeof(TankBlock).GetField("m_BlockCategory", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).SetValue(TankBlock, category);
+            m_BlockCategory.SetValue(TankBlock, category);
             //_block.m_BlockCategory = category;
             return this;
         }

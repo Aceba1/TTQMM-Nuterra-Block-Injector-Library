@@ -131,11 +131,14 @@ namespace Nuterra.BlockInjector
                 return false;
             }
         }
-        static readonly FieldInfo LoadedBlocks = typeof(ManSpawn).GetField("m_LoadedBlocks", System.Reflection.BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-        static readonly FieldInfo LoadedActiveBlocks = typeof(ManSpawn).GetField("m_LoadedActiveBlocks", System.Reflection.BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-        static readonly MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        static readonly FieldInfo BlockPrefabs = typeof(ManSpawn).GetField("m_BlockPrefabs", System.Reflection.BindingFlags.NonPublic | BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        static readonly FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        const BindingFlags binding = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
+        static readonly FieldInfo LoadedBlocks = typeof(ManSpawn).GetField("m_LoadedBlocks", binding);
+        static readonly FieldInfo LoadedActiveBlocks = typeof(ManSpawn).GetField("m_LoadedActiveBlocks", binding);
+        static readonly MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", binding);
+        static readonly FieldInfo BlockPrefabs = typeof(ManSpawn).GetField("m_BlockPrefabs", binding);
+        static readonly FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", binding);
+        static readonly MethodInfo LookupPool = typeof(ComponentPool).GetMethod("LookupPool", binding);
+        static readonly MethodInfo DepoolItems = typeof(ComponentPool).GetMethod("DepoolItems", binding);
 
         private static bool Ready = false;
         private static event Action PostStartEvent;
@@ -281,22 +284,24 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        static Type T_BlockUnlockTable = typeof(BlockUnlockTable),
+            CorpBlockData = T_BlockUnlockTable.GetNestedType("CorpBlockData", BindingFlags.Instance | BindingFlags.NonPublic),
+            GradeData = T_BlockUnlockTable.GetNestedType("GradeData", BindingFlags.Instance | BindingFlags.NonPublic);
+        static FieldInfo m_CorpBlockList = T_BlockUnlockTable.GetField("m_CorpBlockList", BindingFlags.Instance | BindingFlags.NonPublic),
+            m_CorpBlockLevelLookup = T_BlockUnlockTable.GetField("m_CorpBlockLevelLookup", BindingFlags.Instance | BindingFlags.NonPublic),
+            m_BlockList = GradeData.GetField("m_BlockList"),
+            m_GradeList = CorpBlockData.GetField("m_GradeList");
 
         internal static void FixBlockUnlockTable(CustomBlock block)
         {
             try
             {
                 ManLicenses.inst.DiscoverBlock((BlockTypes)block.BlockID);
-                //For now, all custom blocks are level 1
-                BindingFlags bind = BindingFlags.Instance | BindingFlags.NonPublic;
-                Type T_BlockUnlockTable = typeof(BlockUnlockTable);
-                Type CorpBlockData = T_BlockUnlockTable.GetNestedType("CorpBlockData", bind);
-                Type GradeData = T_BlockUnlockTable.GetNestedType("GradeData", bind);
-                Array blockList = T_BlockUnlockTable.GetField("m_CorpBlockList", bind).GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
+                Array blockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
 
 
                 object corpData = blockList.GetValue((int)block.Faction);
-                BlockUnlockTable.UnlockData[] unlocked = GradeData.GetField("m_BlockList").GetValue((CorpBlockData.GetField("m_GradeList").GetValue(corpData) as Array).GetValue(block.Grade)) as BlockUnlockTable.UnlockData[];
+                BlockUnlockTable.UnlockData[] unlocked = m_BlockList.GetValue((m_GradeList.GetValue(corpData) as Array).GetValue(block.Grade)) as BlockUnlockTable.UnlockData[];
                 Array.Resize(ref unlocked, unlocked.Length + 1);
                 unlocked[unlocked.Length - 1] = new BlockUnlockTable.UnlockData
                 {
@@ -304,12 +309,12 @@ namespace Nuterra.BlockInjector
                     m_BasicBlock = true,
                     m_DontRewardOnLevelUp = true
                 };
-                GradeData.GetField("m_BlockList")
+                m_BlockList
                     .SetValue(
-                    (CorpBlockData.GetField("m_GradeList").GetValue(corpData) as Array).GetValue(block.Grade),
+                    (m_GradeList.GetValue(corpData) as Array).GetValue(block.Grade),
                     unlocked);
 
-                ((T_BlockUnlockTable.GetField("m_CorpBlockLevelLookup", bind)
+                ((m_CorpBlockLevelLookup
                     .GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array)
                     .GetValue((int)block.Faction) as Dictionary<BlockTypes, int>)
                     .Add((BlockTypes)block.BlockID, block.Grade);
