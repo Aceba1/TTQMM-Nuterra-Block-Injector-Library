@@ -120,83 +120,18 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        internal static Type MeshT = typeof(Mesh), Texture2DT = typeof(Texture2D), MaterialT = typeof(Material);
+        internal static readonly Type MeshT = typeof(Mesh), Texture2DT = typeof(Texture2D), MaterialT = typeof(Material), TextureT = typeof(Texture),
+            SpriteT = typeof(Sprite),
+            cT = typeof(ChunkTypes);
 
-        /*private static void ApplyTex(string FileName, string MatName, Texture2D Tex)
-        {
-            if (FileName.EndsWith(".1.png"))
-            {
-                Console.WriteLine($"Set {MatName} to {FileName}");
-                GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, MatName, true).mainTexture = Tex;
-            }
-            else if (FileName.EndsWith(".2.png"))
-            {
-                Console.WriteLine($"Set {MatName}'s gloss to {FileName}");
-                GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, MatName, true).SetTexture("_MetallicGlossMap", Tex);
-            }
-            else if (FileName.EndsWith(".3.png"))
-            {
-                Console.WriteLine($"Set {MatName}'s emission to {FileName}");
-                GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, MatName, true).SetTexture("_EmissionMap", Tex);
-            }
-        }
+        static Dictionary<string, DateTime> FileChanged = new Dictionary<string, DateTime>();
 
-        private static void ApplyTexToMultiple(string FileName, string MatName, Texture2D Tex)
+        public static void LoadBlocks(bool ParseJSON = true)
         {
-            if (FileName.EndsWith(".1.png"))
-            {
-                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MaterialT, MatName))
-                {
-                    try
-                    {
-                        if (game_mat.mainTexture.width >= 1024)
-                        {
-                            Console.WriteLine($"Set {game_mat.name} to {FileName}");
-                            game_mat.mainTexture = Tex;
-                        }
-                    }
-                    catch { }
-                }
-            }
-            else if (FileName.EndsWith(".2.png"))
-            {
-                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MaterialT, MatName))
-                {
-                    try
-                    {
-                        if (game_mat.GetTexture("_MetallicGlossMap").width >= 1024)
-                        {
-                            Console.WriteLine($"Set {game_mat.name}'s gloss to {FileName}");
-                            game_mat.SetTexture("_MetallicGlossMap", Tex);
-                        }
-                    }
-                    catch { }
-                }
-            }
-            else if (FileName.EndsWith(".3.png"))
-            {
-                foreach (var game_mat in GameObjectJSON.GetObjectsFromGameResources<Material>(MaterialT, MatName))
-                {
-                    try
-                    {
-                        if (game_mat.GetTexture("_EmissionMap").width >= 1024)
-                        {
-                            Console.WriteLine($"Set {game_mat.name}'s emission to {FileName}");
-                            game_mat.SetTexture("_EmissionMap", Tex);
-                        }
-                    }
-                    catch { }
-                }
-            }
-        }
-        */
-        static readonly Type ttx2d = typeof(Texture2D),
-            ttx = typeof(Texture),
-            tsp = typeof(Sprite);
-        public static void LoadBlocks()
-        {
-            var dir = new DirectoryInfo(Path.Combine(System.Reflection.Assembly.GetExecutingAssembly().Location, "../../../"));
-            string BlockPath = Path.Combine(dir.FullName, "Custom Blocks");
+            string BlockPath = Path.Combine(
+                new DirectoryInfo(
+                    Path.Combine(System.Reflection.Assembly.GetExecutingAssembly().Location, "../../../"))
+                .FullName, "Custom Blocks");
             try
             {
                 if (!Directory.Exists(BlockPath))
@@ -214,20 +149,22 @@ namespace Nuterra.BlockInjector
                 Console.WriteLine("Could not access \"" + BlockPath + "\"!\n"+E.Message);
             }
             var CustomBlocks = new DirectoryInfo(BlockPath);
-            var cbJson = CustomBlocks.GetFiles("*.json", SearchOption.AllDirectories);
-            var cbObj = CustomBlocks.GetFiles("*.obj", SearchOption.AllDirectories);
-            var cbPng = CustomBlocks.GetFiles("*.png", SearchOption.AllDirectories);
 
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
+            var cbPng = CustomBlocks.GetFiles("*.png", SearchOption.AllDirectories);
             foreach (FileInfo Png in cbPng)
             {
                 try
                 {
-                    Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
-                    GameObjectJSON.AddObjectToUserResources<Texture2D>(ttx2d, tex, Png.Name);
-                    GameObjectJSON.AddObjectToUserResources<Texture>(ttx, tex, Png.Name);
-                    GameObjectJSON.AddObjectToUserResources<Sprite>(tsp, GameObjectJSON.SpriteFromImage(tex), Png.Name);
+                    if (!FileChanged.TryGetValue(Png.FullName, out DateTime lastEdit) || lastEdit != Png.LastWriteTime)
+                    {
+                        Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
+                        GameObjectJSON.AddObjectToUserResources<Texture2D>(Texture2DT, tex, Png.Name);
+                        GameObjectJSON.AddObjectToUserResources<Texture>(TextureT, tex, Png.Name);
+                        GameObjectJSON.AddObjectToUserResources<Sprite>(SpriteT, GameObjectJSON.SpriteFromImage(tex), Png.Name);
+                        FileChanged[Png.FullName] = Png.LastWriteTime;
+                    }
                 }
                 catch (Exception E)
                 {
@@ -235,13 +172,18 @@ namespace Nuterra.BlockInjector
                 }
             }
             Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json images");
+
             sw.Restart();
+            var cbObj = CustomBlocks.GetFiles("*.obj", SearchOption.AllDirectories);
             foreach (FileInfo Obj in cbObj)
             {
                 try
                 {
-                    GameObjectJSON.AddObjectToUserResources(GameObjectJSON.MeshFromFile(Obj.FullName), Obj.Name);
-                    //Console.WriteLine("Added " + Obj.Name + "\n from " + Obj.FullName);
+                    if (!FileChanged.TryGetValue(Obj.FullName, out DateTime lastEdit) || lastEdit != Obj.LastWriteTime)
+                    {
+                        GameObjectJSON.AddObjectToUserResources(GameObjectJSON.MeshFromFile(Obj.FullName), Obj.Name);
+                        FileChanged[Obj.FullName] = Obj.LastWriteTime;
+                    }
                 }
                 catch (Exception E)
                 {
@@ -249,11 +191,20 @@ namespace Nuterra.BlockInjector
                 }
             }
             Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json models");
-            foreach (FileInfo Json in cbJson)
+
+            if (ParseJSON)
             {
-                sw.Restart();
-                CreateJSONBlock(Json);
-                Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to generate json block");
+                var cbJson = CustomBlocks.GetFiles("*.json", SearchOption.AllDirectories);
+                foreach (FileInfo Json in cbJson)
+                {
+                    if (!FileChanged.TryGetValue(Json.FullName, out DateTime lastEdit) || lastEdit != Json.LastWriteTime)
+                    {
+                        sw.Restart();
+                        CreateJSONBlock(Json);
+                        Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to parse {Json.Name}");
+                        FileChanged[Json.FullName] = Json.LastWriteTime;
+                    }
+                }
             }
             sw.Stop();
         }
@@ -718,7 +669,6 @@ namespace Nuterra.BlockInjector
                 if (!BlockAlreadyExists && jBlock.Recipe != null && jBlock.Recipe != "")
                 {
                     Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
-                    Type cT = typeof(ChunkTypes);
                     string[] recipes = jBlock.Recipe.Replace(" ", "").Split(',');
                     foreach (string recipe in recipes)
                     {
