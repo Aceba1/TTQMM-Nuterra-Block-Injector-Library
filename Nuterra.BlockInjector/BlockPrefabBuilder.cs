@@ -10,6 +10,7 @@ namespace Nuterra.BlockInjector
     {
         public static Dictionary<string, GameObject> PrefabList = new Dictionary<string, GameObject>();
         public static Dictionary<int, string> OverrideValidity = new Dictionary<int, string>();
+        internal static Dictionary<int, uint> ReparseVersion = new Dictionary<int, uint>();
         internal class RegisterTimer : MonoBehaviour
         {
             public BlockPrefabBuilder prefabToRegister;
@@ -40,6 +41,7 @@ namespace Nuterra.BlockInjector
 
         private bool _finished = false;
         private Visible _visible;
+        private ModuleCustomBlock _mcb;
         public TankBlock TankBlock { get; private set; }
         private Damageable _damageable;
         private ModuleDamage _moduleDamage;
@@ -165,6 +167,8 @@ namespace Nuterra.BlockInjector
                 TankBlock.attachPoints = new Vector3[] { };
                 TankBlock.filledCells = new IntVector3[] { new Vector3(0, 0, 0) };
             }
+
+            _mcb = _customBlock.Prefab.EnsureComponent<ModuleCustomBlock>();
         }
 
         public GameObject Prefab { get => _customBlock.Prefab; }
@@ -311,6 +315,15 @@ namespace Nuterra.BlockInjector
             ThrowIfFinished();
             _customBlock.BlockID = id;
             _visible.m_ItemType = new ItemTypeInfo(ObjectTypes.Block, id);
+            if (ReparseVersion.TryGetValue(id, out uint reparse))
+            {
+                if (!BlockLoader.AcceptOverwrite) throw new ArgumentException("A block with the same ID (" + id.ToString() + ") has already been defined!");
+                ReparseVersion[id] = ++reparse; _mcb.reparse_version_cache = reparse;
+            }
+            else
+            {
+                ReparseVersion[id] = 0; _mcb.reparse_version_cache = 0;
+            }
             return this;
         }
 
@@ -640,6 +653,21 @@ namespace Nuterra.BlockInjector
         {
             _finished = true;
             return _customBlock;
+        }
+    }
+
+    internal class ModuleCustomBlock : Module
+    {
+        internal uint reparse_version_cache;
+        static Type T_ComponentPool = typeof(ComponentPool);
+        static FieldInfo m_ReturnToPoolIndex = T_ComponentPool.GetField("m_ReturnToPoolIndex", BindingFlags.Instance | BindingFlags.NonPublic);
+        void OnRecycle()
+        {
+            if (BlockPrefabBuilder.ReparseVersion[(int)block.BlockType] != reparse_version_cache)
+            {
+                m_ReturnToPoolIndex.SetValue(ComponentPool.inst, (int)m_ReturnToPoolIndex.GetValue(ComponentPool.inst) - 1);
+                GameObject.Destroy(gameObject);
+            }
         }
     }
 }
