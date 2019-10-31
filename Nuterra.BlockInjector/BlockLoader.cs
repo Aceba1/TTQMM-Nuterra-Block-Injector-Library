@@ -11,10 +11,19 @@ namespace Nuterra.BlockInjector
         internal class Timer : MonoBehaviour
         {
             internal static string blocks = "";
+            internal float scroll = 0f;
             void OnGUI()
             {
                 if (blocks != "")
-                    GUILayout.Label("Loaded Blocks: "+blocks);
+                {
+                    float height = GUI.skin.label.CalcHeight(new GUIContent(blocks), Screen.width);
+                    GUI.Label(new Rect(0, scroll, Screen.width, height + 20f), "Loaded Blocks: " + blocks, GUI.skin.label);
+                    scroll *= 0.95f;
+                    if (height + scroll > Screen.height - 20f)
+                    {
+                        scroll -= .5f;
+                    }
+                }
                 if (Singleton.Manager<ManSplashScreen>.inst.HasExited)
                     UnityEngine.GameObject.Destroy(this.gameObject);
             }
@@ -94,7 +103,12 @@ namespace Nuterra.BlockInjector
                     if (Overwriting)
                     {
                         var prefabs = (BlockPrefabs.GetValue(ManSpawn.inst) as Dictionary<int, Transform>);
+                        var previous = ManSpawn.inst.GetBlockPrefab((BlockTypes)blockID);
+
+                        DepoolItems.Invoke(ComponentPool.inst, new object[] { LookupPool.Invoke(ComponentPool.inst, new object[] { previous }), int.MaxValue });
+                        GameObject.Destroy(previous.gameObject);
                         prefabs[blockID] = block.Prefab.transform;
+
                     }
                     else
                     {
@@ -180,9 +194,9 @@ namespace Nuterra.BlockInjector
             BlockExamples.Load();
             DirectoryBlockLoader.LoadBlocks();
             var harmony = HarmonyInstance.Create("nuterra.block.injector");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
             PostStartEvent += NetHandler.Patches.INIT;
             PostStartEvent += OverrideInputHandler.INIT;
+            harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
         internal class Patches
@@ -196,40 +210,6 @@ namespace Nuterra.BlockInjector
             //        var Visible = blockPrefab.GetComponent<Visible>();
             //        if (Visible == null || Visible.m_ItemType.ObjectType != ObjectTypes.Block) return true;
             //        if (BlockPrefabBuilder.OverrideValidity.TryGetValue(Visible.m_ItemType.ItemType, out string name) && name != blockPrefab.name) return false;
-            //        return true;
-            //    }
-            //}
-
-
-            //public static bool Catching = false;
-            //[HarmonyPatch(typeof(TTNetworkManager), "AddSpawnableType")]
-            //private static class CatchHexRepeat
-            //{
-            //    private static bool Prefix(ref TTNetworkManager __instance, Transform prefab)
-            //    {
-            //        if (Catching)
-            //        {
-            //            Catching = false;
-            //            try
-            //            {
-            //                typeof(TTNetworkManager).GetMethod("AddSpawnableType").Invoke(__instance, new object[] { prefab });
-            //            }
-            //            catch
-            //            {
-            //                try
-            //                {
-            //                    var hex = prefab.GetComponent<UnityEngine.Networking.NetworkIdentity>().assetId.ToString();
-            //                    Console.WriteLine($"Hex code {hex} is unusable");
-            //                    if (Timer.blocks != "" && hex != "")
-            //                        Timer.blocks += " - Bad hex code (Can be ignored)";
-            //                }
-            //                catch
-            //                {
-            //                    Console.WriteLine("Could not print hex error!");
-            //                }
-            //            }
-            //            return false;
-            //        }
             //        return true;
             //    }
             //}
