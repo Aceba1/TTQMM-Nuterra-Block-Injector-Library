@@ -35,6 +35,10 @@
   "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make an upright box collider relative to the mesh's extents
   "SupressBoxColliderFallback": false, //Disable creation of BoxCollider. Useful for if a collider will be already provided
 
+  //"Friction": 0.6, //A value between 0 and 1, the slowdown of rubbing objects
+  //"StaticFriction": 0.6, //A value between 0 and 1, how much it sticks to a surface when it is stopped
+  //"Bounciness": 0.1, //A value between 0 and 1, how much it bounces back from a collision
+
   // X is right and left, Y is up and down, and Z is forward and backward
 
   /*  EITHER  */
@@ -129,8 +133,11 @@
       "MeshName": null,
       "MakeBoxCollider": false, //Will resize to mesh if one is present, otherwise SubScale
       "MakeSphereCollider": false, //Just a sphere
-      "Layer": null, //Leave as null to be the default Tech layer for collision. Advanced use only!
       "ColliderMeshName": null,
+      "Layer": null, //Leave as null to be the default Tech layer for collision. Advanced use only!
+      "Friction": 0.6, //A value between 0 and 1, the slowdown of rubbing objects
+      "StaticFriction": 0.6, //A value between 0 and 1, how much it sticks to a surface when it is stopped
+      "Bounciness": 0.1, //A value between 0 and 1, how much it bounces back from a collision
       "MeshTextureName": null,
       "MeshMaterialName": null,
       "SubPosition": { "x": 0, "y": 0, "z": 0 },
@@ -150,11 +157,12 @@
       "SubPosition": { "x": 0, "y": 0, "z": 0 }
     }
   ]
-  */
+  /**/
 
   //For great control of a block without creating a C# mod, such a system exists that you can modify the Hierarchy, and variables, of one.
   //OPTIONAL
-  /*
+  /* // Note: There can only be one JSONBLOCK property in a file, but what is in it can be changed depending on use. These are examples.
+
   //Example to make a drill very powerful
   "JSONBLOCK": {
     "ModuleDrill": {
