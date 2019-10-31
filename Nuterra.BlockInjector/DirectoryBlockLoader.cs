@@ -24,6 +24,9 @@ namespace Nuterra.BlockInjector
             public string MeshName;
             public string ColliderMeshName;
             public bool SupressBoxColliderFallback;
+            public float? Friction;
+            public float? StaticFriction;
+            public float? Bounciness;
             public string MeshTextureName;
             public string MeshGlossTextureName;
             public string MeshEmissionTextureName;
@@ -58,6 +61,9 @@ namespace Nuterra.BlockInjector
                 public bool MakeBoxCollider;
                 public bool MakeSphereCollider;
                 public string ColliderMeshName;
+                public float? Friction;
+                public float? StaticFriction;
+                public float? Bounciness;
                 public string MeshTextureName;
                 public string MeshGlossTextureName;
                 public string MeshEmissionTextureName;
@@ -415,6 +421,23 @@ namespace Nuterra.BlockInjector
                     GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
                     missingflag3 ? null :
                     GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
+
+
+                PhysicMaterial localphysmat = new PhysicMaterial();
+                //Get Collision Material
+                if (jBlock.Friction.HasValue)
+                {
+                    localphysmat.dynamicFriction = jBlock.Friction.Value;
+                }
+                if (jBlock.StaticFriction.HasValue)
+                {
+                    localphysmat.staticFriction = jBlock.StaticFriction.Value;
+                }
+                if (jBlock.Bounciness.HasValue)
+                {
+                    localphysmat.bounciness = jBlock.Bounciness.Value;
+                }
+
                 //Set Model
                 {
                     //-Get Mesh
@@ -444,11 +467,11 @@ namespace Nuterra.BlockInjector
                     {
                         if (colliderMesh == null)
                         {
-                            blockbuilder.SetModel(mesh, !jBlock.SupressBoxColliderFallback, localmat);
+                            blockbuilder.SetModel(mesh, !jBlock.SupressBoxColliderFallback, localmat, localphysmat);
                         }
                         else
                         {
-                            blockbuilder.SetModel(mesh, colliderMesh, true, localmat);
+                            blockbuilder.SetModel(mesh, colliderMesh, true, localmat, localphysmat);
                         }
                     }
                 }
@@ -559,6 +582,25 @@ namespace Nuterra.BlockInjector
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
                             string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName) ? null :
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
+
+                        //-Get Collision Material
+                        PhysicMaterial physmat = localphysmat;
+                        bool newphysmat = false;
+                        if (sub.Friction.HasValue && sub.Friction.Value != localphysmat.dynamicFriction)
+                        {
+                            if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
+                            physmat.dynamicFriction = sub.Friction.Value;
+                        }
+                        if (sub.StaticFriction.HasValue && sub.StaticFriction.Value != localphysmat.staticFriction)
+                        {
+                            if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
+                            physmat.staticFriction = sub.StaticFriction.Value;
+                        }
+                        if (sub.Bounciness.HasValue && sub.Bounciness.Value != localphysmat.bounciness)
+                        {
+                            if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
+                            physmat.bounciness = sub.Bounciness.Value;
+                        }
                         //-Apply
                         if (mesh != null)
                         {
@@ -575,6 +617,7 @@ namespace Nuterra.BlockInjector
                             else mc = childG.EnsureComponent<MeshCollider>();
                             mc.convex = true;
                             mc.sharedMesh = colliderMesh;
+                            mc.sharedMaterial = physmat;
                         }
                         if (sub.MakeBoxCollider)
                         {
@@ -584,12 +627,14 @@ namespace Nuterra.BlockInjector
                                 var bc = childG.EnsureComponent<BoxCollider>();
                                 bc.size = mesh.bounds.size - Vector3.one * 0.2f;
                                 bc.center = mesh.bounds.center;
+                                bc.sharedMaterial = physmat;
                             }
                             else
                             {
                                 var bc = childG.EnsureComponent<BoxCollider>();
                                 bc.size = Vector3.one;
                                 bc.center = Vector3.zero;
+                                bc.sharedMaterial = physmat;
                             }
                         }
                         if (sub.MakeSphereCollider)
@@ -597,6 +642,7 @@ namespace Nuterra.BlockInjector
                             var bc = childG.EnsureComponent<SphereCollider>();
                             bc.radius = 0.5f;
                             bc.center = Vector3.zero;
+                            bc.sharedMaterial = physmat;
                         }
                         if (sub.SubScale.HasValue && sub.SubScale != Vector3.zero)
                         {
@@ -734,6 +780,10 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        private static PhysicMaterial CopyPhysicMaterial(PhysicMaterial original)
+        {
+            return new PhysicMaterial() { dynamicFriction = original.dynamicFriction, bounciness = original.bounciness, staticFriction = original.staticFriction };
+        }
         private static string GetPath(this Transform transform, Transform targetParent = null)
         {
             if (transform == targetParent) return "";

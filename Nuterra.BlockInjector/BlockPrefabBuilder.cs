@@ -525,6 +525,11 @@ namespace Nuterra.BlockInjector
 
         public BlockPrefabBuilder SetModel(Mesh Mesh, bool CreateBoxCollider, Material Material = null)
         {
+            return SetModel(Mesh, CreateBoxCollider, Material, new PhysicMaterial());
+        }
+        
+        public BlockPrefabBuilder SetModel(Mesh Mesh, bool CreateBoxCollider, Material Material = null, PhysicMaterial PhysicMaterial = null)
+        {
             ThrowIfFinished();
             GameObject model = new GameObject("m_CustomBlockRenderer");
             model.AddComponent<MeshFilter>().sharedMesh = Mesh;
@@ -537,12 +542,18 @@ namespace Nuterra.BlockInjector
                 var bc = model.AddComponent<BoxCollider>();
                 bc.size = Mesh.bounds.size - Vector3.one * 0.2f;
                 bc.center = Mesh.bounds.center;
+                bc.sharedMaterial = PhysicMaterial;
             }
             SetModel(model);
             return this;
         }
 
         public BlockPrefabBuilder SetModel(Mesh Mesh, Mesh ColliderMesh = null, bool ConvexCollider = true, Material Material = null)
+        {
+            return SetModel(Mesh, ColliderMesh, ConvexCollider, Material, new PhysicMaterial());
+        }
+
+        public BlockPrefabBuilder SetModel(Mesh Mesh, Mesh ColliderMesh = null, bool ConvexCollider = true, Material Material = null, PhysicMaterial PhysicMaterial = null)
         {
             ThrowIfFinished();
             GameObject model = new GameObject("m_CustomBlockRenderer");
@@ -555,6 +566,7 @@ namespace Nuterra.BlockInjector
                 var mc = model.AddComponent<MeshCollider>();
                 mc.convex = ConvexCollider;
                 mc.sharedMesh = ColliderMesh;
+                mc.sharedMaterial = PhysicMaterial;
             }
             SetModel(model, true);
             GameObject.DestroyImmediate(model);
