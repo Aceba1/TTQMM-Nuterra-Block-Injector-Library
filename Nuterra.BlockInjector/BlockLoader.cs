@@ -315,6 +315,16 @@ namespace Nuterra.BlockInjector
                 if (CustomBlocks.TryGetValue(itemType, out block))
                 {
                     result = block.DisplaySprite;
+                    if (result == null)
+                    {
+                        var b = new TankPreset.BlockSpec() { block = block.Name, m_BlockType = (BlockTypes)block.BlockID, m_SkinID = 0, m_VisibleID = -1, orthoRotation = 0, position = IntVector3.zero, saveState = new Dictionary<int, Module.SerialData>(), textSerialData = new List<string>() };
+                        var image = ManScreenshot.inst.RenderSnapshotFromTechData(new TechData() { m_BlockSpecs = new List<TankPreset.BlockSpec> { b } });
+
+                        float x = image.height / (float)image.width;
+                        result = GameObjectJSON.SpriteFromImage(GameObjectJSON.CropImage(image, new Rect((1f-x)*0.5f, 0f, x, 1f)));
+
+                        block.DisplaySprite = result;
+                    }
                     return result != null;
                 }
             }
