@@ -336,8 +336,6 @@ namespace Nuterra.BlockInjector
             var thng = new GameObject();
             var thnng = thng.AddComponent<FirstPersonCamera>();
             BlockLoader.DelayAfterSingleton(thnng.Manual_Awake);
-
-            // Site used for Hash: https://www.random.org/bytes/
         }
     }
 }

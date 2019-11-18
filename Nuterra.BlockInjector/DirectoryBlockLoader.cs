@@ -3,8 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
+using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -12,12 +11,12 @@ namespace Nuterra.BlockInjector
 {
     internal static class DirectoryBlockLoader
     {
-
         internal struct BlockBuilder
         {
             public string Name;
             public string Description;
             public bool KeepReferenceRenderers;
+            public bool KeepReferenceColliders;
             public string GamePrefabReference;
             public int ID;
             public string IconName;
@@ -40,6 +39,7 @@ namespace Nuterra.BlockInjector
             public int Rarity;
             public float? Fragility;
             public float Mass;
+            public Vector3? CenterOfMass;
             public IntVector3? BlockExtents;
             public bool APsOnlyAtBottom;
             public IntVector3[] Cells;
@@ -73,7 +73,7 @@ namespace Nuterra.BlockInjector
                 public Vector3? SubRotation;
                 public bool DestroyExistingRenderer;
                 //PUT ANIMATION CURVES HERE
-                public AnimInfo[] Animation;
+                public AnimInfo[] Animations;
                 public struct AnimInfo
                 {
                     public string ClipName;
@@ -97,7 +97,7 @@ namespace Nuterra.BlockInjector
                         public AnimationCurve ToAnimationCurve()
                         {
                             var Keyframes = new Keyframe[Keys.Length];
-                            for(int i = 0; i < Keys.Length; i++)
+                            for (int i = 0; i < Keys.Length; i++)
                             {
                                 Keyframes[i] = Keys[i].ToKeyframe();
                             }
@@ -126,123 +126,182 @@ namespace Nuterra.BlockInjector
 
         static Dictionary<string, DateTime> FileChanged = new Dictionary<string, DateTime>();
 
-        public static void LoadBlocks(bool ParseJSON = true)
+        static DirectoryInfo m_CBDirectory;
+        static DirectoryInfo GetCBDirectory
         {
-            string BlockPath = Path.Combine(
-                new DirectoryInfo(
-                    Path.Combine(System.Reflection.Assembly.GetExecutingAssembly().Location, "../../../"))
-                .FullName, "Custom Blocks");
-            try
+            get
             {
-                if (!Directory.Exists(BlockPath))
+                if (m_CBDirectory == null)
                 {
-                    Directory.CreateDirectory(BlockPath);
+                    string BlockPath = Path.Combine(
+                    new DirectoryInfo(Path.Combine(System.Reflection.Assembly.GetExecutingAssembly().Location, "../../../"))
+                        .FullName, "Custom Blocks");
+                    try
+                    {
+                        if (!Directory.Exists(BlockPath))
+                        {
+                            Directory.CreateDirectory(BlockPath);
+                            // Add Block Example.json here?
+                        }
+                    }
+                    catch (Exception E)
+                    {
+                        Console.WriteLine("Could not access \"" + BlockPath + "\"!");
+                        throw E;
+                    }
+                    m_CBDirectory = new DirectoryInfo(BlockPath);
                 }
-                string path = BlockPath + "/Example.json";
-                if (!File.Exists(path))
-                {
-                    File.WriteAllText(path, Properties.Resources.ExampleJson);
-                }
+                return m_CBDirectory;
             }
-            catch(Exception E)
-            {
-                Console.WriteLine("Could not access \"" + BlockPath + "\"!\n"+E.Message);
-            }
-            var CustomBlocks = new DirectoryInfo(BlockPath);
+        }
 
-            var sw = new System.Diagnostics.Stopwatch();
-            sw.Start();
-            var cbPng = CustomBlocks.GetFiles("*.png", SearchOption.AllDirectories);
-            foreach (FileInfo Png in cbPng)
+        const long WatchDogTimeBreaker = 3000;
+
+        public static IEnumerator<object> LoadBlocks(bool LoadResources, bool LoadBlocks)
+        {
+            var CustomBlocks = GetCBDirectory;
+
+            if (LoadResources)
             {
-                try
+                var sw = new System.Diagnostics.Stopwatch();
+                sw.Start();
+                long TimeBreak = WatchDogTimeBreaker;
+                var cbPng = CustomBlocks.GetFiles("*.png", SearchOption.AllDirectories);
+                int Count = 0;
+                BlockLoader.Timer.Log("Loading json images...");
+                yield return null;
+                foreach (FileInfo Png in cbPng)
                 {
                     if (!FileChanged.TryGetValue(Png.FullName, out DateTime lastEdit) || lastEdit != Png.LastWriteTime)
                     {
-                        Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
-                        GameObjectJSON.AddObjectToUserResources<Texture2D>(Texture2DT, tex, Png.Name);
-                        GameObjectJSON.AddObjectToUserResources<Texture>(TextureT, tex, Png.Name);
-                        GameObjectJSON.AddObjectToUserResources<Sprite>(SpriteT, GameObjectJSON.SpriteFromImage(tex), Png.Name);
-                        FileChanged[Png.FullName] = Png.LastWriteTime;
+                        try
+                        {
+                            Texture2D tex = GameObjectJSON.ImageFromFile(Png.FullName);
+                            GameObjectJSON.AddObjectToUserResources<Texture2D>(Texture2DT, tex, Png.Name);
+                            GameObjectJSON.AddObjectToUserResources<Texture>(TextureT, tex, Png.Name);
+                            GameObjectJSON.AddObjectToUserResources<Sprite>(SpriteT, GameObjectJSON.SpriteFromImage(tex), Png.Name);
+                            FileChanged[Png.FullName] = Png.LastWriteTime;
+                            Count++;
+                        }
+                        catch (Exception E)
+                        {
+                            Console.WriteLine("Could not read image " + Png.Name + "\n at " + Png.FullName + "\n" + E.Message + "\n" + E.StackTrace);
+                        }
+                        if (TimeBreak < sw.ElapsedMilliseconds)
+                        {
+                            BlockLoader.Timer.ReplaceLast("Loading json images... (" + Count.ToString() + ")");
+                            TimeBreak += sw.ElapsedMilliseconds + WatchDogTimeBreaker;
+                            yield return null;
+                        }
                     }
                 }
-                catch (Exception E)
-                {
-                    Console.WriteLine("Could not read image " + Png.Name + "\n at " + Png.FullName + "\n" + E.Message + "\n" + E.StackTrace);
-                }
-            }
-            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json images");
+                BlockLoader.Timer.ReplaceLast("Loaded " + Count.ToString() + " json images");
+                Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json images");
 
-            sw.Restart();
-            var cbObj = CustomBlocks.GetFiles("*.obj", SearchOption.AllDirectories);
-            foreach (FileInfo Obj in cbObj)
-            {
-                try
+                sw.Restart();
+                TimeBreak = WatchDogTimeBreaker;
+                var cbObj = CustomBlocks.GetFiles("*.obj", SearchOption.AllDirectories);
+                Count = 0;
+                BlockLoader.Timer.Log("Loading json models...");
+                yield return null;
+                foreach (FileInfo Obj in cbObj)
                 {
                     if (!FileChanged.TryGetValue(Obj.FullName, out DateTime lastEdit) || lastEdit != Obj.LastWriteTime)
                     {
-                        GameObjectJSON.AddObjectToUserResources(GameObjectJSON.MeshFromFile(Obj.FullName), Obj.Name);
-                        FileChanged[Obj.FullName] = Obj.LastWriteTime;
+                        try
+                        {
+                            GameObjectJSON.AddObjectToUserResources(GameObjectJSON.MeshFromFile(Obj.FullName), Obj.Name);
+                            FileChanged[Obj.FullName] = Obj.LastWriteTime;
+                            Count++;
+                        }
+                        catch (Exception E)
+                        {
+                            Console.WriteLine("Could not read mesh " + Obj.Name + "\n at " + Obj.FullName + "\n" + E.Message + "\n" + E.StackTrace);
+                        }
+                        if (TimeBreak < sw.ElapsedMilliseconds)
+                        {
+                            BlockLoader.Timer.ReplaceLast("Loading json models... (" + Count.ToString() + ")");
+                            TimeBreak += sw.ElapsedMilliseconds + WatchDogTimeBreaker;
+                            yield return null;
+                        }
                     }
                 }
-                catch (Exception E)
-                {
-                    Console.WriteLine("Could not read mesh " + Obj.Name + "\n at " + Obj.FullName + "\n" + E.Message + "\n" + E.StackTrace);
-                }
+                BlockLoader.Timer.ReplaceLast("Loaded " + Count.ToString() + " json models");
+                Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json models");
+                sw.Stop();
             }
-            Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json models");
-
-            if (ParseJSON)
+            if (LoadBlocks)
             {
                 var cbJson = CustomBlocks.GetFiles("*.json", SearchOption.AllDirectories);
+                //yield return null;
                 foreach (FileInfo Json in cbJson)
                 {
                     if (!FileChanged.TryGetValue(Json.FullName, out DateTime lastEdit) || lastEdit != Json.LastWriteTime)
                     {
-                        sw.Restart();
-                        CreateJSONBlock(Json);
-                        Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to parse {Json.Name}");
+                        CreateJSONBlock(Json, Input.GetKey(KeyCode.LeftControl));
                         FileChanged[Json.FullName] = Json.LastWriteTime;
+                        yield return null;
                     }
                 }
             }
-            sw.Stop();
+            yield break;
         }
 
-        private static void CreateJSONBlock(FileInfo Json)
+        static void L(string Log, bool On)
+        {
+            if (On) Console.WriteLine(Time.realtimeSinceStartup.ToString("000.000") + "  " + Log);
+        }
+
+        private static void CreateJSONBlock(FileInfo Json, bool l = false)
         {
             try
             {
-                //Read JSON
+                L("Get locals for " + Json.Name, l);
                 JObject jObject = JObject.Parse(StripComments(File.ReadAllText(Json.FullName)));
                 BlockBuilder jBlock = jObject.ToObject<BlockBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
                 BlockPrefabBuilder blockbuilder;
-                bool JSONParser = jBlock.JSONBLOCK != null;
 
-                bool HasSubObjs = jBlock.SubObjects != null && jBlock.SubObjects.Length != 0;
-
-                bool BlockAlreadyExists = BlockLoader.CustomBlocks.TryGetValue(jBlock.ID, out var ExistingJSONBlock);
-                bool Prefabbed = !string.IsNullOrEmpty(jBlock.GamePrefabReference);
-                //Prefab reference
-                if (!Prefabbed)
+                L("Read JSON", l);
+                /*Local*/bool BlockAlreadyExists = BlockLoader.CustomBlocks.TryGetValue(jBlock.ID, out var ExistingJSONBlock);
+                if (BlockAlreadyExists && !BlockLoader.AcceptOverwrite)
                 {
+                    Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\nBlock ID collides with " + ExistingJSONBlock.Name);
+                    BlockLoader.Timer.Log($" ! Could not read #{Json.Name} - Block ID collides with {ExistingJSONBlock.Name}!");
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(jBlock.GamePrefabReference))
+                {
+                    L("New instance", l);
                     blockbuilder = new BlockPrefabBuilder();
                 }
                 else
                 {
+                    L("Prefab reference", l);
                     if (jBlock.ReferenceOffset.HasValue && jBlock.ReferenceOffset != Vector3.zero)
                     {
                         //Offset Prefab
-                        blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, jBlock.ReferenceOffset.Value, !jBlock.KeepReferenceRenderers);
+                        blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, jBlock.ReferenceOffset.Value, false);
                     }
                     else
                     {
-                        blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, !jBlock.KeepReferenceRenderers);
+                        blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, false);
+                    }
+                    if (!jBlock.KeepReferenceRenderers)
+                    {
+                        if (!jBlock.KeepReferenceColliders)
+                        {
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter), typeof(Collider));
+                        }
+                        else
+                        {
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter));
+                        }
                     }
 
                     if (jBlock.ReferenceRotationOffset.HasValue && jBlock.ReferenceRotationOffset != Vector3.zero)
                     {
-                        //Add Rotation
+                        L("Rotate Prefab", l);
                         blockbuilder.Prefab.transform.RotateChildren(jBlock.ReferenceRotationOffset.Value);
                     }
 
@@ -251,7 +310,7 @@ namespace Nuterra.BlockInjector
                         for (int ti = 0; ti < blockbuilder.Prefab.transform.childCount; ti++)
                         {
                             var chi = blockbuilder.Prefab.transform.GetChild(ti);
-                            //Stretch
+                            L("Scale Prefab", l);
                             chi.localPosition = Vector3.Scale(chi.localPosition, jBlock.ReferenceScale.Value);
                             chi.localScale = Vector3.Scale(chi.localScale, jBlock.ReferenceScale.Value);
                         }
@@ -259,15 +318,17 @@ namespace Nuterra.BlockInjector
                 }
 
                 //If gameobjectJSON exists, use it
-                if (JSONParser)
+                if (jBlock.JSONBLOCK != null)
                 {
+                    L("Use JSONBLOCK", l);
                     GameObjectJSON.CreateGameObject(jObject.Property("JSONBLOCK").Value.ToObject<JObject>(), blockbuilder.Prefab);
                 }
 
-                //Set IP
+                L("Set IP", l);
                 blockbuilder.SetBlockID(jBlock.ID);
 
                 //Set Category
+                L("Set Category", l);
                 if (jBlock.Category != 0)
                 {
                     blockbuilder.SetCategory((BlockCategories)jBlock.Category);
@@ -277,20 +338,24 @@ namespace Nuterra.BlockInjector
                     blockbuilder.SetCategory(BlockCategories.Standard);
                 }
 
-                //Set Faction (Corp)
+                L("Set Faction (Corp)", l);
                 if (jBlock.Faction != 0)
                 {
                     blockbuilder.SetFaction((FactionSubTypes)jBlock.Faction);
+                }
+                else if (jBlock.Faction < 0)
+                {
+                    blockbuilder.SetFaction(FactionSubTypes.NULL);
                 }
                 else
                 {
                     blockbuilder.SetFaction(FactionSubTypes.GSO);
                 }
 
-                //Set Block Grade
+                L("Set Block Grade", l);
                 blockbuilder.SetGrade(jBlock.Grade);
 
-                //Set HP
+                L("Set HP", l);
                 if (jBlock.HP != 0)
                 {
                     blockbuilder.SetHP(jBlock.HP);
@@ -300,53 +365,54 @@ namespace Nuterra.BlockInjector
                     blockbuilder.SetHP(250);
                 }
 
-                //Set DamageableType
                 if (jBlock.DamageableType.HasValue)
                 {
+                    L("Set DamageableType", l);
                     blockbuilder.SetDamageableType((ManDamage.DamageableType)jBlock.DamageableType.Value);
                 }
 
-                //Set DetachFragility
                 if (jBlock.Fragility.HasValue)
                 {
+                    L("Set DetachFragility", l);
                     blockbuilder.SetDetachFragility(jBlock.Fragility.Value);
                 }
 
-                //Set Rarity
+                L("Set Rarity", l);
                 blockbuilder.SetRarity((BlockRarity)jBlock.Rarity);
 
-                //Set Icon
                 if (jBlock.IconName != null && jBlock.IconName != "")
                 {
-                    var Tex = GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.IconName);
-                    if (Tex == null)
+                    L("Set Icon", l);
+                    var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(SpriteT, jBlock.IconName);
+                    if (Spr == null)
                     {
-                        Tex = GameObjectJSON.GetObjectFromGameResources<Texture2D>(Texture2DT, jBlock.IconName);
-                        if (Tex == null)
-                        {
-                            var Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(jBlock.IconName);
-                            if (Spr == null)
-                            {
+                        //var Tex = GameObjectJSON.GetObjectFromGameResources<Texture2D>(Texture2DT, jBlock.IconName);
+                        //if (Tex == null)
+                        //{
+                        //    Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(jBlock.IconName);
+                        //    if (Spr == null)
+                        //    {
                                 blockbuilder.SetIcon((Sprite)null);
-                            }
-                            else
-                            {
-                                blockbuilder.SetIcon(Spr);
-                            }
-                        }
-                        else
-                        {
-                            blockbuilder.SetIcon(Tex);
-                        }
+                        //    }
+                        //    else
+                        //    {
+                        //        blockbuilder.SetIcon(Spr);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    blockbuilder.SetIcon(Tex);
+                        //}
                     }
                     else
                     {
-                        blockbuilder.SetIcon(Tex);
+                        blockbuilder.SetIcon(Spr);
                     }
                 }
 
+                L("Get Material", l);
+                /*Local*/
                 Material localmat = null;
-                //Get Material
                 if (jBlock.MeshMaterialName != null && jBlock.MeshMaterialName != "")
                 {
                     jBlock.MeshMaterialName.Replace("Venture_", "VEN_");
@@ -362,20 +428,27 @@ namespace Nuterra.BlockInjector
                     localmat = GameObjectJSON.MaterialFromShader();
                 }
 
-                bool missingflag1 = string.IsNullOrWhiteSpace(jBlock.MeshTextureName),
-                    missingflag2 = string.IsNullOrWhiteSpace(jBlock.MeshGlossTextureName),
-                    missingflag3 = string.IsNullOrWhiteSpace(jBlock.MeshEmissionTextureName);
-                localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
-                    missingflag1 ? null :
-                    GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshTextureName),
-                    missingflag2 ? null :
-                    GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
-                    missingflag3 ? null :
-                    GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
+                //-Texture Material
+                {
+                    bool missingflag1 = string.IsNullOrWhiteSpace(jBlock.MeshTextureName),
+                        missingflag2 = string.IsNullOrWhiteSpace(jBlock.MeshGlossTextureName),
+                        missingflag3 = string.IsNullOrWhiteSpace(jBlock.MeshEmissionTextureName);
+                    if (!missingflag1 || !missingflag2 || !missingflag3)
+                    {
+                        L("-Texture Material", l);
+                        localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
+                            missingflag1 ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshTextureName),
+                            missingflag2 ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
+                            missingflag3 ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
+                    }
+                }
 
-
+                L("Get Collision Material", l);
+                /*Local*/
                 PhysicMaterial localphysmat = new PhysicMaterial();
-                //Get Collision Material
                 if (jBlock.Friction.HasValue)
                 {
                     localphysmat.dynamicFriction = jBlock.Friction.Value;
@@ -389,64 +462,54 @@ namespace Nuterra.BlockInjector
                     localphysmat.bounciness = jBlock.Bounciness.Value;
                 }
 
-                //Set Model
+                //Get Mesh
+                Mesh mesh = null;
+                if (jBlock.MeshName != null && jBlock.MeshName != "")
                 {
-                    //-Get Mesh
-                    Mesh mesh = null;
-                    if ((jBlock.MeshName != null && jBlock.MeshName != ""))
-                    {
-                        mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.MeshName);
-                    }
-                    //if (mesh == null && !HasSubObjs)
-                    //{
-                    //    mesh = GameObjectJSON.GetObjectFromGameResources<Mesh>(MeshT, "Cube");
-                    //    if (mesh == null)
-                    //    {
-                    //        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    //        mesh = go.GetComponent<MeshFilter>().mesh;
-                    //        GameObject.Destroy(go);
-                    //    }
-                    //}
-                    //-Get Collider
-                    Mesh colliderMesh = null;
-                    if (jBlock.ColliderMeshName != null && jBlock.ColliderMeshName != "")
-                    {
-                        colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.ColliderMeshName);
-                    }
-                    //-Apply
+                    L("Get Mesh", l);
+                    mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.MeshName);
+                }
+
+                //Get Collider
+                Mesh colliderMesh = null;
+                if (jBlock.ColliderMeshName != null && jBlock.ColliderMeshName != "")
+                {
+                    L("Get Collider", l);
+                    colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.ColliderMeshName);
+                }
+
+                //Set Mesh
+                if (colliderMesh == null)
+                {
                     if (mesh != null)
                     {
-                        if (colliderMesh == null)
-                        {
-                            blockbuilder.SetModel(mesh, !jBlock.SupressBoxColliderFallback, localmat, localphysmat);
-                        }
-                        else
-                        {
-                            blockbuilder.SetModel(mesh, colliderMesh, true, localmat, localphysmat);
-                        }
+                        L("Set Mesh" + (jBlock.SupressBoxColliderFallback ? "" : " and Auto Collider"), l);
+                        blockbuilder.SetModel(mesh, !jBlock.SupressBoxColliderFallback, localmat, localphysmat);
                     }
                 }
-                if (HasSubObjs) //Set SUB MESHES
+                else
                 {
+                    L("Set Mesh and Collider", l);
+                    blockbuilder.SetModel(mesh, colliderMesh, true, localmat, localphysmat);
+                }
+
+                if (jBlock.SubObjects != null && jBlock.SubObjects.Length != 0)
+                {
+                    L("Set Sub Bodies", l);
                     var tr = blockbuilder.Prefab.transform;
-                    foreach (var sub in jBlock.SubObjects) //For each SUB
+
+                    foreach (var sub in jBlock.SubObjects)
                     {
-                        Transform childT = null;
                         string LocalPath;
-                        if (sub.SubOverrideName != null && sub.SubOverrideName != "") childT = tr.RecursiveFind(sub.SubOverrideName);
+
+                        L("-Get GameObject", l);
+                        Transform childT = string.IsNullOrEmpty(sub.SubOverrideName) ? null : (tr.RecursiveFindWithProperties(sub.SubOverrideName) as Component)?.transform;
+                        bool New = childT == null;
                         GameObject childG = null;
-                        bool New = false;
-                        if (childT != null)
+                        if (New)
                         {
-                            childG = childT.gameObject;
-                            if (sub.Layer.HasValue)
-                            {
-                                childG.layer = sub.Layer.Value;
-                            }
-                        }
-                        else
-                        {
-                            string name = "SubObject_" + (tr.childCount + 1).ToString();
+                            string name = (string.IsNullOrEmpty(sub.SubOverrideName) ? "SubObject_" + (tr.childCount + 1).ToString() : sub.SubOverrideName);
+                            L("-New GameObject " + name, l);
                             LocalPath = "/" + name;
                             childG = new GameObject(name);
                             childT = childG.transform;
@@ -459,30 +522,45 @@ namespace Nuterra.BlockInjector
                             }
                             else
                             {
-                                childG.layer = Globals.inst.layerTank;
+                                childG.layer = 8;//Globals.inst.layerTank;
                             }
                             New = true;
                         }
-                        //-Offset
+                        else
+                        {
+                            L("-Existing GameObject " + sub.SubOverrideName, l);
+                            childG = childT.gameObject;
+                            if (sub.Layer.HasValue)
+                            {
+                                childG.layer = sub.Layer.Value;
+                            }
+                        }
+
                         if (sub.SubPosition.HasValue)
                         {
+                            L("-Offset Position", l);
                             childT.localPosition = sub.SubPosition.Value;
                         }
                         if (sub.SubRotation.HasValue)
                         {
+                            L("-Offset Rotation", l);
                             childT.localRotation = Quaternion.Euler(sub.SubRotation.Value);
                         }
+
                         //-DestroyCollidersOnObj
                         if (sub.DestroyExistingColliders)
                         {
+                            L("-Destroy Colliders", l);
                             foreach (var collider in childG.GetComponents<Collider>())
                             {
                                 Component.DestroyImmediate(collider);
                             }
                         }
+
                         //-DestroyRendersOnObj
                         if (sub.DestroyExistingRenderer)
                         {
+                            L("-Destroy Renderers", l);
                             foreach (var comp1 in childG.GetComponents<MeshRenderer>())
                             {
                                 Component.DestroyImmediate(comp1);
@@ -492,18 +570,23 @@ namespace Nuterra.BlockInjector
                                 Component.DestroyImmediate(comp2);
                             }
                         }
+
                         //-Get Mesh
-                        Mesh mesh = null;
+                        Mesh submesh = null;
                         if (sub.MeshName != null && sub.MeshName != "")
                         {
-                            mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.MeshName);
+                            L("-Get Mesh", l);
+                            submesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.MeshName);
                         }
+
                         //-Get Collider
-                        Mesh colliderMesh = null;
+                        Mesh subcolliderMesh = null;
                         if (sub.ColliderMeshName != null && sub.ColliderMeshName != "")
                         {
-                            colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.ColliderMeshName);
+                            L("-Get Collider", l);
+                            subcolliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.ColliderMeshName);
                         }
+
                         //-Get Material
                         Material mat = localmat;
                         if (!New && !sub.DestroyExistingRenderer)
@@ -516,16 +599,18 @@ namespace Nuterra.BlockInjector
                         }
                         if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
                         {
+                            L("-Get Material", l);
                             sub.MeshMaterialName.Replace("Venture_", "VEN_");
                             sub.MeshMaterialName.Replace("GeoCorp_", "GC_");
                             try
                             {
                                 var mat2 = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName);
-                                if (mat2 == null) Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!");
+                                if (mat2 == null) Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!", l);
                                 else mat = mat2;
                             }
                             catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
                         }
+                        L("-Texture Material", l);
                         mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
                             string.IsNullOrWhiteSpace(sub.MeshTextureName) ? null :
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
@@ -534,7 +619,7 @@ namespace Nuterra.BlockInjector
                             string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName) ? null :
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
 
-                        //-Get Collision Material
+                        L("-Get Collision Material", l);
                         PhysicMaterial physmat = localphysmat;
                         bool newphysmat = false;
                         if (sub.Friction.HasValue && sub.Friction.Value != localphysmat.dynamicFriction)
@@ -552,36 +637,49 @@ namespace Nuterra.BlockInjector
                             if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
                             physmat.bounciness = sub.Bounciness.Value;
                         }
+
                         //-Apply
-                        if (mesh != null)
+                        if (submesh != null)
                         {
-                            if (New) childG.AddComponent<MeshFilter>().sharedMesh = mesh;
-                            else childG.EnsureComponent<MeshFilter>().sharedMesh = mesh;
+                            L("-Set Mesh", l);
+                            if (New) childG.AddComponent<MeshFilter>().sharedMesh = submesh;
+                            else childG.EnsureComponent<MeshFilter>().sharedMesh = submesh;
+                            childG.EnsureComponent<MeshRenderer>().material = mat;
+                        }
+                        else
+                        {
+                            var renderer = childG.GetComponent<MeshRenderer>();
+                            if (renderer != null)
+                            {
+                                L("-Set Material", l);
+                                renderer.material = mat;
+                            }
                         }
 
-                        childG.EnsureComponent<MeshRenderer>().material = mat;
-
-                        if (colliderMesh != null)
+                        if (subcolliderMesh != null)
                         {
+                            L("-Set Collider Mesh", l);
                             MeshCollider mc;
                             if (New) mc = childG.AddComponent<MeshCollider>();
                             else mc = childG.EnsureComponent<MeshCollider>();
                             mc.convex = true;
-                            mc.sharedMesh = colliderMesh;
+                            mc.sharedMesh = subcolliderMesh;
                             mc.sharedMaterial = physmat;
                         }
                         if (sub.MakeBoxCollider)
                         {
-                            if (mesh != null)
+                            if (submesh != null)
                             {
-                                mesh.RecalculateBounds();
+                                L("-Set Collider Box from Mesh", l);
+                                submesh.RecalculateBounds();
                                 var bc = childG.EnsureComponent<BoxCollider>();
-                                bc.size = mesh.bounds.size - Vector3.one * 0.2f;
-                                bc.center = mesh.bounds.center;
+                                bc.size = submesh.bounds.size - Vector3.one * 0.2f;
+                                bc.center = submesh.bounds.center;
                                 bc.sharedMaterial = physmat;
                             }
                             else
                             {
+                                L("-Set Collider Box", l);
                                 var bc = childG.EnsureComponent<BoxCollider>();
                                 bc.size = Vector3.one;
                                 bc.center = Vector3.zero;
@@ -590,63 +688,63 @@ namespace Nuterra.BlockInjector
                         }
                         if (sub.MakeSphereCollider)
                         {
+                            L("-Set Collider Sphere", l);
                             var bc = childG.EnsureComponent<SphereCollider>();
                             bc.radius = 0.5f;
                             bc.center = Vector3.zero;
                             bc.sharedMaterial = physmat;
                         }
+                        //-Set Size
                         if (sub.SubScale.HasValue && sub.SubScale != Vector3.zero)
                         {
+                            L("-Set Size", l);
                             childT.localScale = sub.SubScale.Value;
                         }
                         //-Animation
-                        if (sub.Animation != null)
+                        if (sub.Animations != null)
                         {
                             Console.WriteLine("Animation block detected");
-                            var mA = tr.GetComponentsInChildren<Animator>(true);
+                            var mA = tr.GetComponentsInChildren<ModuleAnimator>(true);
                             if (mA.Length != 0)
                             {
                                 var Animator = mA[0];
                                 GameObjectJSON.DumpAnimation(Animator);
-                                foreach (var anim in sub.Animation)
+                                foreach (var anim in sub.Animations)
                                 {
-                                    GameObjectJSON.ModifyAnimation(Animator, anim.ClipName, childT.GetPath(Animator.transform), GameObjectJSON.AnimationCurveStruct.ConvertToStructArray(anim.Curves));
+                                    GameObjectJSON.ModifyAnimation(Animator.Animator, anim.ClipName, childT.GetPath(Animator.transform), GameObjectJSON.AnimationCurveStruct.ConvertToStructArray(anim.Curves));
                                 }
                             }
                         }
                     }
                 }
 
-                //Set Name
+                L("Set Name", l);
                 blockbuilder.SetName(jBlock.Name);
 
-                //Set Desc
+                L("Set Description", l);
                 blockbuilder.SetDescription(jBlock.Description);
 
-                //Set Price
-                if (jBlock.Price != 0)
-                {
-                    blockbuilder.SetPrice(jBlock.Price);
-                }
-                else
-                {
-                    blockbuilder.SetPrice(500);
-                }
-
+                //Set Cells
                 if (jBlock.Cells != null && jBlock.Cells.Length != 0)
                 {
+                    L("Set Cells Manual", l);
                     blockbuilder.SetSizeManual(jBlock.Cells, true);
                 }
                 else if (jBlock.BlockExtents.HasValue)
                 {
+                    L("Set Cells Extents", l);
                     blockbuilder.SetSize(jBlock.BlockExtents.Value, (jBlock.APsOnlyAtBottom ? BlockPrefabBuilder.AttachmentPoints.Bottom : BlockPrefabBuilder.AttachmentPoints.All));
                 }
+
+                //Set APs
                 if (jBlock.APs != null)
                 {
+                    L("Set APs", l);
                     blockbuilder.SetAPsManual(jBlock.APs);
                 }
 
                 //Set Mass
+                L("Set Mass", l);
                 if (jBlock.Mass != 0f)
                 {
                     blockbuilder.SetMass(jBlock.Mass);
@@ -656,44 +754,41 @@ namespace Nuterra.BlockInjector
                     blockbuilder.SetMass(1f);
                 }
 
-                // REGISTER
-                if (BlockAlreadyExists && BlockLoader.AcceptOverwrite)
+                //Set Center of Mass
+                if (jBlock.CenterOfMass.HasValue)
                 {
-                    BlockLoader.Register(blockbuilder.Build());
-                    blockbuilder.Prefab.SetActive(false);
+                    L("Set Center of Mass", l);
+                    blockbuilder.SetCenterOfMass(jBlock.CenterOfMass.Value);
                 }
-                else
-                    blockbuilder.RegisterLater(6);
 
                 //Recipe
+                /*Local*/int RecipePrice = 0;
                 if (!BlockAlreadyExists && jBlock.Recipe != null && jBlock.Recipe != "")
                 {
+                    L("Apply Recipe", l);
                     Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
                     string[] recipes = jBlock.Recipe.Replace(" ", "").Split(',');
                     foreach (string recipe in recipes)
                     {
-                        int chunk = (int)ChunkTypes.Null;
-                        try
-                        {
-                            chunk = (int)(ChunkTypes)Enum.Parse(cT, recipe, true);
-                        }
-                        catch
+                        ChunkTypes chunk = ChunkTypes.Null;
+                        if (!Enum.TryParse(recipe, true, out chunk))
                         {
                             if (int.TryParse(recipe, out int result))
                             {
-                                chunk = result;
+                                chunk = (ChunkTypes)result;
                             }
                         }
-                        if (chunk != (int)ChunkTypes.Null)
+                        if (chunk != ChunkTypes.Null)
                         {
-                            if (!RecipeBuilder.ContainsKey(chunk))
+                            if (!RecipeBuilder.ContainsKey((int)chunk))
                             {
-                                RecipeBuilder.Add(chunk, 1);
+                                RecipeBuilder.Add((int)chunk, 1);
                             }
                             else
                             {
-                                RecipeBuilder[chunk]++;
+                                RecipeBuilder[(int)chunk]++;
                             }
+                            RecipePrice += RecipeManager.inst.GetChunkPrice(chunk);
                         }
                         else
                         {
@@ -722,11 +817,38 @@ namespace Nuterra.BlockInjector
                                 new CustomRecipe.RecipeOutput(jBlock.ID)
                             }, RecipeTable.Recipe.OutputType.Items, fab);
                 }
+
+                L("Set Price", l);
+                if (jBlock.Price != 0)
+                {
+                    blockbuilder.SetPrice(jBlock.Price);
+                }
+                else if (RecipePrice > 0)
+                {
+                    blockbuilder.SetPrice(RecipePrice);
+                }
+                else
+                {
+                    blockbuilder.SetPrice(500);
+                }
+
+                // REGISTER
+                if (BlockAlreadyExists)
+                {
+                    L("Override Register", l);
+                    BlockLoader.Register(blockbuilder.Build());
+                    blockbuilder.Prefab.SetActive(false);
+                }
+                else
+                {
+                    L("Register", l);
+                    blockbuilder.RegisterLater(2);
+                }
             }
             catch (Exception E)
             {
-                Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\n" + E.Message + "\n" + E.StackTrace);
-                BlockLoader.Timer.blocks += $"\nCould not read #{Json.Name} - \"{E.Message}\"";
+                Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\n" + E);
+                BlockLoader.Timer.Log($" ! Could not read #{Json.Name} - \"{E.Message}\"");
             }
         }
 
@@ -745,35 +867,6 @@ namespace Nuterra.BlockInjector
                 parent = parent.parent;
             }
             return result;
-        }
-
-        private static Transform RecursiveFind(this Transform transform, string NameOfChild, string HierarchyBuildup = "")
-        {
-            string cName = NameOfChild.Substring(NameOfChild.LastIndexOf('/') + 1);
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                var child = transform.GetChild(i);
-                //Console.WriteLine(child.name);
-                if (child.name == cName)
-                {
-                    HierarchyBuildup += "/" + cName;
-                    //Console.WriteLine(HierarchyBuildup + "  " + NameOfChild);
-                    if (HierarchyBuildup.EndsWith(NameOfChild))
-                    {
-                        return child;
-                    }
-                }
-            }
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                var c = transform.GetChild(i);
-                var child = RecursiveFind(c, NameOfChild, HierarchyBuildup + "/" + c.name);
-                if (child != null)
-                {
-                    return child;
-                }
-            }
-            return null;
         }
 
         private static void RotateChildren(this Transform transform, Vector3 Rotation)

@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using System;
+using System.Reflection;
 
 namespace Nuterra.BlockInjector
 {
@@ -34,6 +36,40 @@ namespace Nuterra.BlockInjector
         public void Register()
         {
             BlockLoader.Register(this);
+        }
+    }
+
+    internal class ModuleCustomBlock : Module
+    {
+        public bool HasInjectedCenterOfMass;
+        public Vector3 InjectedCenterOfMass;
+        bool rbodyExists = false;
+        internal uint reparse_version_cache;
+        static Type T_ComponentPool = typeof(ComponentPool);
+        static FieldInfo m_ReturnToPoolIndex = T_ComponentPool.GetField("m_ReturnToPoolIndex", BindingFlags.Instance | BindingFlags.NonPublic);
+        void OnRecycle()
+        {
+            if (BlockPrefabBuilder.ReparseVersion[(int)block.BlockType] != reparse_version_cache)
+            {
+                m_ReturnToPoolIndex.SetValue(ComponentPool.inst, (int)m_ReturnToPoolIndex.GetValue(ComponentPool.inst) - 1);
+                GameObject.Destroy(gameObject);
+            }
+        }
+
+        void Update()
+        {
+            if (HasInjectedCenterOfMass)
+            {
+                bool re = block.rbody.IsNotNull();
+                if (re != rbodyExists)
+                {
+                    rbodyExists = re;
+                    if (re)
+                    {
+                        block.rbody.centerOfMass = InjectedCenterOfMass;
+                    }
+                }
+            }
         }
     }
 }

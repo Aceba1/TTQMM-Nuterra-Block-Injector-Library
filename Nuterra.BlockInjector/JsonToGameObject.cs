@@ -15,9 +15,11 @@ namespace Nuterra.BlockInjector
 
         const string m_tab = "  ";
 
+        static Type t_mat = typeof(Shader);
+        static Type t_uobj = typeof(UnityEngine.Object);
         public static Material MaterialFromShader(string ShaderName = "StandardTankBlock")
         {
-            var shader = Shader.Find(ShaderName);
+            var shader = GetObjectFromGameResources<Shader>(t_mat, ShaderName, true);
             return new Material(shader);
         }
 
@@ -49,9 +51,9 @@ namespace Nuterra.BlockInjector
         }
         public static T GetObjectFromUserResources<T>(Type t, string targetName) where T : UnityEngine.Object
         {
-            if (LoadedResources.ContainsKey(t) && LoadedResources[t].ContainsKey(targetName))
+            if (LoadedResources.TryGetValue(t, out var bucket) && bucket.TryGetValue(targetName, out var item))
             {
-                return LoadedResources[t][targetName] as T;
+                return item as T;
             }
             return null;
         }
@@ -218,13 +220,13 @@ namespace Nuterra.BlockInjector
             AddObjectToUserResources<T>(typeof(T), Object, Name);
         }
 
-        public static void DumpAnimation(Animator animator)
+        public static void DumpAnimation(ModuleAnimator animator)
         {
             Console.WriteLine("Clip names for animator " + animator.name + ":");
-            for (int i = 0; i < animator.layerCount; i++)
+            for (int i = 0; i < animator.Animator.layerCount; i++)
             {
-                Console.WriteLine(">Layer " + i.ToString() + ":");
-                foreach (var clip in animator.GetCurrentAnimatorClipInfo(i))
+                Console.WriteLine(">Layer " + i.ToString() + "("+ animator.Animator.GetLayerName(i) + "):");
+                foreach (var clip in animator.Animator.GetCurrentAnimatorClipInfo(i))
                 {
                     Console.WriteLine(" >" + clip.clip.name);
                 }
@@ -259,18 +261,123 @@ namespace Nuterra.BlockInjector
             for(int i = 0; i < animator.layerCount; i++)
             {
                 var clips = animator.GetCurrentAnimatorClipInfo(i);
-                foreach (var clip in clips)
+                for (int j = 0; j < clips.Length; j++)
                 {
-                    if (clip.clip.name == clipName)
+                    var clip = clips[j];
+                    if (clips[j].clip.name == clipName)
                     {
                         foreach (var curve in curves)
                         {
                             clip.clip.SetCurve(path, curve.Type, curve.PropertyName, curve.Curve);
+                            clips[j] = clip;
                         }
                         return;
                     }
                 }
             }
+        }
+
+        public static object GetValueFromPath(this Component component, string PropertyPath)
+        {
+            Type currentType = component.GetType();
+            object currentObject = component;
+            var props = PropertyPath.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach(string pprop in props)
+            {
+                var tfield = currentType.GetField(pprop, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
+                if (tfield != null)
+                {
+                    currentObject = tfield.GetValue(currentObject);
+                    currentType = tfield.FieldType;
+                }
+                else
+                {
+                    var tproperty = currentType.GetProperty(pprop, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
+                    if (tproperty != null)
+                    {
+                        currentObject = tproperty.GetValue(currentObject, null);
+                        currentType = tproperty.PropertyType;
+                    }
+                    else return null;
+                }
+            }
+            return currentObject;
+        }
+
+        public static object RecursiveFindWithProperties(this Transform transform, string NameOfProperty)
+        {
+            try
+            {
+                int propIndex = NameOfProperty.IndexOf('.');
+                if (propIndex == -1)
+                {
+                    return transform.RecursiveFind(NameOfProperty);
+                }
+                var result = transform;
+
+                while (true)
+                {
+                    propIndex = NameOfProperty.IndexOf('.');
+                    if (propIndex == -1)
+                    {
+                        return result.RecursiveFind(NameOfProperty);
+                    }
+                    int reIndex = NameOfProperty.IndexOf('/', propIndex);
+                    int lastIndex = NameOfProperty.LastIndexOf('/', propIndex);
+                    if (lastIndex > 0)
+                    {
+                        string transPath = NameOfProperty.Substring(0, lastIndex);
+                        result = result.RecursiveFind(transPath);
+                        if (result == null) return null;
+                    }
+
+                    string propPath = NameOfProperty.Substring(propIndex, Math.Max(reIndex - propIndex, 0));
+                    string propClass = NameOfProperty.Substring(lastIndex + 1, Math.Max(propIndex - lastIndex - 1, 0));
+
+                    var component = result.GetComponent(propClass);
+                    var value = component.GetValueFromPath(propPath);
+
+
+                    if (reIndex == -1) return value;
+                    result = (value as Component).transform;
+                    NameOfProperty = NameOfProperty.Substring(reIndex);
+                }
+            }
+            catch (Exception E)
+            {
+                Console.WriteLine("RecursiveFindWithParameters failed! " + E);
+                return null;
+            }
+        }
+
+        public static Transform RecursiveFind(this Transform transform, string NameOfChild, string HierarchyBuildup = "")
+        {
+            if (NameOfChild == "/") return transform;
+            string cName = NameOfChild.Substring(NameOfChild.LastIndexOf('/') + 1);
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                var child = transform.GetChild(i);
+                //Console.WriteLine(child.name);
+                if (child.name == cName)
+                {
+                    HierarchyBuildup += "/" + cName;
+                    //Console.WriteLine(HierarchyBuildup + "  " + NameOfChild);
+                    if (HierarchyBuildup.EndsWith(NameOfChild))
+                    {
+                        return child;
+                    }
+                }
+            }
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                var c = transform.GetChild(i);
+                var child = c.RecursiveFind(NameOfChild, HierarchyBuildup + "/" + c.name);
+                if (child != null)
+                {
+                    return child;
+                }
+            }
+            return null;
         }
 
         static Dictionary<string, Type> stringtypecache = new Dictionary<string, Type>();
@@ -405,6 +512,7 @@ namespace Nuterra.BlockInjector
                                 }
                                //Console.WriteLine(Spacing + "Created " + property.Name);
                             }
+                            SearchTransform = result.transform;
                             ApplyValues(component, componentType, property.Value as JObject, Spacing);
                            //Console.WriteLine(Spacing + "Set values of " + property.Name);
                         }
@@ -421,7 +529,8 @@ namespace Nuterra.BlockInjector
             return result;
         }
 
-        public static object ApplyValues(object instance, Type instanceType, JObject json, string Spacing)
+        static Transform SearchTransform;
+        static object ApplyValues(object instance, Type instanceType, JObject json, string Spacing)
         {
            //Console.WriteLine(Spacing+"Going down");
             object _instance = instance;
@@ -547,7 +656,7 @@ namespace Nuterra.BlockInjector
                                 type = UseField ? tField.FieldType : tProp.PropertyType;
                                 targetName = cache;
                             }
-                            UnityEngine.Object searchresult = null;
+                            object searchresult = null;
                             // TODO: Allow setting objects from hierarchy as value
                             if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
                             {
@@ -556,21 +665,29 @@ namespace Nuterra.BlockInjector
                             }
                             else
                             {
-                                UnityEngine.Object[] search = Resources.FindObjectsOfTypeAll(type);
-                                string failedsearch = "";
-                                for (int i = 0; i < search.Length; i++)
+                                try
                                 {
-                                    if (search[i].name == targetName)
-                                    {
-                                        searchresult = search[i];
-                                       //Console.WriteLine(Spacing + m_tab + ">Setting value from existing resource reference");
-                                        break;
-                                    }
-                                    failedsearch += "(" + search[i].name + ") ";
+                                    searchresult = SearchTransform.RecursiveFindWithProperties(cache);
                                 }
-                                if (searchresult == null)
+                                catch { }
+                                if (searchresult == null && type.IsSubclassOf(t_uobj))
                                 {
-                                    Console.WriteLine("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
+                                    UnityEngine.Object[] search = Resources.FindObjectsOfTypeAll(type);
+                                    string failedsearch = "";
+                                    for (int i = 0; i < search.Length; i++)
+                                    {
+                                        if (search[i].name == targetName)
+                                        {
+                                            searchresult = search[i];
+                                            //Console.WriteLine(Spacing + m_tab + ">Setting value from existing resource reference");
+                                            break;
+                                        }
+                                        failedsearch += "(" + search[i].name + ") ";
+                                    }
+                                    if (searchresult == null)
+                                    {
+                                        Console.WriteLine("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
+                                    }
                                 }
                             }
                             if (UseField)
@@ -584,7 +701,15 @@ namespace Nuterra.BlockInjector
                         }
                     }
                 }
-                catch (Exception E) { Console.WriteLine(Spacing + "!!!" + E.Message/*+"\n"+E.StackTrace*/); }
+                catch (Exception E) 
+                { 
+                    Console.WriteLine(Spacing + "!!!" + E/*+"\n"+E.StackTrace*/); 
+                    while (E.InnerException != null) 
+                    {
+                        E = E.InnerException;
+                        Console.WriteLine(E);
+                    } 
+                }
             }
            //Console.WriteLine(Spacing+"Going up");
             return _instance;

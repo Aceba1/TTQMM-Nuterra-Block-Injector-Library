@@ -14,6 +14,7 @@
   "Price": 100, //The price is measured by sum of recipe value times 3
   "HP": 500, //A GSO one block has 250 health
   "Mass": 1.0,
+  //"CenterOfMass": {"x": 0.0, "y": 0.0, "z": 0.0},
 
   "Fragility": 1.0, //How likely the block is to fall off from being attacked. 2 is two times as likely, 0 is none at all, for example, SCUs do not fall off when attacked
   "DamageableType": 0, // Standard = 0, Armour = 1, Rubber = 2, Volatile = 3, Shield = 4, Wood = 5, Rock = 6
@@ -102,7 +103,8 @@
 
   //OPTIONAL
   "GamePrefabReference": null, //Use a block prefab from the GAME'S RESOURCES as a base. For example, "GSOBlock(111)"
-  "KeepReferenceRenderers": true,
+  "KeepReferenceRenderers": true, //If not true, prefab renderers will be removed, and colliders will be removed if below is not true
+  "KeepReferenceColliders": true, //If the above is not true, colliders will be preserved if this property is true
   "ReferenceOffset": {
     "x": 0,
     "y": 0,
@@ -126,7 +128,7 @@
   // Sub Objects can modify existing sub gameobjects on a prefab reference. Properties can be omitted as necessary
   /*
   "SubObjects": [
-    { // This is the start of a subobject modifier item
+    { // This is the start of a subobject modifier item. All the parameters are here for reference
       "SubOverrideName": "m_CORP_Block_SubObject", //This line can be omitted (or set to not a valid subobject of the prefab) to create a new gameobject child.
       "DestroyExistingRenderer": false, //With this false, it will use the material on the subobject if it exists instead of root. Can still be modified with below properties
       "DestroyExistingColliders": false,
@@ -148,7 +150,7 @@
         "z": 0  // Roll
       }
     }, // You can add as many items as needed for your block
-    {
+    { // This item example only has a few of the parameters, as it does not need all of it
       "SubOverrideName": "SubGameObject/CommonName", // For target subobjects with shared names, a number or parent subobject name can be used to target the right one
       "DestroyExistingRenderer": false,
       "MeshName": null,

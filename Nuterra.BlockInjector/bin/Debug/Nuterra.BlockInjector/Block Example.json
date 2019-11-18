@@ -1,0 +1,227 @@
+// -- Make a copy of this file, change the ID, and modify the values shown to make your own block --
+// "PropertyName" : Value,
+// Only change the Value, and make sure it ends with a comma
+
+// Helpful site for https://danny-alexander.github.io/terratech-block-list/block-list.html
+{
+  "Name": "Magical Block",
+  "Description": "A very nice block, loaded from the file system\nThis one is magical!", //You can make multiple lines with \n
+  "ID": 534968, //A random ID that MUST be unique
+
+  "Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP = 3, Venture = 4, HawkEye = 5, Special = 6, BetterFuture = 7
+  "Category": 0, //Control = 1, Standard = 2|0, Wheels = 3, Weapons = 4, Accessories = 5, Power = 6, Base = 7, Flight = 8
+  "Grade": 0, //The desired grade minus one
+  "Price": 100, //The price is measured by sum of recipe value times 3
+  "HP": 500, //A GSO one block has 250 health
+  "Mass": 1.0,
+  //"CenterOfMass": {"x": 0.0, "y": 0.0, "z": 0.0},
+
+  "Fragility": 1.0, //How likely the block is to fall off from being attacked. 2 is two times as likely, 0 is none at all, for example, SCUs do not fall off when attacked
+  "DamageableType": 0, // Standard = 0, Armour = 1, Rubber = 2, Volatile = 3, Shield = 4, Wood = 5, Rock = 6
+  "Rarity": 0, // Common = 0, Uncommon = 1, Rare = 2
+
+  "Recipe": "PlumbiaIngot, 5, plumbiteore", // Separate chunk names or IDs with a comma. Not case sensitive.
+
+  "IconName": null, //FILE Name of image, such as "icon.png". File can be anywhere and should be uniquely named
+
+  "MeshName": null, //FILE Name of mesh, such as "mesh.obj". File can be anywhere and should be uniquely named
+
+  /*  EITHER  */
+  "MeshTextureName": null, //FILE Name of image for texture, such as "texture.png". File can be anywhere and should be uniquely named
+  //"MeshGlossTextureName": null, //Black white transparency image for the shine. Opaque black looks like rough plastic or rubber, Opaque white looks like glossed mirror.
+  //"MeshEmissionTextureName": null, //Texture like the first, except is for illumination of parts of the model for things like night. Black is "off", the brighter it is the more it shows. Think LEDs
+  /*  OR  */
+  "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GC_Main", "VEN_Main", "BF_Main", and "HE_Main",. This material flashes and everything! (You can use this in combination with the above)
+
+  "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make an upright box collider relative to the mesh's extents
+  "SupressBoxColliderFallback": false, //Disable creation of BoxCollider. Useful for if a collider will be already provided
+
+  //"Friction": 0.6, //A value between 0 and 1, the slowdown of rubbing objects
+  //"StaticFriction": 0.6, //A value between 0 and 1, how much it sticks to a surface when it is stopped
+  //"Bounciness": 0.1, //A value between 0 and 1, how much it bounces back from a collision
+
+  // X is right and left, Y is up and down, and Z is forward and backward
+
+  /*  EITHER  */
+  "Cells": [ //Units in the grid space to be occupied
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    }
+  ],
+  /*  OR  */
+  "BlockExtents": //Makes a grid box with these dimensions. IGNORED if "Cells": is used
+  {
+    "x": 1,
+    "y": 2,
+    "z": 1
+  }, // A vector of (1, 1, 1) returns a one-celled block (Width, Height, Length)
+
+  /*  EITHER  */
+  "APsOnlyAtBottom": false, //Make APs only on the bottom, or have all faces covered. IGNORED if "APs": is used. ONLY works with "BlockExtents":
+  /*  OR  */
+  "APs": [ //The location of APs on the block. Delete this or set to null if you'd rather use "APsOnlyAtBottom": with "BlockExtents": 
+    {
+      "x": 0,
+      "y": 0,
+      "z": -0.5
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0.5
+    },
+    {
+      "x": -0.5,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "x": 0.5,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "x": 0,
+      "y": -0.5,
+      "z": 0
+    },
+    {
+      "x": 0,
+      "y": 1.5,
+      "z": 0
+    }
+  ],
+
+  // Delete /* and */ if using
+
+  //OPTIONAL
+  "GamePrefabReference": null, //Use a block prefab from the GAME'S RESOURCES as a base. For example, "GSOBlock(111)"
+  "KeepReferenceRenderers": true, //If not true, prefab renderers will be removed, and colliders will be removed if below is not true
+  "KeepReferenceColliders": true, //If the above is not true, colliders will be preserved if this property is true
+  "ReferenceOffset": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  }, //Shift the subobjects of the block prefab by x, y and z
+  /*
+  "ReferenceRotationOffset": {
+    "x": 0, // Pitch
+    "y": 0, // Yaw
+    "z": 0  // Roll
+  }, //Rotate the subobjects of the block prefab by the origin
+  */
+  /*
+  "ReferenceScale": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  }, //Scale all the subobjects of the block prefab by the origin
+  */
+
+  // Sub Objects can modify existing sub gameobjects on a prefab reference. Properties can be omitted as necessary
+  /*
+  "SubObjects": [
+    { // This is the start of a subobject modifier item. All the parameters are here for reference
+      "SubOverrideName": "m_CORP_Block_SubObject", //This line can be omitted (or set to not a valid subobject of the prefab) to create a new gameobject child.
+      "DestroyExistingRenderer": false, //With this false, it will use the material on the subobject if it exists instead of root. Can still be modified with below properties
+      "DestroyExistingColliders": false,
+      "MeshName": null,
+      "MakeBoxCollider": false, //Will resize to mesh if one is present, otherwise SubScale
+      "MakeSphereCollider": false, //Just a sphere
+      "ColliderMeshName": null,
+      "Layer": null, //Leave as null to be the default Tech layer for collision. Advanced use only!
+      "Friction": 0.6, //A value between 0 and 1, the slowdown of rubbing objects
+      "StaticFriction": 0.6, //A value between 0 and 1, how much it sticks to a surface when it is stopped
+      "Bounciness": 0.1, //A value between 0 and 1, how much it bounces back from a collision
+      "MeshTextureName": null,
+      "MeshMaterialName": null,
+      "SubPosition": { "x": 0, "y": 0, "z": 0 },
+      "SubScale": { "x": 1, "y": 1, "z": 1 },
+      "SubRotation": {
+        "x": 0, // Pitch
+        "y": 0, // Yaw
+        "z": 0  // Roll
+      }
+    }, // You can add as many items as needed for your block
+    { // This item example only has a few of the parameters, as it does not need all of it
+      "SubOverrideName": "SubGameObject/CommonName", // For target subobjects with shared names, a number or parent subobject name can be used to target the right one
+      "DestroyExistingRenderer": false,
+      "MeshName": null,
+      "ColliderMeshName": null,
+      "MeshMaterialName": null,
+      "SubPosition": { "x": 0, "y": 0, "z": 0 }
+    }
+  ]
+  /**/
+
+  //For great control of a block without creating a C# mod, such a system exists that you can modify the Hierarchy, and variables, of one.
+  //OPTIONAL
+  /* // Note: There can only be one JSONBLOCK property in a file, but what is in it can be changed depending on use. These are examples.
+
+  //Example to make a drill very powerful
+  "JSONBLOCK": {
+    "ModuleDrill": {
+      "damagePerSecond": 1000000
+    }
+  }
+
+  //Example to change travel distance of a projectile
+  "JSONBLOCK": {
+    "FireData": {
+      "m_MuzzleVelocity": 2.1
+    }
+  }
+
+  //You can access children of gameobjects as you access components. And in those children, modify their components or go deeper
+  "JSONBLOCK": {
+    "ModuleWeapon": {
+      "m_RotateSpeed" : 15 //Speed at which a weapon can aim at something
+    },
+    "GameObject|_gimbalBase": {        //When a property name starts with GameObject|, it means it is a subobject. Which holds more subobjects, or components
+      "GimbalAimer": {                 //This is a component, and holds values
+        "rotationLimits": [-90, 90]//Modifications go here
+      },
+      "GameObject|_gimbalElev": {
+        "GimbalAimer": {
+        "rotationLimits": [-90, 90]//Modifications go here
+      }
+    }
+  }
+
+  //You can even modify damage caused from bullets
+  "JSONBLOCK": {
+    "FireData": {
+      "Instantiate|m_BulletPrefab": {  //Instantiating duplicates the object in the property to make it unique from the prefab. Enters the subobject rather than component
+        "WeaponRound": {               //Hence why the component type is used. Can be combined with more subobject exploration or components for more control
+          "m_Damage": 10000,
+        },
+        "Projectile": {                //Use if the projectile is an explosion
+          "Instantiate|m_Explosion": { //Instantiate| is like GameObject|
+            "Explosion": {
+              "m_ExplosionSize": 1,
+              "m_EffectRadius": 4,
+              "m_MaxDamageStrength": 1000,
+              "m_MaxImpulseStrength": 1000
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // There are a LOT of things that can be modified, but to learn of them would require a dumper tool/mod, or decompiler.
+  */
+  //Note: Any component or gameobject which cannot be found will be created.
+  //A gameobject can be created without specifying a name, such as "GameObject": {}
+  //This is an old module which has recently been brought to life. It is not recommended for normal use, but brings much more capability.
+  //If you have any problems, recommendations, or seek for guidance, ask on the Forum or official TerraTech Discord (discord.gg/terratechgame)
+
+  //It may be necessary to examine the hierarchy of the block you wish to base your block on. You can do that by pressing backslash with your mouse on top of that block, with the Control Blocks mod installed.
+}

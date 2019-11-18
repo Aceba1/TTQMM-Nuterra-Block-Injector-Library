@@ -10,19 +10,42 @@ namespace Nuterra.BlockInjector
     {
         internal class Timer : MonoBehaviour
         {
-            internal static string blocks = "";
-            internal float scroll = 0f;
+            public static void Log(string NewLine)
+            {
+                blocks.Add(NewLine);
+            }
+
+            public static void AddToLast(string Append)
+            {
+                blocks[blocks.Count - 1] += Append;
+            }
+
+            public static void ReplaceLast(string NewLine)
+            {
+                blocks[blocks.Count - 1] = NewLine;
+            }
+
+            internal static List<string> blocks = new List<string> { "Loaded Blocks:" };
+            internal float scroll = 0f, scrollVel = 0f;
             void OnGUI()
             {
-                if (blocks != "")
+                if (blocks.Count > 1)
                 {
-                    float height = GUI.skin.label.CalcHeight(new GUIContent(blocks), Screen.width);
-                    GUI.Label(new Rect(0, scroll, Screen.width, height + 20f), "Loaded Blocks: " + blocks, GUI.skin.label);
-                    scroll *= 0.95f;
-                    if (height + scroll > Screen.height - 20f)
+                    float height = GUI.skin.label.lineHeight;
+                    for (int i = 0; i < blocks.Count; i++)
                     {
-                        scroll -= .5f;
+                        GUI.Label(new Rect(0, scroll + height * (i + 1), Screen.width, height), blocks[i], GUI.skin.label);
                     }
+                    if (height * (blocks.Count + 1) + scroll > Screen.height)
+                    {
+                        scrollVel *= 0.9f;
+                        scrollVel -= 1f;
+                    }
+                    else
+                    {
+                        scrollVel *= 0.7f;
+                    }
+                    scroll += scrollVel;
                 }
                 if (Singleton.Manager<ManSplashScreen>.inst.HasExited)
                     UnityEngine.GameObject.Destroy(this.gameObject);
@@ -34,7 +57,7 @@ namespace Nuterra.BlockInjector
             }
             void Wait()
             {
-                Invoke("Doit", 5f);
+                Invoke("Doit", 3f);
             }
             void Doit()
             {
@@ -43,19 +66,50 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        internal class OverrideInputHandler : MonoBehaviour
+        internal class JsonBlockCoroutine : MonoBehaviour
         {
+            IEnumerator<object> coroutine;
+            bool RunningCoroutine = false;
+            bool RunLoadBlocksRightAfter = false;
+
             void Update()
             {
-                if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.B))
+                if (!RunningCoroutine)
                 {
-                    DirectoryBlockLoader.LoadBlocks();
+                    if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.B))
+                    {
+                        BeginCoroutine(true, true);
+                    }
+                }
+                else
+                {
+                    RunningCoroutine = coroutine.MoveNext();
+                    if (!RunningCoroutine)
+                    {
+                        AcceptOverwrite = true;
+                        if (RunLoadBlocksRightAfter)
+                        {
+                            BeginCoroutine(false, true);
+                            RunLoadBlocksRightAfter = false;
+                        }
+                    }
                 }
             }
-            internal static void INIT()
+
+            public void BeginCoroutine(bool LoadResources, bool LoadBlocks)
             {
-                new GameObject().AddComponent<OverrideInputHandler>();
-                AcceptOverwrite = true;
+                if (RunningCoroutine && LoadBlocks)
+                {
+                    RunLoadBlocksRightAfter = true;
+                    return;
+                }
+                RunningCoroutine = true;
+                coroutine = DirectoryBlockLoader.LoadBlocks(LoadResources, LoadBlocks);
+                //new System.Threading.Tasks.Task(delegate
+                //{
+                //    DirectoryBlockLoader.LoadBlockResources();
+                //    LoadedResources = true;
+                //}).Start();
             }
         }
 
@@ -71,20 +125,20 @@ namespace Nuterra.BlockInjector
                 int blockID = block.BlockID;
                 bool Overwriting = AcceptOverwrite && CustomBlocks.ContainsKey(blockID);
                 Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
-                Timer.blocks += $"\n - #{blockID} - \"{block.Name}\"";
+                Timer.Log($" - #{blockID} - \"{block.Name}\"");
                 ManSpawn spawnManager = ManSpawn.inst;
                 if (!Overwriting)
                 {
                     if (CustomBlocks.ContainsKey(blockID))
                     {
-                        Timer.blocks += " - FAILED: Custom Block already exists!";
+                        Timer.AddToLast(" - FAILED: Custom Block already exists!");
                         Console.WriteLine("Registering block failed: A block with the same ID already exists");
                         return false;
                     }
                     bool BlockExists = spawnManager.IsValidBlockToSpawn((BlockTypes)blockID);
                     if (BlockExists)
                     {
-                        Timer.blocks += " - ID already exists";
+                        Timer.AddToLast(" - ID already exists");
                         Console.WriteLine("Registering block incomplete: A block with the same ID already exists");
                         return false;
                     }
@@ -94,6 +148,7 @@ namespace Nuterra.BlockInjector
                 {
                     CustomBlocks[blockID] = block;
                 }
+
                 int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
                 spawnManager.VisibleTypeInfo.SetDescriptor<FactionSubTypes>(hashCode, block.Faction);
                 spawnManager.VisibleTypeInfo.SetDescriptor<BlockCategories>(hashCode, block.Category);
@@ -120,14 +175,33 @@ namespace Nuterra.BlockInjector
                     var m_BlockPriceLookup = BlockPriceLookup.GetValue(RecipeManager.inst) as Dictionary<int, int>;
                     if (m_BlockPriceLookup.ContainsKey(blockID)) m_BlockPriceLookup[blockID] = block.Price;
                     else m_BlockPriceLookup.Add(blockID, block.Price);
+
+                    try
+                    {
+                        PrePool.Invoke(block.Prefab.GetComponent<TankBlock>(), null);
+                    }
+                    catch (Exception E)
+                    {
+                        Console.WriteLine(E);
+                        if (E.InnerException != null)
+                        {
+                            Console.WriteLine(E.InnerException);
+                        }
+                    }
+
                     return true;
                 }
                 catch (Exception E)
                 {
-                    Console.WriteLine(E.Message + "\n" + E.StackTrace);
+                    Console.WriteLine(E.Message + "\n" + E.StackTrace + "\n" + E.InnerException?.Message);
                     if (E.InnerException != null)
-                        Console.WriteLine(E.InnerException.Message + "\n" + E.InnerException.StackTrace);
-                    Timer.blocks += " FAILED: " + E.InnerException?.Message;
+                    {
+                        Timer.AddToLast(" - FAILED: " + E.InnerException?.Message);
+                    }
+                    else
+                    {
+                        Timer.AddToLast(" - FAILED: " + E.Message);
+                    }
                     return false;
                 }
             }
@@ -136,11 +210,11 @@ namespace Nuterra.BlockInjector
                 Console.WriteLine(E.Message + "\n" + E.StackTrace + "\n" + E.InnerException?.Message);
                 if (E.InnerException != null)
                 {
-                    Timer.blocks += " - FAILED: " + E.InnerException?.Message;
+                    Timer.AddToLast(" - FAILED: " + E.InnerException?.Message);
                 }
                 else
                 {
-                    Timer.blocks += " - FAILED: " + E.Message;
+                    Timer.AddToLast(" - FAILED: " + E.Message);
                 }
                 return false;
             }
@@ -153,6 +227,7 @@ namespace Nuterra.BlockInjector
         static readonly FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", binding);
         static readonly MethodInfo LookupPool = typeof(ComponentPool).GetMethod("LookupPool", binding);
         static readonly MethodInfo DepoolItems = typeof(ComponentPool).GetMethod("DepoolItems", binding);
+        static readonly MethodInfo PrePool = typeof(TankBlock).GetMethod("PrePool", binding);
 
         private static bool Ready = false;
         private static event Action PostStartEvent;
@@ -190,13 +265,16 @@ namespace Nuterra.BlockInjector
 
         public static void PostModsLoaded()
         {
+            var harmony = HarmonyInstance.Create("nuterra.block.injector");
+            harmony.PatchAll(Assembly.GetExecutingAssembly());
+
             new GameObject().AddComponent<Timer>();
             BlockExamples.Load();
-            DirectoryBlockLoader.LoadBlocks();
-            var harmony = HarmonyInstance.Create("nuterra.block.injector");
             PostStartEvent += NetHandler.Patches.INIT;
-            PostStartEvent += OverrideInputHandler.INIT;
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            var jsonblockloader = new GameObject().AddComponent<JsonBlockCoroutine>();
+            jsonblockloader.BeginCoroutine(true, false);
+            PostStartEvent += delegate { jsonblockloader.BeginCoroutine(false, true); };
         }
 
         internal class Patches
@@ -302,11 +380,13 @@ namespace Nuterra.BlockInjector
             }
             catch (Exception E)
             {
-                Timer.blocks += " - FAILED: Could not add to block table. Could it be the grade level?";
+                Timer.AddToLast(" - FAILED: Could not add to block table. Could it be the grade level?");
                 Console.WriteLine("Registering block failed: Could not add to block table. " + E.Message);
             }
         }
 
+        //static int lastFrameRendered;
+        static bool PermitSpriteGeneration = true;
         private static bool ResourceLookup_OnSpriteLookup(ObjectTypes objectType, int itemType, ref UnityEngine.Sprite result)
         {
             if (objectType == ObjectTypes.Block)
@@ -315,14 +395,19 @@ namespace Nuterra.BlockInjector
                 if (CustomBlocks.TryGetValue(itemType, out block))
                 {
                     result = block.DisplaySprite;
-                    if (result == null)
+                    if (result == null && PermitSpriteGeneration)// && lastFrameRendered != Time.frameCount)
                     {
-                        var b = new TankPreset.BlockSpec() { block = block.Name, m_BlockType = (BlockTypes)block.BlockID, m_SkinID = 0, m_VisibleID = -1, orthoRotation = 0, position = IntVector3.zero, saveState = new Dictionary<int, Module.SerialData>(), textSerialData = new List<string>() };
-                        var image = ManScreenshot.inst.RenderSnapshotFromTechData(new TechData() { m_BlockSpecs = new List<TankPreset.BlockSpec> { b } });
+                        try
+                        {
+                            //lastFrameRendered = Time.frameCount;
+                            var b = new TankPreset.BlockSpec() { block = block.Name, m_BlockType = (BlockTypes)block.BlockID, m_SkinID = 0, m_VisibleID = -1, orthoRotation = 0, position = IntVector3.zero, saveState = new Dictionary<int, Module.SerialData>(), textSerialData = new List<string>() };
+                            var image = ManScreenshot.inst.RenderSnapshotFromTechData(new TechData() { m_BlockSpecs = new List<TankPreset.BlockSpec> { b } }, new IntVector2(256, 256));
 
-                        float x = image.height / (float)image.width;
-                        result = GameObjectJSON.SpriteFromImage(GameObjectJSON.CropImage(image, new Rect((1f-x)*0.5f, 0f, x, 1f)));
-
+                            //float x = image.height / (float)image.width;
+                            float x = 1f;
+                            result = GameObjectJSON.SpriteFromImage(image);//GameObjectJSON.CropImage(image, new Rect((1f - x) * 0.5f, 0f, x, 1f)));
+                        }
+                        catch { PermitSpriteGeneration = false; }
                         block.DisplaySprite = result;
                     }
                     return result != null;
