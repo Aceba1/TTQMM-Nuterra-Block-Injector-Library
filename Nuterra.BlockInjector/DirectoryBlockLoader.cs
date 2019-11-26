@@ -15,8 +15,9 @@ namespace Nuterra.BlockInjector
         {
             public string Name;
             public string Description;
-            public bool KeepReferenceRenderers;
-            public bool KeepReferenceColliders;
+            public bool KeepReferenceRenderers; // Legacy
+            public bool KeepRenderers;
+            public bool KeepColliders;
             public string GamePrefabReference;
             public int ID;
             public string IconName;
@@ -287,9 +288,16 @@ namespace Nuterra.BlockInjector
                     {
                         blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, false);
                     }
-                    if (!jBlock.KeepReferenceRenderers)
+                    if (jBlock.KeepRenderers)
                     {
-                        if (!jBlock.KeepReferenceColliders)
+                        if (!jBlock.KeepColliders)
+                        {
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(Collider));
+                        }
+                    }
+                    else if (!jBlock.KeepReferenceRenderers)
+                    {
+                        if (!jBlock.KeepColliders)
                         {
                             blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter), typeof(Collider));
                         }
@@ -619,23 +627,26 @@ namespace Nuterra.BlockInjector
                             string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName) ? null :
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
 
-                        L("-Get Collision Material", l);
                         PhysicMaterial physmat = localphysmat;
-                        bool newphysmat = false;
-                        if (sub.Friction.HasValue && sub.Friction.Value != localphysmat.dynamicFriction)
+                        if (sub.MakeBoxCollider || sub.MakeSphereCollider || !string.IsNullOrWhiteSpace(sub.ColliderMeshName))
                         {
-                            if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
-                            physmat.dynamicFriction = sub.Friction.Value;
-                        }
-                        if (sub.StaticFriction.HasValue && sub.StaticFriction.Value != localphysmat.staticFriction)
-                        {
-                            if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
-                            physmat.staticFriction = sub.StaticFriction.Value;
-                        }
-                        if (sub.Bounciness.HasValue && sub.Bounciness.Value != localphysmat.bounciness)
-                        {
-                            if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
-                            physmat.bounciness = sub.Bounciness.Value;
+                            L("-Get Collision Material", l);
+                            bool newphysmat = false;
+                            if (sub.Friction.HasValue && sub.Friction.Value != localphysmat.dynamicFriction)
+                            {
+                                if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
+                                physmat.dynamicFriction = sub.Friction.Value;
+                            }
+                            if (sub.StaticFriction.HasValue && sub.StaticFriction.Value != localphysmat.staticFriction)
+                            {
+                                if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
+                                physmat.staticFriction = sub.StaticFriction.Value;
+                            }
+                            if (sub.Bounciness.HasValue && sub.Bounciness.Value != localphysmat.bounciness)
+                            {
+                                if (!newphysmat) { physmat = CopyPhysicMaterial(localphysmat); newphysmat = true; }
+                                physmat.bounciness = sub.Bounciness.Value;
+                            }
                         }
 
                         //-Apply

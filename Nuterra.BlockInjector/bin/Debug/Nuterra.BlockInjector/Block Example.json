@@ -103,8 +103,9 @@
 
   //OPTIONAL
   "GamePrefabReference": null, //Use a block prefab from the GAME'S RESOURCES as a base. For example, "GSOBlock(111)"
-  "KeepReferenceRenderers": true, //If not true, prefab renderers will be removed, and colliders will be removed if below is not true
-  "KeepReferenceColliders": true, //If the above is not true, colliders will be preserved if this property is true
+  "KeepRenderers": true, //If not true, prefab renderers will be removed
+  "KeepColliders": true, //If not true, colliders will be removed
+  //"KeepReferenceRenderers": true, //Legacy property, keeps both colliders and renderers. Shouldn't be used with the 2 properties above
   "ReferenceOffset": {
     "x": 0,
     "y": 0,
