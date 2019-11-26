@@ -164,6 +164,11 @@ namespace Nuterra.BlockInjector
             }
 
             _mcb = _customBlock.Prefab.EnsureComponent<ModuleCustomBlock>();
+
+            Transform transform = _customBlock.Prefab.transform;
+            transform.position = Vector3.zero;
+            transform.rotation = Quaternion.identity;
+            transform.localScale = Vector3.one;
         }
 
         public GameObject Prefab { get => _customBlock.Prefab; }
