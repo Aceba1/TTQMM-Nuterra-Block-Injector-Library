@@ -19,6 +19,8 @@ namespace Nuterra.BlockInjector
             return comp as T;
         }
 
+        public static Material SetTexturesToMaterial(this Material material, Texture2D Alpha = null, Texture2D MetallicGloss = null, Texture2D Emission = null, bool MakeCopy = false) => GameObjectJSON.SetTexturesToMaterial(MakeCopy, material, Alpha, MetallicGloss, Emission);
+
         public static GameObject FindChildGameObject(this GameObject root, string targetName)
         {
             Transform[] ts = root.transform.GetComponentsInChildren<Transform>();

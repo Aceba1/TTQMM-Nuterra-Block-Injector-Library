@@ -13,8 +13,8 @@ namespace Nuterra.BlockInjector
             Stopwatch sw = new Stopwatch();
             sw.Start();
             #region Blocks
-            Material mat = GameObjectJSON.MaterialFromShader();
-            mat.mainTexture = GameObjectJSON.ImageFromFile(Properties.Resources.bacon_material_png);
+            Material mat = GameObjectJSON.MaterialFromShader()
+                .SetTexturesToMaterial(Alpha: GameObjectJSON.ImageFromFile(Properties.Resources.bacon_material_png));
             Material GSOMain = GameObjectJSON.GetObjectFromGameResources<Material>("GSO_Main");
 
 
@@ -81,10 +81,7 @@ namespace Nuterra.BlockInjector
                 Texture2D main = GameObjectJSON.ImageFromFile(Properties.Resources.banana_material_png);
                 Texture2D gloss = GameObjectJSON.ImageFromFile(Properties.Resources.banana_gloss_material_png);
 
-                Material changemat2 = GameObjectJSON.MaterialFromShader();
-
-                changemat2.SetTexture("_MainTex", main);
-                changemat2.SetTexture("_MetallicGlossMap", gloss);
+                Material changemat2 = GameObjectJSON.MaterialFromShader().SetTexturesToMaterial(main, gloss);
 
                 foreach (MeshFilter mes in componentsInChildren2)
                 {

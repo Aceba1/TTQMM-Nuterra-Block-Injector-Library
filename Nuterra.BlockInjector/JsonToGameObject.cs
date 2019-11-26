@@ -15,34 +15,41 @@ namespace Nuterra.BlockInjector
 
         const string m_tab = "  ";
 
-        static Type t_mat = typeof(Shader);
+        static Type t_shader = typeof(Shader);
         static Type t_uobj = typeof(UnityEngine.Object);
         public static Material MaterialFromShader(string ShaderName = "StandardTankBlock")
         {
-            var shader = GetObjectFromGameResources<Shader>(t_mat, ShaderName, true);
+            var shader = GetObjectFromGameResources<Shader>(t_shader, ShaderName, true);
             return new Material(shader);
         }
 
         public static Material SetTexturesToMaterial(bool MakeCopy, Material material, Texture2D Alpha = null, Texture2D MetallicGloss = null, Texture2D Emission = null)
         {
-            bool flag1 = Alpha != null, flag2 = MetallicGloss != null, flag3 = Emission!=null;
+            bool flag1 = Alpha != null, flag2 = MetallicGloss != null, flag3 = Emission != null;
+            List<string> shaderKeywords = new List<string>(material.shaderKeywords);
+            Material m = material;
             if (MakeCopy && (flag1 || flag2 || flag3))
             {
-                material = new Material(material);
+                m = new Material(material);
             }
             if (flag1)
             {
-                material.SetTexture("_MainTex", Alpha);
+                m.SetTexture("_MainTex", Alpha);
             }
             if (flag2)
             {
-                material.SetTexture("_MetallicGlossMap", MetallicGloss);
+                m.SetTexture("_MetallicGlossMap", MetallicGloss);
+                string value = "_METALLICGLOSSMAP";
+                if (!shaderKeywords.Contains(value)) shaderKeywords.Add(value);
             }
             if (flag3)
             {
-                material.SetTexture("_EmissionMap", Emission);
+                m.SetTexture("_EmissionMap", Emission);
+                string value = "_EMISSION";
+                if (!shaderKeywords.Contains(value)) shaderKeywords.Add(value);
             }
-            return material;
+            m.shaderKeywords = shaderKeywords.ToArray();
+            return m;
         }
 
         public static T GetObjectFromUserResources<T>(string targetName) where T : UnityEngine.Object
