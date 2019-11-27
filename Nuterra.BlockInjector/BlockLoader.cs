@@ -24,17 +24,30 @@ namespace Nuterra.BlockInjector
             {
                 blocks[blocks.Count - 1] = NewLine;
             }
-
+            bool HasExited = false;
             internal static List<string> blocks = new List<string> { "Loaded Blocks:" };
             internal float scroll = 0f, scrollVel = 0f;
             void OnGUI()
             {
-                if (blocks.Count > 1)
+                HasExited |= Singleton.Manager<ManSplashScreen>.inst.HasExited;
+                if (HasExited)
+                {
+                    if (JsonBlockCoroutine.RunningCoroutine)
+                    {
+                        GUI.Label(new Rect(4, 4, Screen.width, 25), "Bulk-loading remaining blocks! Please hold...", GUI.skin.label);
+                        JsonBlockCoroutine.LockLinear += 1;
+                    }
+                    else
+                    {
+                        UnityEngine.GameObject.Destroy(this.gameObject);
+                    }
+                }
+                else if (blocks.Count > 1)
                 {
                     float height = GUI.skin.label.lineHeight;
                     for (int i = 0; i < blocks.Count; i++)
                     {
-                        GUI.Label(new Rect(0, scroll + height * (i + 1), Screen.width, height), blocks[i], GUI.skin.label);
+                        GUI.Label(new Rect(0, scroll + height * (i + 1), Screen.width, 25), blocks[i], GUI.skin.label);
                     }
                     if (height * (blocks.Count + 1) + scroll > Screen.height)
                     {
@@ -47,8 +60,6 @@ namespace Nuterra.BlockInjector
                     }
                     scroll += scrollVel;
                 }
-                if (Singleton.Manager<ManSplashScreen>.inst.HasExited)
-                    UnityEngine.GameObject.Destroy(this.gameObject);
             }
 
             void Start()
@@ -68,8 +79,9 @@ namespace Nuterra.BlockInjector
 
         internal class JsonBlockCoroutine : MonoBehaviour
         {
+            internal static byte LockLinear;
             IEnumerator<object> coroutine;
-            bool RunningCoroutine = false;
+            internal static bool RunningCoroutine = false;
             bool RunLoadBlocksRightAfter = false;
 
             void Update()
@@ -83,16 +95,24 @@ namespace Nuterra.BlockInjector
                 }
                 else
                 {
-                    RunningCoroutine = coroutine.MoveNext();
-                    if (!RunningCoroutine)
+                    do
                     {
-                        AcceptOverwrite = true;
-                        if (RunLoadBlocksRightAfter)
+                        RunningCoroutine = coroutine.MoveNext();
+                        if (!RunningCoroutine)
                         {
-                            BeginCoroutine(false, true);
-                            RunLoadBlocksRightAfter = false;
+                            AcceptOverwrite = true;
+                            if (RunLoadBlocksRightAfter)
+                            {
+                                BeginCoroutine(false, true);
+                                RunLoadBlocksRightAfter = false;
+                            }
+                            else
+                            {
+                                LockLinear = 0;
+                            }
                         }
                     }
+                    while (LockLinear > 0 && RunningCoroutine);
                 }
             }
 
