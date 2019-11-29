@@ -299,11 +299,11 @@ namespace Nuterra.BlockInjector
                     {
                         if (!jBlock.KeepColliders)
                         {
-                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter), typeof(Collider));
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(Renderer), typeof(MeshFilter), typeof(Collider));
                         }
                         else
                         {
-                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter));
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(Renderer), typeof(MeshFilter));
                         }
                     }
 
@@ -569,7 +569,7 @@ namespace Nuterra.BlockInjector
                         if (sub.DestroyExistingRenderer)
                         {
                             L("-Destroy Renderers", l);
-                            foreach (var comp1 in childG.GetComponents<MeshRenderer>())
+                            foreach (var comp1 in childG.GetComponents<Renderer>())
                             {
                                 Component.DestroyImmediate(comp1);
                             }
@@ -599,7 +599,7 @@ namespace Nuterra.BlockInjector
                         Material mat = localmat;
                         if (!New && !sub.DestroyExistingRenderer)
                         {
-                            var ren = childG.GetComponent<MeshRenderer>();
+                            var ren = childG.GetComponent<Renderer>();
                             if (ren != null)
                             {
                                 mat = ren.material;
@@ -659,7 +659,7 @@ namespace Nuterra.BlockInjector
                         }
                         else
                         {
-                            var renderer = childG.GetComponent<MeshRenderer>();
+                            var renderer = childG.GetComponent<Renderer>();
                             if (renderer != null)
                             {
                                 L("-Set Material", l);

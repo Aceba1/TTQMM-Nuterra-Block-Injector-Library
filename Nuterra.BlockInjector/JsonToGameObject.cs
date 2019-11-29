@@ -318,34 +318,50 @@ namespace Nuterra.BlockInjector
                 int propIndex = NameOfProperty.IndexOf('.');
                 if (propIndex == -1)
                 {
-                    return transform.RecursiveFind(NameOfProperty);
+                    var t = transform.RecursiveFind(NameOfProperty);
+                    Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
+                    return t;
                 }
-                var result = transform;
+                Transform result = transform;
 
                 while (true)
                 {
                     propIndex = NameOfProperty.IndexOf('.');
                     if (propIndex == -1)
                     {
-                        return result.RecursiveFind(NameOfProperty);
+                        var t = result.RecursiveFind(NameOfProperty);
+                        Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
+                        return t;
                     }
                     int reIndex = NameOfProperty.IndexOf('/', propIndex);
                     int lastIndex = NameOfProperty.LastIndexOf('/', propIndex);
                     if (lastIndex > 0)
                     {
                         string transPath = NameOfProperty.Substring(0, lastIndex);
+                        Console.Write($"<Find:{transPath}>");
                         result = result.RecursiveFind(transPath);
-                        if (result == null) return null;
+                        if (result == null)
+                        {
+                            Console.WriteLine("EMPTY");
+                            return null;
+                        }
                     }
 
                     string propPath = NameOfProperty.Substring(propIndex, Math.Max(reIndex - propIndex, 0));
                     string propClass = NameOfProperty.Substring(lastIndex + 1, Math.Max(propIndex - lastIndex - 1, 0));
 
-                    var component = result.GetComponent(propClass);
-                    var value = component.GetValueFromPath(propPath);
+                    Console.Write($"<Class:{propClass}>");
+                    Component component = result.GetComponent(propClass);
+                    Console.Write($"<Property:{propPath}>");
+                    object value = component.GetValueFromPath(propPath);
 
+                    if (reIndex == -1)
+                    {
+                        Console.WriteLine(value == null ? "EMPTY" : "RETURN");
+                        return value;
+                    }
 
-                    if (reIndex == -1) return value;
+                    Console.Write("<GetTrans>");
                     result = (value as Component).transform;
                     NameOfProperty = NameOfProperty.Substring(reIndex);
                 }
@@ -447,6 +463,7 @@ namespace Nuterra.BlockInjector
                 try
                 {
                     bool Duplicate = property.Name.StartsWith("Duplicate");
+                    bool Reference = property.Name.StartsWith("Reference");
                     if (Duplicate || property.Name.StartsWith("GameObject") || property.Name.StartsWith("UnityEngine.GameObject"))
                     {
                         string name = "Object Child";
@@ -549,11 +566,12 @@ namespace Nuterra.BlockInjector
                     string name = property.Name;
                    //Console.WriteLine(Spacing + m_tab + property.Name);
                     int GetCustomName = property.Name.IndexOf('|');
-                    bool Wipe = false, Instantiate = false;
+                    bool Wipe = false, Instantiate = false, Reference = false;
                     if (GetCustomName != -1)
                     {
                         Wipe = name.StartsWith("Wipe");
                         Instantiate = name.StartsWith("Instantiate");
+                        Reference = name.StartsWith("Reference");
                         name = property.Name.Substring(GetCustomName + 1);
                     }
                     FieldInfo tField = instanceType.GetField(name, bind);
