@@ -77,8 +77,8 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        private Dictionary<string, GameObject> _gameBlocks;
-        Dictionary<string, GameObject> GameBlocks
+        private static Dictionary<string, GameObject> _gameBlocks;
+        internal static Dictionary<string, GameObject> GameBlocks
         {
             get
             {
