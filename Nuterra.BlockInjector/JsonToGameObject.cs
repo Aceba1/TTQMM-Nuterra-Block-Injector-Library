@@ -458,8 +458,6 @@ namespace Nuterra.BlockInjector
            return CreateGameObject(JObject.Parse(json));
         }
 
-        static readonly JValue jNull = JValue.CreateNull();
-
         static bool GetReferenceFromBlockResource(string blockPath, out object reference)
         {
             reference = null;
@@ -560,7 +558,7 @@ namespace Nuterra.BlockInjector
 
                         if (!newGameObject)
                         {
-                            if (property.Value == jNull)
+                            if (property.Value.Type == JTokenType.Null)
                             {
                                 Console.WriteLine(Spacing + "Could not find object " + property.Name + " to delete");
                                 continue;
@@ -571,7 +569,7 @@ namespace Nuterra.BlockInjector
                         }
                         else
                         {
-                            if (property.Value == jNull)
+                            if (property.Value.Type == JTokenType.Null)
                             {
                                 GameObject.DestroyImmediate(newGameObject);
                                 continue;
@@ -596,7 +594,7 @@ namespace Nuterra.BlockInjector
                         Type componentType = GetType(property.Name);
                         if (componentType == null) continue;
                         object component = result.GetComponent(componentType);
-                        if (property.Value == jNull)
+                        if (property.Value.Type == JTokenType.Null)
                         {
                             Component c = component as Component;
                             if (c != null)
