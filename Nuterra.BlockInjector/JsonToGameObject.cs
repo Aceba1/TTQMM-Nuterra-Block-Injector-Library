@@ -578,9 +578,7 @@ namespace Nuterra.BlockInjector
                             }
                             if (Duplicate)
                             {
-                                bool Active = newGameObject.activeInHierarchy;
                                 newGameObject = GameObject.Instantiate(newGameObject);
-                                newGameObject.SetActive(Active);
                                 string newName = name + "_copy";
                                 int count = 1;
                                 while (result.transform.Find(newName))

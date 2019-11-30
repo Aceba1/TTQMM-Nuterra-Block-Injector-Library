@@ -363,12 +363,12 @@ namespace Nuterra.BlockInjector
         }
 
         static Type T_BlockUnlockTable = typeof(BlockUnlockTable),
-            CorpBlockData = T_BlockUnlockTable.GetNestedType("CorpBlockData", BindingFlags.Instance | BindingFlags.NonPublic),
-            GradeData = T_BlockUnlockTable.GetNestedType("GradeData", BindingFlags.Instance | BindingFlags.NonPublic);
-        static FieldInfo m_CorpBlockList = T_BlockUnlockTable.GetField("m_CorpBlockList", BindingFlags.Instance | BindingFlags.NonPublic),
-            m_CorpBlockLevelLookup = T_BlockUnlockTable.GetField("m_CorpBlockLevelLookup", BindingFlags.Instance | BindingFlags.NonPublic),
-            m_BlockList = GradeData.GetField("m_BlockList"),
-            m_GradeList = CorpBlockData.GetField("m_GradeList");
+            CorpBlockData = T_BlockUnlockTable.GetNestedType("CorpBlockData", binding),
+            GradeData = T_BlockUnlockTable.GetNestedType("GradeData", binding);
+        static FieldInfo m_CorpBlockList = T_BlockUnlockTable.GetField("m_CorpBlockList", binding),
+            m_CorpBlockLevelLookup = T_BlockUnlockTable.GetField("m_CorpBlockLevelLookup", binding),
+            m_BlockList = GradeData.GetField("m_BlockList", binding),
+            m_GradeList = CorpBlockData.GetField("m_GradeList", binding);
 
         internal static void FixBlockUnlockTable(CustomBlock block)
         {
