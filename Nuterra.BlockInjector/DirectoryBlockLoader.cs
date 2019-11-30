@@ -51,6 +51,7 @@ namespace Nuterra.BlockInjector
             public string Recipe;
             public SubObj[] SubObjects;
 
+            public JObject Deserializer;
             public JObject JSONBLOCK;
 
             public struct SubObj
@@ -326,13 +327,18 @@ namespace Nuterra.BlockInjector
                 }
 
                 //If gameobjectJSON exists, use it
-                if (jBlock.JSONBLOCK != null)
+                if (jBlock.Deserializer != null)
                 {
-                    L("Use JSONBLOCK", l);
-                    GameObjectJSON.CreateGameObject(jObject.Property("JSONBLOCK").Value.ToObject<JObject>(), blockbuilder.Prefab);
+                    L("Use Deserializer", l);
+                    GameObjectJSON.CreateGameObject(jObject["Deserializer"].ToObject<JObject>(), blockbuilder.Prefab);
+                }
+                else if (jBlock.JSONBLOCK != null)
+                {
+                    L("Use Deserializer", l);
+                    GameObjectJSON.CreateGameObject(jObject["JSONBLOCK"].ToObject<JObject>(), blockbuilder.Prefab);
                 }
 
-                L("Set IP", l);
+                L("Set ID", l);
                 blockbuilder.SetBlockID(jBlock.ID);
 
                 //Set Category
