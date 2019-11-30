@@ -608,16 +608,18 @@ namespace Nuterra.BlockInjector
                         if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
                         {
                             L("-Get Material", l);
-                            sub.MeshMaterialName.Replace("Venture_", "VEN_");
-                            sub.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                            try
-                            {
-                                var mat2 = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, sub.MeshMaterialName);
-                                if (mat2 == null) Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!", l);
-                                else mat = mat2;
-                            }
-                            catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
+                            string matName = sub.MeshMaterialName.Replace("Venture_", "VEN_")
+                                                                 .Replace("GeoCorp_", "GC_");
+                            if (matName == jBlock.MeshMaterialName) mat = localmat;
+                            else try
+                                {
+                                    var mat2 = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, matName);
+                                    if (mat2 == null) Console.WriteLine(matName + " is not a valid Game Material!", l);
+                                    else mat = mat2;
+                                }
+                                catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
                         }
+
                         L("-Texture Material", l);
                         mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
                             string.IsNullOrWhiteSpace(sub.MeshTextureName) ? null :
