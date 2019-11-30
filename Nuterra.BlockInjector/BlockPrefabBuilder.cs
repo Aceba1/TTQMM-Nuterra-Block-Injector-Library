@@ -609,7 +609,7 @@ namespace Nuterra.BlockInjector
             if (Mesh != null)
             {
                 model.AddComponent<MeshFilter>().sharedMesh = Mesh;
-                model.AddComponent<MeshRenderer>().material = Material == null ? GameObjectJSON.MaterialFromShader() : Material;
+                model.AddComponent<MeshRenderer>().sharedMaterial = Material == null ? GameObjectJSON.MaterialFromShader() : Material;
             }
             if (ColliderMesh != null)
             {
@@ -632,13 +632,13 @@ namespace Nuterra.BlockInjector
                 _renderObject = renderObject;
             _renderObject.transform.parent = _customBlock.Prefab.transform;
             _renderObject.transform.localPosition = Vector3.zero;
-            _renderObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            _renderObject.transform.localRotation = Quaternion.identity;
             _renderObject.layer = Globals.inst.layerTank;
 
-            foreach (GameObject child in _renderObject.EnumerateHierarchy(false, false))
-            {
-                child.layer = _renderObject.layer;
-            }
+            //foreach (GameObject child in _renderObject.EnumerateHierarchy(false, false))
+            //{
+            //    child.layer = _renderObject.layer;
+            //}
 
             return this;
         }
