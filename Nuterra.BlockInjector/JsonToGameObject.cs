@@ -71,19 +71,16 @@ namespace Nuterra.BlockInjector
 
         public static GameObject GetBlockFromAssetTable(string NameOfBlock)
         {
-            var allblocks = ((BlockTable)m_BlockTable.GetValue(ManSpawn.inst)).m_Blocks;
-            foreach (var block in allblocks)
+            //var allblocks = ((BlockTable)m_BlockTable.GetValue(ManSpawn.inst)).m_Blocks;
+            //foreach (GameObject block in allblocks)
+            //{
+            //    if (block.name.StartsWith(NameOfBlock))
+            //        return block;
+            //}
+            string NewSearch = NameOfBlock.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
+            if (BlockPrefabBuilder.GameBlocks.TryGetValue(NewSearch, out GameObject block))
             {
-                if (block.name.StartsWith(NameOfBlock))
-                    return block;
-            }
-            string NewSearch = NameOfBlock.Replace("(", "").Replace(")", "").Replace("_", "").Replace(m_tab, "").ToLower();
-            foreach (var block in allblocks)
-            {
-                if (block.name.Replace("_", "").Replace(m_tab, "").ToLower().StartsWith(NewSearch))
-                {
-                    return block;
-                }
+                return block;
             }
             return null;
         }
@@ -106,8 +103,19 @@ namespace Nuterra.BlockInjector
             return GetObjectsFromGameResources<T>(typeof(T), startOfTargetName);
         }
 
+        static Dictionary<Type, Dictionary<string, UnityEngine.Object>> GameResourceCache = new Dictionary<Type, Dictionary<string, UnityEngine.Object>>();
+
         public static T GetObjectFromGameResources<T>(Type t, string targetName, bool Log = false) where T : UnityEngine.Object
         {
+            if (GameResourceCache.TryGetValue(t, out var CacheLookup))
+            {
+                if (CacheLookup.TryGetValue(targetName, out var result))
+                    return result as T;
+            }
+            else
+            {
+                GameResourceCache.Add(t, new Dictionary<string, UnityEngine.Object>());
+            }
             T searchresult = null;
             T[] search = Resources.FindObjectsOfTypeAll(t) as T[];
             string failedsearch = "";
@@ -136,6 +144,7 @@ namespace Nuterra.BlockInjector
                     Console.WriteLine("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
                 }
             }
+            GameResourceCache[t].Add(targetName, searchresult);
             return searchresult;
         }
         public static T GetObjectFromGameResources<T>(string targetName, bool Log = false) where T : UnityEngine.Object
