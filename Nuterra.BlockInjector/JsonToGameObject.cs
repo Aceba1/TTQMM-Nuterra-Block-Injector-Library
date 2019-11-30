@@ -327,9 +327,8 @@ namespace Nuterra.BlockInjector
                 int propIndex = NameOfProperty.IndexOf('.');
                 if (propIndex == -1)
                 {
-                    var t = transform.RecursiveFind(NameOfProperty);
-                    Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
-                    return t;
+                    //Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
+                    return transform.RecursiveFind(NameOfProperty);
                 }
                 Transform result = transform;
 
@@ -356,7 +355,9 @@ namespace Nuterra.BlockInjector
                         }
                     }
 
-                    string propPath = NameOfProperty.Substring(propIndex, Math.Max(reIndex - propIndex, 0));
+                    string propPath;
+                    if (reIndex == -1) propPath = NameOfProperty.Substring(propIndex);
+                    else propPath = NameOfProperty.Substring(propIndex, Math.Max(reIndex - propIndex, 0));
                     string propClass = NameOfProperty.Substring(lastIndex + 1, Math.Max(propIndex - lastIndex - 1, 0));
 
                     Console.Write($"<Class:{propClass}>");
@@ -377,7 +378,8 @@ namespace Nuterra.BlockInjector
             }
             catch (Exception E)
             {
-                Console.WriteLine("RecursiveFindWithParameters failed! " + E);
+                Console.WriteLine("RecursiveFindWithProperties failed! " + E);
+                if (E.InnerException != null) Console.WriteLine(E.InnerException);
                 return null;
             }
         }
@@ -453,7 +455,35 @@ namespace Nuterra.BlockInjector
 
         public static GameObject CreateGameObject(string json)
         {
-           return CreateGameObject(Newtonsoft.Json.Linq.JObject.Parse(json));
+           return CreateGameObject(JObject.Parse(json));
+        }
+
+        static readonly JValue jNull = JValue.CreateNull();
+
+        static bool GetReferenceFromBlockResource(string blockPath, out object reference)
+        {
+            reference = null;
+            int separator = blockPath.IndexOfAny(new char[] { '.', '/' });
+            if (separator == -1)
+            {
+                Console.WriteLine("Reference path is invalid! Expected block name and path to GameObject (" + blockPath + ")");
+                return false;
+            }
+            string sRefBlock = blockPath.Substring(0, separator);
+            var refBlock = GetBlockFromAssetTable(sRefBlock);
+            if (refBlock == null)
+            {
+                Console.WriteLine("Reference block is nonexistent! (" + sRefBlock + ")");
+                return false;
+            }
+            string sRefPath = blockPath.Substring(separator + 1);
+            reference = RecursiveFindWithProperties(refBlock.transform, sRefPath);
+            if (reference == null)
+            {
+                Console.WriteLine("Reference result is null! (block" + sRefBlock + ", path " + sRefPath + ")");
+                return false;
+            }
+            return true;
         }
 
         public static GameObject CreateGameObject(JObject json, GameObject GameObjectToPopulate = null, string Spacing = "")
@@ -473,7 +503,7 @@ namespace Nuterra.BlockInjector
                 {
                     bool Duplicate = property.Name.StartsWith("Duplicate");
                     bool Reference = property.Name.StartsWith("Reference");
-                    if (Duplicate || property.Name.StartsWith("GameObject") || property.Name.StartsWith("UnityEngine.GameObject"))
+                    if (Duplicate || Reference || property.Name.StartsWith("GameObject") || property.Name.StartsWith("UnityEngine.GameObject"))
                     {
                         string name = "Object Child";
                         int GetCustomName = property.Name.IndexOf('|');
@@ -482,10 +512,55 @@ namespace Nuterra.BlockInjector
                             name = property.Name.Substring(GetCustomName + 1);
                         }
 
-                        GameObject newGameObject = result.transform.Find(name)?.gameObject;
+                        GameObject newGameObject = null;
+                        if (Reference)
+                        {
+                            if (GetReferenceFromBlockResource(name, out object refTarget))
+                            {
+
+                                GameObject refObject = null;
+                                if (refTarget is GameObject _refObject)
+                                {
+                                    refObject = _refObject;
+                                }
+                                else
+                                { 
+                                    if (refTarget is Component _refComponent)
+                                    {
+                                        refObject = _refComponent.gameObject;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Property of Reference path is not a component! (" + name + ")");
+                                        continue;
+                                    }
+                                }
+                                newGameObject = GameObject.Instantiate(refObject);
+                                string newName = refObject.name;
+                                int count = 1;
+                                while (result.transform.Find(newName))
+                                {
+                                    newName = name + "_" + (++count).ToString();
+                                }
+                                newGameObject.name = newName;
+                                newGameObject.transform.parent = result.transform;
+                                newGameObject.transform.localPosition = refObject.transform.localPosition;
+                                newGameObject.transform.localRotation = refObject.transform.localRotation;
+                                newGameObject.transform.localScale = refObject.transform.localScale;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            newGameObject = result.transform.Find(name)?.gameObject;
+                        }
+
                         if (!newGameObject)
                         {
-                            if (property.Value == null)
+                            if (property.Value == jNull)
                             {
                                 Console.WriteLine(Spacing + "Could not find object " + property.Name + " to delete");
                                 continue;
@@ -496,16 +571,16 @@ namespace Nuterra.BlockInjector
                         }
                         else
                         {
-                            if (property.Value == null)
+                            if (property.Value == jNull)
                             {
                                 GameObject.DestroyImmediate(newGameObject);
-                               //Console.WriteLine(Spacing + "Deleted " + property.Name);
                                 continue;
                             }
                             if (Duplicate)
                             {
                                 bool Active = newGameObject.activeInHierarchy;
                                 newGameObject = GameObject.Instantiate(newGameObject);
+                                newGameObject.SetActive(Active);
                                 string newName = name + "_copy";
                                 int count = 1;
                                 while (result.transform.Find(newName))
@@ -523,7 +598,7 @@ namespace Nuterra.BlockInjector
                         Type componentType = GetType(property.Name);
                         if (componentType == null) continue;
                         object component = result.GetComponent(componentType);
-                        if (property.Value == null)
+                        if (property.Value == jNull)
                         {
                             Component c = component as Component;
                             if (c != null)
@@ -568,35 +643,67 @@ namespace Nuterra.BlockInjector
            //Console.WriteLine(Spacing+"Going down");
             object _instance = instance;
             BindingFlags bind = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-            foreach (JProperty property in json.Properties())
+            foreach (JProperty jsonProperty in json.Properties())
             {
                 try
                 {
-                    string name = property.Name;
-                   //Console.WriteLine(Spacing + m_tab + property.Name);
-                    int GetCustomName = property.Name.IndexOf('|');
-                    bool Wipe = false, Instantiate = false, Reference = false;
+                    string name = jsonProperty.Name;
+                    //Console.WriteLine(Spacing + m_tab + property.Name);
+                    int GetCustomName = jsonProperty.Name.IndexOf('|');
+                    bool Wipe = false, Instantiate = false;
                     if (GetCustomName != -1)
                     {
                         Wipe = name.StartsWith("Wipe");
                         Instantiate = name.StartsWith("Instantiate");
-                        Reference = name.StartsWith("Reference");
-                        name = property.Name.Substring(GetCustomName + 1);
+                        name = jsonProperty.Name.Substring(GetCustomName + 1);
                     }
                     FieldInfo tField = instanceType.GetField(name, bind);
                     PropertyInfo tProp = instanceType.GetProperty(name, bind);
-                    MethodInfo tMethod = instanceType.GetMethod(name, bind);
+                    //MethodInfo tMethod = instanceType.GetMethod(name, bind);
                     bool UseField = tProp == null;
-                    bool UseMethod = tMethod != null;
-                    if (UseField)
+                    //bool UseMethod = false;
+                    if (UseField && tField == null)
                     {
-                        if (tField == null)
-                        {
-                           //Console.WriteLine(Spacing + m_tab + "skipping...");
+                        //UseMethod = tMethod != null;
+                        //if (!UseMethod)
                             continue;
-                        }
                     }
-                    if (property.Value is JObject)
+                    #region if (UseMethod)
+                    //if (UseMethod)
+                    //{
+                    //    try
+                    //    {
+                    //        //Console.WriteLine(Spacing + m_tab + ">Calling method");
+                    //        var pValues = jsonProperty.Value as JObject;
+                    //        var parameters = tMethod.GetParameters();
+                    //        object[] invokeParams = new object[parameters.Length];
+                    //        for (int p = 0; p < parameters.Length; p++)
+                    //        {
+                    //            var param = parameters[p];
+                    //            if (pValues.TryGetValue(param.Name, out JToken pValue))
+                    //            {
+                    //                invokeParams[p] = pValue.ToObject(param.ParameterType);
+                    //            }
+                    //            else if (param.HasDefaultValue)
+                    //            {
+                    //                invokeParams[p] = param.DefaultValue;
+                    //            }
+                    //            else
+                    //            {
+                    //                invokeParams[p] = null;
+                    //            }
+                    //        }
+                    //        tMethod.Invoke(_instance, invokeParams);
+                    //    }
+                    //    catch(Exception e)
+                    //    {
+                    //        Console.WriteLine(e + "\nMethod use failed! (" + jsonProperty.Name + ")" + (jsonProperty.Value is JObject ? "" : " - Property value is not an object with parameters"));
+                    //    }
+                    //    continue;
+                    //}
+                    #endregion 
+
+                    if (jsonProperty.Value is JObject)
                     {
                         if (UseField)
                         {
@@ -609,17 +716,17 @@ namespace Nuterra.BlockInjector
                                     bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
                                     var nObj = Component.Instantiate(original as Component);
                                     nObj.gameObject.SetActive(isActive);
-                                   //Console.WriteLine(Spacing + m_tab + ">Instantiating");
-                                    CreateGameObject(property.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                                    //Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                                    CreateGameObject(jsonProperty.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
                                     Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
                                     rewrite = nObj;
                                 }
-                                else rewrite = ApplyValues(original, tField.FieldType, property.Value as JObject, Spacing + m_tab);
+                                else rewrite = ApplyValues(original, tField.FieldType, jsonProperty.Value as JObject, Spacing + m_tab);
                             }
                             else
                             {
                                 original = Activator.CreateInstance(tField.FieldType);
-                                rewrite = ApplyValues(original, tField.FieldType, property.Value as JObject, Spacing + m_tab);
+                                rewrite = ApplyValues(original, tField.FieldType, jsonProperty.Value as JObject, Spacing + m_tab);
                             }
                             try { tField.SetValue(_instance, rewrite); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
                         }
@@ -634,115 +741,94 @@ namespace Nuterra.BlockInjector
                                     bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
                                     var nObj = Component.Instantiate(original as Component);
                                     nObj.gameObject.SetActive(isActive);
-                                   //Console.WriteLine(Spacing + m_tab + ">Instantiating");
-                                    CreateGameObject(property.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                                    //Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                                    CreateGameObject(jsonProperty.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
                                     Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
                                     rewrite = nObj;
                                 }
-                                else rewrite = ApplyValues(original, tProp.PropertyType, property.Value as JObject, Spacing + m_tab);
+                                else rewrite = ApplyValues(original, tProp.PropertyType, jsonProperty.Value as JObject, Spacing + m_tab);
                             }
                             else
                             {
                                 original = Activator.CreateInstance(tProp.PropertyType);
-                                rewrite = ApplyValues(original, tProp.PropertyType, property.Value as JObject, Spacing + m_tab);
+                                rewrite = ApplyValues(original, tProp.PropertyType, jsonProperty.Value as JObject, Spacing + m_tab);
                             }
                             if (tProp.CanWrite)
                                 try { tProp.SetValue(_instance, rewrite, null); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
                         }
                     }
-                    if (property.Value is JValue || property.Value is JArray )
+                    else if (jsonProperty.Value is JArray jArray)
+                    {
+                        if (UseField)
+                        {
+                            tField.SetValue(_instance, jArray.ToObject(tField.FieldType));
+                        }
+                        else
+                        {
+                            if (tProp.CanWrite) tProp.SetValue(_instance, jArray.ToObject(tProp.PropertyType), null);
+                            else Console.WriteLine("Cannot write to property! (" + jsonProperty.Name + ")");
+                        }
+                    }
+                    else if (jsonProperty.Value is JValue jValue)
                     {
                         try
                         {
-                            if (UseMethod)
-                            {
-                               //Console.WriteLine(Spacing + m_tab + ">Calling method (No parameters)");
-
-                                var value = property.Value;
-                                tMethod.Invoke(_instance, null);
-                            }
-                            else
-                            {
-                                if (UseField)
-                                {
-                                    tField.SetValue(_instance, property.Value.ToObject(tField.FieldType));
-                                }
-                                else
-                                {
-                                    tProp.SetValue(_instance, property.Value.ToObject(tProp.PropertyType), null);
-                                }
-                               //Console.WriteLine(Spacing + m_tab + ">Setting value");
-                            }
-                        }
-                        catch
-                        {
-                            string cache = property.Value.ToObject<string>();
-                            string targetName;
-                            Type type;
-                            if (cache.Contains('|'))
-                            {
-                                string[] cachepart = cache.Split('|');
-                                type = Type.GetType(cachepart[0]);
-                                targetName = cachepart[1];
-                            }
-                            else
-                            {
-                                type = UseField ? tField.FieldType : tProp.PropertyType;
-                                targetName = cache;
-                            }
-                            object searchresult = null;
-                            // TODO: Allow setting objects from hierarchy as value
-                            if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
-                            {
-                                searchresult = LoadedResources[type][targetName];
-                               //Console.WriteLine(Spacing + m_tab + ">Setting value from user resource reference");
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    searchresult = SearchTransform.RecursiveFindWithProperties(cache);
-                                }
-                                catch { }
-                                if (searchresult == null && type.IsSubclassOf(t_uobj))
-                                {
-                                    UnityEngine.Object[] search = Resources.FindObjectsOfTypeAll(type);
-                                    string failedsearch = "";
-                                    for (int i = 0; i < search.Length; i++)
-                                    {
-                                        if (search[i].name == targetName)
-                                        {
-                                            searchresult = search[i];
-                                            //Console.WriteLine(Spacing + m_tab + ">Setting value from existing resource reference");
-                                            break;
-                                        }
-                                        failedsearch += "(" + search[i].name + ") ";
-                                    }
-                                    if (searchresult == null)
-                                    {
-                                        Console.WriteLine("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
-                                    }
-                                }
-                            }
                             if (UseField)
                             {
-                                tField.SetValue(_instance, searchresult);
+                                tField.SetValue(_instance, jValue.ToObject(tField.FieldType));
                             }
                             else
                             {
-                                tProp.SetValue(_instance, searchresult, null);
+                                if (tProp.CanWrite) tProp.SetValue(_instance, jValue.ToObject(tProp.PropertyType), null);
+                                else Console.WriteLine("Cannot write to property! (" + jsonProperty.Name + ")");
                             }
+                            continue;
+                        }
+                        catch { }
+                        string cache = jValue.ToObject<string>();
+                        string targetName = cache.Substring(cache.IndexOf('|') + 1);
+                        Type type = UseField ? tField.FieldType : tProp.PropertyType;
+                        object searchresult = null;
+                        if (cache.StartsWith("Reference"))
+                        {
+                            if (!GetReferenceFromBlockResource(targetName, out searchresult)) // Get value from a block in the game
+                                continue;
+                        }
+                        else if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
+                        {
+                            searchresult = LoadedResources[type][targetName]; // Get value from a value in the user database
+                        }
+                        else
+                        {
+                            try
+                            {
+                                searchresult = SearchTransform.RecursiveFindWithProperties(cache); // Get value from this block
+                            }
+                            catch { }
+                            if (searchresult == null && type.IsSubclassOf(t_uobj))
+                            {
+                                searchresult = GetObjectFromGameResources<UnityEngine.Object>(type, targetName, true);
+                            }
+                        }
+                        if (UseField)
+                        {
+                            tField.SetValue(_instance, searchresult);
+                        }
+                        else
+                        {
+                            tProp.SetValue(_instance, searchresult, null);
                         }
                     }
                 }
-                catch (Exception E) 
-                { 
-                    Console.WriteLine(Spacing + "!!!" + E/*+"\n"+E.StackTrace*/); 
-                    while (E.InnerException != null) 
+                catch (Exception E)
+                {
+                    Console.WriteLine(Spacing + "!!!" + E/*+"\n"+E.StackTrace*/);
+                    int max = 3;
+                    while (E.InnerException != null && max-- != 0)
                     {
                         E = E.InnerException;
                         Console.WriteLine(E);
-                    } 
+                    }
                 }
             }
            //Console.WriteLine(Spacing+"Going up");
