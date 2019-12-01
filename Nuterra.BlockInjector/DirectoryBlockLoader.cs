@@ -280,15 +280,8 @@ namespace Nuterra.BlockInjector
                 else
                 {
                     L("Prefab reference", l);
-                    if (jBlock.ReferenceOffset.HasValue && jBlock.ReferenceOffset != Vector3.zero)
-                    {
-                        //Offset Prefab
-                        blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, jBlock.ReferenceOffset.Value, false);
-                    }
-                    else
-                    {
-                        blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, false);
-                    }
+                    blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, false);
+
                     if (jBlock.KeepRenderers)
                     {
                         if (!jBlock.KeepColliders)
@@ -322,6 +315,15 @@ namespace Nuterra.BlockInjector
                             L("Scale Prefab", l);
                             chi.localPosition = Vector3.Scale(chi.localPosition, jBlock.ReferenceScale.Value);
                             chi.localScale = Vector3.Scale(chi.localScale, jBlock.ReferenceScale.Value);
+                        }
+                    }
+
+                    if (jBlock.ReferenceOffset.HasValue)
+                    {
+                        L("Offset Prefab", l);
+                        for (int i = 0; i < blockbuilder.Prefab.transform.childCount; i++)
+                        {
+                            blockbuilder.Prefab.transform.GetChild(i).localPosition += jBlock.ReferenceOffset.Value;
                         }
                     }
                 }
