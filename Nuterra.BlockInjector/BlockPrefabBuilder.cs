@@ -456,13 +456,20 @@ namespace Nuterra.BlockInjector
         {
             ThrowIfFinished();
             List<IntVector3> cells = new List<IntVector3>();
-            for (int x = 0; x < Math.Abs(size.x); x++)
+            int xm = Math.Abs(size.x),
+                ym = Math.Abs(size.y),
+                zm = Math.Abs(size.z);
+            for (int x = 0; x < xm; x++)
             {
-                for (int y = 0; y < Math.Abs(size.y); y++)
+                bool OnFace1 = x == 0 || x == xm - 1;
+                for (int y = 0; y < ym; y++)
                 {
-                    for (int z = 0; z < Math.Abs(size.z); z++)
+                    bool OnFace2 = OnFace1 || (y == 0 || y == ym - 1);
+                    for (int z = 0; z < zm; z++)
                     {
-                        cells.Add(new Vector3(Math.Sign(size.x) * x, Math.Sign(size.y) * y, Math.Sign(size.z) * z));
+                        bool OnFace = OnFace2 || (z == 0 || z == zm - 1);
+                        if (OnFace)
+                            cells.Add(new Vector3(Math.Sign(size.x) * x, Math.Sign(size.y) * y, Math.Sign(size.z) * z));
                     }
                 }
             }
