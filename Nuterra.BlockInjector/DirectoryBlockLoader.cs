@@ -300,11 +300,11 @@ namespace Nuterra.BlockInjector
                     {
                         if (!jBlock.KeepColliders)
                         {
-                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(Renderer), typeof(MeshFilter), typeof(Collider));
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(SkinnedMeshRenderer), typeof(MeshFilter), typeof(Collider));
                         }
                         else
                         {
-                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(Renderer), typeof(MeshFilter));
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(SkinnedMeshRenderer), typeof(MeshFilter));
                         }
                     }
 
@@ -667,11 +667,12 @@ namespace Nuterra.BlockInjector
                         }
                         else
                         {
-                            var renderer = childG.GetComponent<Renderer>();
-                            if (renderer != null)
+                            var renderers = childG.GetComponents<Renderer>();
+                            if (renderers.Length != 0)
                             {
                                 L("-Set Material", l);
-                                renderer.material = mat;
+                                foreach (var renderer in renderers)
+                                    renderer.material = mat;
                             }
                         }
 
