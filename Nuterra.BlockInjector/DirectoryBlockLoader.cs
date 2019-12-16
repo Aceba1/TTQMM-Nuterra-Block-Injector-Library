@@ -48,7 +48,8 @@ namespace Nuterra.BlockInjector
             public Vector3? ReferenceOffset;
             public Vector3? ReferenceScale;
             public Vector3? ReferenceRotationOffset;
-            public string Recipe;
+            public JToken Recipe;
+            public string RecipeTable;
             public SubObj[] SubObjects;
 
             public JObject Deserializer;
@@ -789,36 +790,30 @@ namespace Nuterra.BlockInjector
 
                 //Recipe
                 /*Local*/int RecipePrice = 0;
-                if (!BlockAlreadyExists && jBlock.Recipe != null && jBlock.Recipe != "")
+                if (!BlockAlreadyExists && jBlock.Recipe != null)
                 {
                     L("Apply Recipe", l);
                     Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
-                    string[] recipes = jBlock.Recipe.Replace(" ", "").Split(',');
-                    foreach (string recipe in recipes)
+                    if (jBlock.Recipe is JValue rString)
                     {
-                        ChunkTypes chunk = ChunkTypes.Null;
-                        if (!Enum.TryParse(recipe, true, out chunk))
+                        string[] recipe = rString.ToObject<string>().Replace(" ", "").Split(',');
+                        foreach (string item in recipe)
                         {
-                            if (int.TryParse(recipe, out int result))
-                            {
-                                chunk = (ChunkTypes)result;
-                            }
+                            RecipePrice += AppendToRecipe(RecipeBuilder, item, 1);
                         }
-                        if (chunk != ChunkTypes.Null)
+                    }
+                    else if (jBlock.Recipe is JObject rObject)
+                    {
+                        foreach (var item in rObject)
                         {
-                            if (!RecipeBuilder.ContainsKey((int)chunk))
-                            {
-                                RecipeBuilder.Add((int)chunk, 1);
-                            }
-                            else
-                            {
-                                RecipeBuilder[(int)chunk]++;
-                            }
-                            RecipePrice += RecipeManager.inst.GetChunkPrice(chunk);
+                            RecipePrice += AppendToRecipe(RecipeBuilder, item.Key, item.Value.ToObject<int>());
                         }
-                        else
+                    }
+                    else if (jBlock.Recipe is JArray rArray)
+                    {
+                        foreach (var item in rArray)
                         {
-                            Console.WriteLine("No ChunkTypes found matching given name, nor could parse as ID (int): " + recipe);
+                            RecipePrice += AppendToRecipe(RecipeBuilder, item.ToString(), 1);
                         }
                     }
 
@@ -831,7 +826,11 @@ namespace Nuterra.BlockInjector
                     }
 
                     string fab = "gsofab";
-                    switch ((FactionSubTypes)jBlock.Faction)
+                    if (!string.IsNullOrEmpty(jBlock.RecipeTable))
+                    {
+                        fab = jBlock.RecipeTable;
+                    }
+                    else switch ((FactionSubTypes)jBlock.Faction)
                     {
                         case FactionSubTypes.GC: fab = "gcfab"; break;
                         case FactionSubTypes.VEN: fab = "venfab"; break;
@@ -876,6 +875,35 @@ namespace Nuterra.BlockInjector
                 Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\n" + E);
                 BlockLoader.Timer.Log($" ! Could not read #{Json.Name} - \"{E.Message}\"");
             }
+        }
+
+        static int AppendToRecipe(Dictionary<int, int> RecipeBuilder, string Type, int Count)
+        {
+            ChunkTypes chunk = ChunkTypes.Null;
+            if (!Enum.TryParse(Type, true, out chunk))
+            {
+                if (int.TryParse(Type, out int result))
+                {
+                    chunk = (ChunkTypes)result;
+                }
+            }
+            if (chunk != ChunkTypes.Null)
+            {
+                if (!RecipeBuilder.ContainsKey((int)chunk))
+                {
+                    RecipeBuilder.Add((int)chunk, 1);
+                }
+                else
+                {
+                    RecipeBuilder[(int)chunk] += Count;
+                }
+                return RecipeManager.inst.GetChunkPrice(chunk);
+            }
+            else
+            {
+                Console.WriteLine("No ChunkTypes found matching given name, nor could parse as ID (int): " + Type);
+            }
+            return 0;
         }
 
         private static PhysicMaterial CopyPhysicMaterial(PhysicMaterial original)

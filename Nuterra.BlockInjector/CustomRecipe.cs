@@ -19,19 +19,27 @@ namespace Nuterra.BlockInjector
 
         internal static void RegisterRecipe(CustomRecipeStruct customRecipe)
         {
-            List<RecipeTable.Recipe> GSORecipes = null;
-            foreach (var list in Singleton.Manager<RecipeManager>.inst.recipeTable.m_RecipeLists)
+            List<RecipeTable.Recipe> recipeList = null;
+            var recipeTable = Singleton.Manager<RecipeManager>.inst.recipeTable;
+            foreach (RecipeTable.RecipeList list in recipeTable.m_RecipeLists)
             {
                 if (list.m_Name == customRecipe.NameOfFabricator)
                 {
-                    GSORecipes = list.m_Recipes;
+                    recipeList = list.m_Recipes;
                     break;
                 }
             }
 
-            if (GSORecipes == null)
+            if (recipeList == null)
             {
-                throw new System.Exception("Could not find recipe table of " + customRecipe.NameOfFabricator);
+                Console.WriteLine("Creating new recipe table '" + customRecipe.NameOfFabricator + "'...");
+                recipeList = new List<RecipeTable.Recipe>();
+                var NewRecipeItem = new RecipeTable.RecipeList()
+                {
+                    m_Name = customRecipe.NameOfFabricator,
+                    m_Recipes = recipeList,
+                };
+                recipeTable.m_RecipeLists.Add(NewRecipeItem);
             }
 
             var InputItems = new RecipeTable.Recipe.ItemSpec[customRecipe.Inputs.Length];
@@ -53,7 +61,7 @@ namespace Nuterra.BlockInjector
                 m_OutputType = customRecipe.OutputType,
                 m_OutputItems = OutputItems
             };
-            GSORecipes.Add(Recipe);
+            recipeList.Add(Recipe);
         }
         internal struct CustomRecipeStruct
         {
