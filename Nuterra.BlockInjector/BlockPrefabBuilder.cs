@@ -82,6 +82,8 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        static string TrimForSafeSearch(string Value) => Value.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
+
         private static Dictionary<string, GameObject> _gameBlocksNameDict;
         private static Dictionary<int, GameObject> _gameBlocksIDDict;
         public static bool GameBlocksByName(string ReferenceName, out GameObject Block)
@@ -90,7 +92,7 @@ namespace Nuterra.BlockInjector
             {
                 PopulateRefDictionaries();
             }
-            return _gameBlocksNameDict.TryGetValue(ReferenceName.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower(), out Block);
+            return _gameBlocksNameDict.TryGetValue(TrimForSafeSearch(ReferenceName), out Block);
         }
         public static bool GameBlocksByID(int ReferenceID, out GameObject Block)
         {
@@ -112,7 +114,7 @@ namespace Nuterra.BlockInjector
                 {
                     if (go.GetComponent<TankBlock>())
                     {
-                        _gameBlocksNameDict.Add(go.name.Replace("_", "").Replace(" ", "").ToLower(), go);
+                        _gameBlocksNameDict.Add(TrimForSafeSearch(go.name), go);
                         Visible v = go.GetComponent<Visible>();
                         if (v != null)
                         {
@@ -223,10 +225,12 @@ namespace Nuterra.BlockInjector
             ThrowIfFinished();
             if (!BlockLoader.AcceptOverwrite || !BlockLoader.CustomBlocks.ContainsKey(_customBlock.BlockID))
             {
-                throw new InvalidOperationException($"OverlapExistingRegister : Block {_customBlock.Name} ({_customBlock.BlockID}) has not been registered before!");
+                throw new InvalidOperationException($"OverlapExistingRegister : Block {_customBlock.Name} ({_customBlock.BlockID}) has not been registered before! Use RegisterLater()");
             }
             OptimizeCellsForAP();
             BlockLoader.Register(_customBlock);
+            _gameBlocksNameDict[TrimForSafeSearch(_customBlock.Name)] = _customBlock.Prefab;
+            _gameBlocksIDDict[_customBlock.BlockID] = _customBlock.Prefab;
             Prefab.SetActive(false);
             _finished = true;
             return this;
@@ -247,8 +251,10 @@ namespace Nuterra.BlockInjector
             //string name = _customBlock.Name;
             //while (PrefabList.ContainsKey(name)) name += "+";
             //_customBlock.Prefab.name = name;
-            //PrefabList.Add(name, _customBlock.Prefab);
             _customBlock.Prefab.name = _customBlock.Name;
+
+            _gameBlocksNameDict[TrimForSafeSearch(_customBlock.Name)] = _customBlock.Prefab;
+            _gameBlocksIDDict[_customBlock.BlockID] = _customBlock.Prefab;
 
             //OverrideValidity.Add(_customBlock.BlockID, _customBlock.Name);
             //_customBlock.Prefab.transform.position = Vector3.down * 1000f;
