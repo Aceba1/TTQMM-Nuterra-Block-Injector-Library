@@ -875,8 +875,7 @@ namespace Nuterra.BlockInjector
                 if (BlockAlreadyExists)
                 {
                     L("Override Register", l);
-                    BlockLoader.Register(blockbuilder.Build());
-                    blockbuilder.Prefab.SetActive(false);
+                    blockbuilder.OverlapExistingRegister();
                 }
                 else
                 {

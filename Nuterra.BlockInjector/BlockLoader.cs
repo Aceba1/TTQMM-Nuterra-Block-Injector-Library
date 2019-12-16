@@ -100,7 +100,6 @@ namespace Nuterra.BlockInjector
                         RunningCoroutine = coroutine.MoveNext();
                         if (!RunningCoroutine)
                         {
-                            AcceptOverwrite = true;
                             if (RunLoadBlocksRightAfter)
                             {
                                 BeginCoroutine(false, true);
@@ -109,6 +108,7 @@ namespace Nuterra.BlockInjector
                             else
                             {
                                 LockLinear = 0;
+                                AcceptOverwrite = true;
                             }
                         }
                     }
@@ -133,7 +133,7 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        public static bool AcceptOverwrite;
+        public static bool AcceptOverwrite { get; private set; }
 
         public static readonly Dictionary<int, CustomBlock> CustomBlocks = new Dictionary<int, CustomBlock>();
         public static readonly Dictionary<int, CustomChunk> CustomChunks = new Dictionary<int, CustomChunk>();
@@ -167,6 +167,7 @@ namespace Nuterra.BlockInjector
                 else
                 {
                     CustomBlocks[blockID] = block;
+                    UnpermitSpriteGeneration.Remove(blockID);
                 }
 
                 int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
@@ -203,20 +204,16 @@ namespace Nuterra.BlockInjector
                     catch (Exception E)
                     {
                         Console.WriteLine(E);
-                        if (E.InnerException != null)
-                        {
-                            Console.WriteLine(E.InnerException);
-                        }
                     }
 
                     return true;
                 }
                 catch (Exception E)
                 {
-                    Console.WriteLine(E.Message + "\n" + E.StackTrace + "\n" + E.InnerException?.Message);
+                    Console.WriteLine(E);
                     if (E.InnerException != null)
                     {
-                        Timer.AddToLast(" - FAILED: " + E.InnerException?.Message);
+                        Timer.AddToLast(" - FAILED: " + E.InnerException.Message);
                     }
                     else
                     {
@@ -227,10 +224,10 @@ namespace Nuterra.BlockInjector
             }
             catch (Exception E)
             {
-                Console.WriteLine(E.Message + "\n" + E.StackTrace + "\n" + E.InnerException?.Message);
+                Console.WriteLine(E);
                 if (E.InnerException != null)
                 {
-                    Timer.AddToLast(" - FAILED: " + E.InnerException?.Message);
+                    Timer.AddToLast(" - FAILED: " + E.InnerException.Message);
                 }
                 else
                 {
@@ -299,16 +296,90 @@ namespace Nuterra.BlockInjector
 
         internal class Patches
         {
-            //[HarmonyPatch(typeof(ManSpawn), "AddBlockToDictionary")]
-            //private static class DisallowGameBlockLoading
+            /*
+             * static int[] s_AttachPointsTemp;
+             * static Dictionary<int, int[]> s_APFilledCellsPerBlock;
+             * Pre_InitAPFilledCells()
+             * {
+             *     // Copy what is in InitAPFilledCells, but fill the int[] array inside the dictionary instead of the byte[] array
+             *     s_AttachPointsTemp = block.attachPoints;
+             *     block.attachPoints = new Vector3[0]; // This bit prevents the crash in InitFilledAPCells() base version by making it loop 0 times
+             * }
+             * Post_InitAPFilledCells()
+             * {
+             *     block.attackPoints = s_AttachPointsTemp;
+             *     block.m_APFilledCells = new byte[s_AttachPointsTemp.Length];
+             * }
+             * Post_GetFilledCellForAPIndex()
+             * {
+             *     return filledCells[s_APFilledCellsPerBlock[block.blockID][index]];
+             * }
+             */
+            //private static class FlansPatch
             //{
-            //    private static bool Prefix(GameObject blockPrefab)
+            //    static Dictionary<int, int[]> s_APFilledCellsPerBlock = new Dictionary<int, int[]>();
+            //    static FieldInfo m_APFilledCells = typeof(TankBlock).GetField("m_APFilledCells", binding);
+
+            //    [HarmonyPatch(typeof(TankBlock), "InitAPFilledCells")]
+            //    private static class FlansPatch_InitAPFilledCells
             //    {
-            //        if (blockPrefab == null) return true;
-            //        var Visible = blockPrefab.GetComponent<Visible>();
-            //        if (Visible == null || Visible.m_ItemType.ObjectType != ObjectTypes.Block) return true;
-            //        if (BlockPrefabBuilder.OverrideValidity.TryGetValue(Visible.m_ItemType.ItemType, out string name) && name != blockPrefab.name) return false;
-            //        return true;
+            //        private static bool Prefix(ref TankBlock __instance)
+            //        {
+            //            if (__instance.filledCells.Length > 255)
+            //            {
+            //                List<Vector3> croppedAPs = new List<Vector3>();
+            //                List<int> APFilledCells = new List<int>();
+            //                bool NotifyError = true;
+            //                for (int i = 0; i < __instance.attachPoints.Length; i++)
+            //                {
+            //                    Vector3 attachPoint = __instance.attachPoints[i];
+            //                    IntVector3 ScaledAP = attachPoint * 2f;
+            //                    IntVector3 FlooredAP = ScaledAP.PadHalfDown();
+            //                    IntVector3 RoofedAP = FlooredAP + ScaledAP.AxisUnit();
+            //                    for (int cell = 0; cell < __instance.filledCells.Length; cell++)
+            //                    {
+            //                        bool FlooredCell = __instance.filledCells[cell] == FlooredAP,
+            //                             RoofedCell = __instance.filledCells[cell] == RoofedAP;
+            //                        if (FlooredCell || RoofedCell)
+            //                        {
+            //                            if (FlooredCell && RoofedCell)
+            //                            {
+            //                                Console.WriteLine($"Block {__instance.name} has an AP crushed between two cells! ({attachPoint})");
+            //                                NotifyError = false;
+            //                                break;
+            //                            }
+            //                            APFilledCells.Add(cell);
+            //                            croppedAPs.Add(attachPoint);
+            //                            NotifyError = false;
+            //                            break;
+            //                        }
+            //                    }
+            //                    if (NotifyError)
+            //                    {
+            //                        Console.WriteLine($"Block {__instance.name} has an AP without a cell! ({attachPoint})");
+            //                    }
+            //                }
+            //                s_APFilledCellsPerBlock[__instance.GetComponent<Visible>().ItemType] = APFilledCells.ToArray();
+            //                m_APFilledCells.SetValue(__instance, new byte[APFilledCells.Count]);
+            //                __instance.attachPoints = croppedAPs.ToArray();
+            //                return false;
+            //            }
+            //            return true;
+            //        }
+            //    }
+
+            //    [HarmonyPatch(typeof(TankBlock), "GetFilledCellForAPIndex")]
+            //    private static class FlansPatch_GetFilledCellForAPIndex
+            //    {
+            //        private static bool Prefix(ref TankBlock __instance, ref IntVector3 __result, int index)
+            //        {
+            //            if (s_APFilledCellsPerBlock.TryGetValue(__instance.visible.ID, out int[] APCellArray))
+            //            {
+            //                __result = __instance.filledCells[APCellArray[index]];
+            //                return false;
+            //            }
+            //            return true;
+            //        }
             //    }
             //}
 
@@ -406,7 +477,7 @@ namespace Nuterra.BlockInjector
         }
 
         //static int lastFrameRendered;
-        static bool PermitSpriteGeneration = true;
+        static List<int> UnpermitSpriteGeneration = new List<int>();
         private static bool ResourceLookup_OnSpriteLookup(ObjectTypes objectType, int itemType, ref UnityEngine.Sprite result)
         {
             if (objectType == ObjectTypes.Block)
@@ -415,7 +486,7 @@ namespace Nuterra.BlockInjector
                 if (CustomBlocks.TryGetValue(itemType, out block))
                 {
                     result = block.DisplaySprite;
-                    if (result == null && PermitSpriteGeneration)// && lastFrameRendered != Time.frameCount)
+                    if (result == null && !UnpermitSpriteGeneration.Contains(itemType))// && lastFrameRendered != Time.frameCount)
                     {
                         try
                         {
@@ -427,7 +498,7 @@ namespace Nuterra.BlockInjector
                             float x = 1f;
                             result = GameObjectJSON.SpriteFromImage(image);//GameObjectJSON.CropImage(image, new Rect((1f - x) * 0.5f, 0f, x, 1f)));
                         }
-                        catch { PermitSpriteGeneration = false; }
+                        catch { UnpermitSpriteGeneration.Add(itemType); }
                         block.DisplaySprite = result;
                     }
                     return result != null;

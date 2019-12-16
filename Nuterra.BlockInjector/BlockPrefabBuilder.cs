@@ -252,6 +252,7 @@ namespace Nuterra.BlockInjector
 
             //OverrideValidity.Add(_customBlock.BlockID, _customBlock.Name);
             //_customBlock.Prefab.transform.position = Vector3.down * 1000f;
+            OptimizeCellsForAP();
             new GameObject().AddComponent<RegisterTimer>().CallBlockPrefabBuilder(Time, this, _customBlock);
             _finished = true;
             return this;
@@ -774,6 +775,44 @@ namespace Nuterra.BlockInjector
             else
                 Console.WriteLine($"Cound not find block '{ReferenceName}' for explosion effect");
             return this;
+        }
+
+        private void OptimizeCellsForAP()
+        {
+            List<int> croppedCells = new List<int>();
+            for (int i = 0; i < TankBlock.attachPoints.Length; i++) // Go through every AP on the block
+            {
+                IntVector3 ScaledAP = TankBlock.attachPoints[i] * 2f;
+                IntVector3 FlooredAP = ScaledAP.PadHalfDown();
+                IntVector3 RoofedAP = FlooredAP + ScaledAP.AxisUnit();
+                for (int cell = 0; cell < TankBlock.filledCells.Length; cell++) // Find if the AP is on a cell. Start at 0, because cells near 255 can accidentally be pushed beyond that cap
+                {
+                    if (TankBlock.filledCells[cell] == FlooredAP ||
+                        TankBlock.filledCells[cell] == RoofedAP)
+                    {
+                        if (!croppedCells.Contains(cell))
+                            croppedCells.Add(cell); // Cell will cause deadlock, move to front
+                        break;
+                    }
+                }
+            }
+            if (croppedCells.Count != 0) // If there are any cells that would cause a deadlock...
+            {
+                List<IntVector3> NewCellOrder = new List<IntVector3>(TankBlock.filledCells); // Turn cells to list for reorganizing
+                croppedCells.Sort(); // Sort indexes by ascending to avoid corruption
+                for (int i = croppedCells.Count - 1; i >= 0; i--) // Remove from top-down to avoid corruption
+                {
+                    //Console.WriteLine("Removing cell " + croppedCells[i] + " from block " + _customBlock.Name + " (" + NewCellOrder.Count + " cells)");
+                    NewCellOrder.RemoveAt(croppedCells[i]);
+                }
+                List<IntVector3> InjectedCells = new List<IntVector3>(); // Make insert list
+                foreach (var cell in croppedCells)
+                {
+                    InjectedCells.Add(TankBlock.filledCells[cell]);
+                }
+                NewCellOrder.InsertRange(0, InjectedCells);
+                TankBlock.filledCells = NewCellOrder.ToArray();
+            }
         }
     }
 }
