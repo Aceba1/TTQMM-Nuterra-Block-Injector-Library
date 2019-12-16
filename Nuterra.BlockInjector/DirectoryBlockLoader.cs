@@ -274,7 +274,7 @@ namespace Nuterra.BlockInjector
                     return;
                 }
 
-                string gpr = jBlock.GamePrefabReference.ToString();
+                string gpr = jBlock.GamePrefabReference == null ? null : jBlock.GamePrefabReference.ToString();
                 if (string.IsNullOrEmpty(gpr))
                 {
                     L("New instance", l);
