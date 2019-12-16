@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using System.Reflection;
+using Newtonsoft.Json.Serialization;
 
 namespace Nuterra.BlockInjector
 {
@@ -69,20 +71,15 @@ namespace Nuterra.BlockInjector
         internal static Type ManSpawnT = typeof(ManSpawn);
         static FieldInfo m_BlockTable = ManSpawnT.GetField("m_BlockTable", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
 
-        public static GameObject GetBlockFromAssetTable(string NameOfBlock)
+        public static GameObject GetBlockFromAssetTable(string BlockName)
         {
-            //var allblocks = ((BlockTable)m_BlockTable.GetValue(ManSpawn.inst)).m_Blocks;
-            //foreach (GameObject block in allblocks)
-            //{
-            //    if (block.name.StartsWith(NameOfBlock))
-            //        return block;
-            //}
-            string NewSearch = NameOfBlock.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
-            if (BlockPrefabBuilder.GameBlocks.TryGetValue(NewSearch, out GameObject block))
-            {
-                return block;
-            }
-            return null;
+            BlockPrefabBuilder.GameBlocksByName(BlockName, out GameObject Block);
+            return Block;
+        }
+        public static GameObject GetBlockFromAssetTable(int BlockID)
+        {
+            BlockPrefabBuilder.GameBlocksByID(BlockID, out GameObject Block);
+            return Block;
         }
 
         public static List<T> GetObjectsFromGameResources<T>(Type t, string startOfTargetName) where T : UnityEngine.Object
@@ -468,7 +465,13 @@ namespace Nuterra.BlockInjector
                 return false;
             }
             string sRefBlock = blockPath.Substring(0, separator);
-            var refBlock = GetBlockFromAssetTable(sRefBlock);
+            
+            GameObject refBlock;
+            if (int.TryParse(sRefBlock, out int ID))
+                refBlock = GetBlockFromAssetTable(ID);
+            else
+                refBlock = GetBlockFromAssetTable(sRefBlock);
+
             if (refBlock == null)
             {
                 Console.WriteLine("Reference block is nonexistent! (" + sRefBlock + ")");

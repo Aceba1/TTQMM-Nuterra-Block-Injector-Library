@@ -18,7 +18,7 @@ namespace Nuterra.BlockInjector
             public bool KeepReferenceRenderers; // Legacy
             public bool KeepRenderers;
             public bool KeepColliders;
-            public string GamePrefabReference;
+            public JValue GamePrefabReference;
             public int ID;
             public string IconName;
             public string MeshName;
@@ -272,7 +272,8 @@ namespace Nuterra.BlockInjector
                     return;
                 }
 
-                if (string.IsNullOrEmpty(jBlock.GamePrefabReference))
+                string gpr = jBlock.GamePrefabReference.ToString();
+                if (string.IsNullOrEmpty(gpr))
                 {
                     L("New instance", l);
                     blockbuilder = new BlockPrefabBuilder();
@@ -280,7 +281,10 @@ namespace Nuterra.BlockInjector
                 else
                 {
                     L("Prefab reference", l);
-                    blockbuilder = new BlockPrefabBuilder(jBlock.GamePrefabReference, false);
+                    if (int.TryParse(gpr, out int gprID))
+                        blockbuilder = new BlockPrefabBuilder(gprID, false);
+                    else
+                        blockbuilder = new BlockPrefabBuilder(gpr, false);
 
                     if (jBlock.KeepRenderers)
                     {

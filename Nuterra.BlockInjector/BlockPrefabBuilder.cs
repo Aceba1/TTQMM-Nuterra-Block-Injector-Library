@@ -63,6 +63,11 @@ namespace Nuterra.BlockInjector
                 Initialize(prefab, false);
         }
 
+        public BlockPrefabBuilder(int PrefabFromResource, bool RemoveRenderers = true)
+        {
+            CreateFromRes(PrefabFromResource, RemoveRenderers);
+        }
+
         public BlockPrefabBuilder(string PrefabFromResource, bool RemoveRenderers = true)
         {
             CreateFromRes(PrefabFromResource, RemoveRenderers);
@@ -77,46 +82,80 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        private static Dictionary<string, GameObject> _gameBlocks;
-        internal static Dictionary<string, GameObject> GameBlocks
+        private static Dictionary<string, GameObject> _gameBlocksNameDict;
+        private static Dictionary<int, GameObject> _gameBlocksIDDict;
+        public static bool GameBlocksByName(string ReferenceName, out GameObject Block)
         {
-            get
+            if (_gameBlocksNameDict == null)
             {
-                if (_gameBlocks == null)
+                PopulateRefDictionaries();
+            }
+            return _gameBlocksNameDict.TryGetValue(ReferenceName.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower(), out Block);
+        }
+        public static bool GameBlocksByID(int ReferenceID, out GameObject Block)
+        {
+            if (_gameBlocksIDDict == null)
+            {
+                PopulateRefDictionaries();
+            }
+            return _gameBlocksIDDict.TryGetValue(ReferenceID, out Block);
+        }
+
+        private static void PopulateRefDictionaries()
+        {
+            _gameBlocksIDDict = new Dictionary<int, GameObject>();
+            _gameBlocksNameDict = new Dictionary<string, GameObject>();
+            var gos = Resources.FindObjectsOfTypeAll<GameObject>();
+            foreach (var go in gos)
+            {
+                try
                 {
-                    _gameBlocks = new Dictionary<string, GameObject>();
-                    var gos = Resources.FindObjectsOfTypeAll<GameObject>();
-                    foreach (var go in gos)
+                    if (go.GetComponent<TankBlock>())
                     {
-                        try
+                        _gameBlocksNameDict.Add(go.name.Replace("_", "").Replace(" ", "").ToLower(), go);
+                        Visible v = go.GetComponent<Visible>();
+                        if (v != null)
                         {
-                            if (go.GetComponent<TankBlock>())
-                            {
-                                _gameBlocks.Add(go.name.Replace("_", "").Replace(" ", "").ToLower(), go);
-                            }
+                            _gameBlocksIDDict.Add(v.ItemType, go);
                         }
-                        catch { /*fail silently*/ }
                     }
                 }
-                return _gameBlocks;
+                catch { /*fail silently*/ }
             }
         }
 
-        internal void CreateFromRes(string PrefabFromResource, bool RemoveRenderers)
+        internal void CreateFromRes(int PrefabID, bool RemoveRenderers)
         {
             GameObject original = null;
-            string NewSearch = PrefabFromResource.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
-            try
+            if (!GameBlocksByID(PrefabID, out original))
             {
-                if (!GameBlocks.TryGetValue(NewSearch, out original))
-                {
-                    PrefabList.TryGetValue(PrefabFromResource, out original);
-                }
+
             }
-            catch { /*report in below condition*/ }
             if (original == null)
             {
-                string errStr = $"No prefab named '{PrefabFromResource}' => '{NewSearch}' could be found... (Make sure block exists before this one!)";
+                string errStr = $"No prefab with ID '{PrefabID}' could be found...";
+                Console.WriteLine(errStr);
+                throw new Exception(errStr);
+            }
+            var copy = UnityEngine.Object.Instantiate(original);
+            Initialize(copy, false);
+            if (RemoveRenderers)
+            {
+                RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(MeshFilter), typeof(Collider));
+            }
+            RemoveChildrenWithComponent(true, null, typeof(ColliderSwapper), typeof(TTNetworkTransform));
+        }
+
+        internal void CreateFromRes(string PrefabName, bool RemoveRenderers)
+        {
+            GameObject original = null;
+            if (!GameBlocksByName(PrefabName, out original))
+            {
+
+            }
+            if (original == null)
+            {
+                string errStr = $"No prefab named '{PrefabName}' could be found...";
                 Console.WriteLine(errStr);
                 throw new Exception(errStr);
             }
