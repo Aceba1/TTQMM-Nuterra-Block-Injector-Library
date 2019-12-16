@@ -756,10 +756,24 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        internal CustomBlock Build()
+        public BlockPrefabBuilder DeathExplosionReference(int ReferenceID)
         {
-            _finished = true;
-            return _customBlock;
+            ThrowIfFinished();
+            if (GameBlocksByID(ReferenceID, out GameObject refBlock))
+                _moduleDamage.deathExplosion = refBlock.GetComponent<ModuleDamage>().deathExplosion;
+            else
+                Console.WriteLine($"Cound not find block '{ReferenceID}' for explosion effect");
+            return this;
+        }
+
+        public BlockPrefabBuilder DeathExplosionReference(string ReferenceName)
+        {
+            ThrowIfFinished();
+            if (GameBlocksByName(ReferenceName, out GameObject refBlock))
+                _moduleDamage.deathExplosion = refBlock.GetComponent<ModuleDamage>().deathExplosion;
+            else
+                Console.WriteLine($"Cound not find block '{ReferenceName}' for explosion effect");
+            return this;
         }
     }
 }

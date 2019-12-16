@@ -19,6 +19,7 @@ namespace Nuterra.BlockInjector
             public bool KeepRenderers;
             public bool KeepColliders;
             public JValue GamePrefabReference;
+            public JValue DeathExplosionReference;
             public int ID;
             public string IconName;
             public string MeshName;
@@ -330,6 +331,19 @@ namespace Nuterra.BlockInjector
                         {
                             blockbuilder.Prefab.transform.GetChild(i).localPosition += jBlock.ReferenceOffset.Value;
                         }
+                    }
+                }
+
+                if (jBlock.DeathExplosionReference != null)
+                {
+                    L("Reference Death Explosion", l);
+                    string der = jBlock.DeathExplosionReference.ToString();
+                    if (!string.IsNullOrEmpty(der))
+                    {
+                        if (int.TryParse(der, out int derID))
+                            blockbuilder.DeathExplosionReference(derID);
+                        else
+                            blockbuilder.DeathExplosionReference(der);
                     }
                 }
 
