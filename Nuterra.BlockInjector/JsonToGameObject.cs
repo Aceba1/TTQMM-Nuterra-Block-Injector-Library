@@ -546,13 +546,26 @@ namespace Nuterra.BlockInjector
                                 }
                                 else
                                 { 
-                                    if (refTarget is Component _refComponent)
+                                    if (refTarget is Component)
                                     {
-                                        refObject = _refComponent.gameObject;
+                                        if (refTarget is Transform refTrans)
+                                        {
+                                            refObject = refTrans.gameObject;
+                                        }
+                                        else // Duplicate component
+                                        {
+                                            Type refType = refTarget.GetType();
+                                            object component = result.GetComponent(refType);
+                                            if (component as Component == null)
+                                                component = result.AddComponent(refType);
+                                            ShallowCopy(refType, refTarget, component);
+                                            ApplyValues(component, refType, property.Value as JObject, Spacing);
+                                            continue;
+                                        }
                                     }
                                     else
                                     {
-                                        Console.WriteLine("Property of Reference path is not a component! (" + name + ")");
+                                        Console.WriteLine("Property of Reference path is not a component or object! (" + name + ")");
                                         continue;
                                     }
                                 }
@@ -576,7 +589,10 @@ namespace Nuterra.BlockInjector
                         }
                         else
                         {
-                            newGameObject = result.transform.Find(name)?.gameObject;
+                            if (Duplicate && name.Contains('/'))
+                                newGameObject = (SearchTransform.RecursiveFindWithProperties(name) as Component)?.gameObject;
+                            if (newGameObject == null)
+                                newGameObject = result.transform.Find(name)?.gameObject;
                         }
 
                         if (!newGameObject)
@@ -600,6 +616,7 @@ namespace Nuterra.BlockInjector
                             if (Duplicate)
                             {
                                 newGameObject = GameObject.Instantiate(newGameObject);
+                                name = name.Substring(1 + name.LastIndexOfAny(new char[] { '/', '.' }));
                                 string newName = name + "_copy";
                                 int count = 1;
                                 while (result.transform.Find(newName))
@@ -658,8 +675,7 @@ namespace Nuterra.BlockInjector
         static Transform SearchTransform;
         static object ApplyValues(object instance, Type instanceType, JObject json, string Spacing)
         {
-           //Console.WriteLine(Spacing+"Going down");
-            object _instance = instance;
+            //Console.WriteLine(Spacing+"Going down");
             BindingFlags bind = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             foreach (JProperty jsonProperty in json.Properties())
             {
@@ -729,81 +745,237 @@ namespace Nuterra.BlockInjector
                     }
                     else if (jsonProperty.Value is JArray jArray)
                     {
+                        object sourceArray = Wipe ? null : (
+                            UseField ? tField.GetValue(instance) : (
+                                tProp.CanRead ? tProp.GetValue(instance, null) : null));
+                        var newArray = MakeJSONArray(sourceArray, UseField ? tField.FieldType : tProp.PropertyType, jArray, Spacing, Wipe); // add Wipe param, copy custom names to inside new method
                         if (UseField)
                         {
-                            tField.SetValue(_instance, jArray.ToObject(tField.FieldType));
+                            tField.SetValue(instance, newArray);
                         }
-                        else
+                        else if (tProp.CanWrite)
                         {
-                            if (tProp.CanWrite) tProp.SetValue(_instance, jArray.ToObject(tProp.PropertyType), null);
-                            else Console.WriteLine("Cannot write to property! (" + jsonProperty.Name + ")");
+                            tProp.SetValue(instance, newArray, null);
                         }
+                        else throw new TargetException("Property is read-only!");
                     }
                     else if (jsonProperty.Value is JValue jValue)
                     {
-                        try
-                        {
-                            if (UseField)
-                            {
-                                tField.SetValue(_instance, jValue.ToObject(tField.FieldType));
-                            }
-                            else
-                            {
-                                if (tProp.CanWrite) tProp.SetValue(_instance, jValue.ToObject(tProp.PropertyType), null);
-                                else Console.WriteLine("Cannot write to property! (" + jsonProperty.Name + ")");
-                            }
-                            continue;
-                        }
-                        catch { }
-                        string cache = jValue.ToObject<string>();
-                        string targetName = cache.Substring(cache.IndexOf('|') + 1);
-                        Type type = UseField ? tField.FieldType : tProp.PropertyType;
-                        object searchresult = null;
-                        if (cache.StartsWith("Reference"))
-                        {
-                            if (!GetReferenceFromBlockResource(targetName, out searchresult)) // Get value from a block in the game
-                                continue;
-                        }
-                        else if (LoadedResources.ContainsKey(type) && LoadedResources[type].ContainsKey(targetName))
-                        {
-                            searchresult = LoadedResources[type][targetName]; // Get value from a value in the user database
-                        }
-                        else
-                        {
-                            try
-                            {
-                                searchresult = SearchTransform.RecursiveFindWithProperties(cache); // Get value from this block
-                            }
-                            catch { }
-                            if (searchresult == null && type.IsSubclassOf(t_uobj))
-                            {
-                                searchresult = GetObjectFromGameResources<UnityEngine.Object>(type, targetName, true);
-                            }
-                        }
-                        if (UseField)
-                        {
-                            tField.SetValue(_instance, searchresult);
-                        }
-                        else
-                        {
-                            tProp.SetValue(_instance, searchresult, null);
-                        }
+                        SetJSONValue(jValue, jsonProperty, instance, UseField, tField, tProp);
                     }
                 }
                 catch (Exception E)
                 {
-                    Console.WriteLine(Spacing + "!!!" + E/*+"\n"+E.StackTrace*/);
-                    int max = 3;
-                    while (E.InnerException != null && max-- != 0)
-                    {
-                        E = E.InnerException;
-                        Console.WriteLine(E);
-                    }
+                    Console.WriteLine(Spacing + "!!! Error on modifying property " + jsonProperty.Name);
+                    Console.WriteLine(Spacing + "!!! " + E/*+"\n"+E.StackTrace*/);
                 }
             }
            //Console.WriteLine(Spacing+"Going up");
-            return _instance;
+            return instance;
         }
+
+        private static void ShallowCopy(Type sharedType, object source, object target)
+        {
+            var fields = sharedType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+            var props = sharedType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (var field in fields)
+            {
+                try
+                {
+                    field.SetValue(target, field.GetValue(source));
+                }
+                catch { }
+            }
+            foreach (var prop in props)
+            {
+                try
+                {
+                    if (prop.CanRead && prop.CanWrite)
+                        prop.SetValue(target, prop.GetValue(source), null);
+                }
+                catch { }
+            }
+        }
+
+        static Type t_ilist = typeof(IList);
+        private static IList MakeJSONArray(object originalArray, Type ArrayType, JArray Deserialize, string Spacing, bool Wipe)
+        {
+            IList newList;
+            Type itemType;
+            //if (ArrayType.IsSubclassOf(t_ilist))
+            //{
+            IList sourceList = Wipe ? null : originalArray as IList;
+
+            if (ArrayType.IsGenericType) itemType = ArrayType.GetGenericArguments()[0];
+            else itemType = ArrayType.GetElementType();
+
+            int newCount = Deserialize.Count;
+            newList = Activator.CreateInstance(ArrayType, newCount) as IList; // newCount here tells fixed arrays how many items to have. List<> arrays get starting capacity, but is empty.
+            if (newCount != newList.Count) // Must be a List<>, which means it can be expanded with the following...
+            {
+                object def = itemType.IsClass ? null : Activator.CreateInstance(itemType); // Get default (Avoid creation if not needed)
+                for (int i = 0; i < newCount; i++) newList.Add(def); // Populate empty list from 0 to length
+            }
+
+            for (int i = 0; i < newCount; i++) // Populate!
+            {
+                object item;
+                //if (sourceList != null && i < sourceList.Count)
+                //    item = sourceList[i];
+                //else
+                item = newList[i]; // Do not reference the original object! (Corruption risk)
+
+                if (Deserialize[i] is JObject _jObject)
+                {
+                    if (item == null)
+                    {
+                        item = Activator.CreateInstance(itemType); // Create instance, because is needed
+                        if (sourceList.Count != 0) // Copy current or last element
+                        {
+                            ShallowCopy(itemType, sourceList[Math.Min(i, sourceList.Count - 1)], item); // Helpful, trust me
+                        }
+                    }
+                    item = ApplyValues(item, itemType, _jObject, Spacing);
+                }
+                else if (Deserialize[i] is JArray _jArray)
+                {
+                    item = MakeJSONArray(item, itemType, _jArray, Spacing, false);
+                }
+                else if (Deserialize[i] is JValue _jValue)
+                {
+                    try
+                    {
+                        item = _jValue.ToObject(itemType);
+                    }
+                    catch
+                    {
+                        string cache = _jValue.ToObject<string>();
+                        string targetName = cache.Substring(cache.IndexOf('|') + 1);
+                        item = GetValueFromString(targetName, cache, itemType);
+                    }
+                }
+                newList[i] = item;
+            }
+            return newList;
+            //}
+            //else throw new Exception($"Trying to modify array to non-array type (Does not implement IList interface)");
+        }
+
+        private static void SetJSONObject(JObject jObject, ref object instance, string Spacing, bool Wipe, bool Instantiate, FieldInfo tField, PropertyInfo tProp, bool UseField)
+        {
+            if (UseField)
+            {
+                object original, rewrite;
+                if (!Wipe)
+                {
+                    original = tField.GetValue(instance);
+                    if (Instantiate)
+                    {
+                        bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
+                        var nObj = Component.Instantiate(original as Component);
+                        nObj.gameObject.SetActive(isActive);
+                        //Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                        var cacheSearchTransform = SearchTransform;
+                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                        SearchTransform = cacheSearchTransform;
+                        //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
+                        rewrite = nObj;
+                    }
+                    else rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
+                }
+                else
+                {
+                    original = Activator.CreateInstance(tField.FieldType);
+                    rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
+                }
+                try { tField.SetValue(instance, rewrite); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
+            }
+            else
+            {
+                object original, rewrite;
+                if (!Wipe)
+                {
+                    original = tProp.GetValue(instance, null);
+                    if (Instantiate)
+                    {
+                        bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
+                        var nObj = Component.Instantiate(original as Component);
+                        nObj.gameObject.SetActive(isActive);
+                        //Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                        var cacheSearchTransform = SearchTransform;
+                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                        SearchTransform = cacheSearchTransform;
+                        //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
+                        rewrite = nObj;
+                    }
+                    else rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
+                }
+                else
+                {
+                    original = Activator.CreateInstance(tProp.PropertyType);
+                    rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
+                }
+                if (tProp.CanWrite)
+                    try { tProp.SetValue(instance, rewrite, null); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
+            }
+        }
+
+        static void SetJSONValue(JValue jValue, JProperty jsonProperty, object _instance, bool UseField, FieldInfo tField = null, PropertyInfo tProp = null)
+        {
+            try
+            {
+                if (UseField)
+                {
+                    tField.SetValue(_instance, jValue.ToObject(tField.FieldType));
+                }
+                else
+                {
+                    if (tProp.CanWrite) tProp.SetValue(_instance, jValue.ToObject(tProp.PropertyType), null);
+                    else Console.WriteLine("Property is write-locked! (" + jsonProperty.Name + ")");
+                }
+                return;//continue;
+            }
+            catch { }
+            string cache = jValue.ToObject<string>();
+            string targetName = cache.Substring(cache.IndexOf('|') + 1);
+            Type type = UseField ? tField.FieldType : tProp.PropertyType;
+            object searchresult = GetValueFromString(targetName, cache, type);
+            if (UseField)
+            {
+                tField.SetValue(_instance, searchresult);
+            }
+            else
+            {
+                tProp.SetValue(_instance, searchresult, null);
+            }
+        }
+
+        static object GetValueFromString(string search, string searchFull, Type outType)
+        {
+            if (searchFull.StartsWith("Reference"))
+            {
+                if (GetReferenceFromBlockResource(search, out var result)) // Get value from a block in the game
+                    return result;
+            }
+            else if (LoadedResources.TryGetValue(outType, out var dict) && dict.TryGetValue(search, out var result))
+            {
+                return result; // Get value from a value in the user database
+            }
+            else
+            {
+                try
+                {
+                    return SearchTransform.RecursiveFindWithProperties(searchFull); // Get value from this block
+                }
+                catch { }
+                if (outType.IsSubclassOf(t_uobj))
+                {
+                    return GetObjectFromGameResources<UnityEngine.Object>(outType, search, true);
+                }
+            }
+            return null;
+        }
+
         public static string LogAllComponents(Transform SearchIn, bool Reflection = false, string Indenting = "")
         {
             string result = "";
@@ -842,5 +1014,14 @@ namespace Nuterra.BlockInjector
             }
             return result;
         }
+
+        //IList CopyToNew(Type source, object from, int count)
+        //{
+        //    object result;
+        //    if (source.IsArray)
+        //    {
+        //        result = System.Activator.CreateInstance(source, count)
+        //    }
+        //}
     }
 }
