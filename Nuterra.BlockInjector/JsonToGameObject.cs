@@ -297,15 +297,28 @@ namespace Nuterra.BlockInjector
             var props = PropertyPath.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
             foreach(string pprop in props)
             {
-                var tfield = currentType.GetField(pprop, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
+                string prop = pprop;
+                int arr = prop.IndexOf('[');
+                string[] ind = null;
+                if (arr != -1)
+                {
+                    ind = prop.Substring(arr + 1).TrimEnd(']').Split(',');
+
+                    prop = prop.Substring(0, arr);
+                }
+                var tfield = currentType.GetField(prop, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
                 if (tfield != null)
                 {
                     currentObject = tfield.GetValue(currentObject);
+                    if (arr != -1)
+                    {
+                        //currentObject = tfield.FieldType.
+                    }
                     currentType = tfield.FieldType;
                 }
                 else
                 {
-                    var tproperty = currentType.GetProperty(pprop, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
+                    var tproperty = currentType.GetProperty(prop, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
                     if (tproperty != null)
                     {
                         currentObject = tproperty.GetValue(currentObject, null);
@@ -376,7 +389,6 @@ namespace Nuterra.BlockInjector
             catch (Exception E)
             {
                 Console.WriteLine("RecursiveFindWithProperties failed! " + E);
-                if (E.InnerException != null) Console.WriteLine(E.InnerException);
                 return null;
             }
         }
@@ -489,6 +501,15 @@ namespace Nuterra.BlockInjector
 
         public static GameObject CreateGameObject(JObject json, GameObject GameObjectToPopulate = null, string Spacing = "")
         {
+            if (GameObjectToPopulate == null)
+            {
+                GameObjectToPopulate = new GameObject("New Deserialized Object");
+            }
+            SearchTransform = GameObjectToPopulate.transform;
+            return CreateGameObject_Internal(json, GameObjectToPopulate, Spacing);
+        }
+        static GameObject CreateGameObject_Internal(JObject json, GameObject GameObjectToPopulate, string Spacing)
+        {
             System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
             stopwatch.Start();
             GameObject result;
@@ -507,7 +528,7 @@ namespace Nuterra.BlockInjector
                     if (Duplicate || Reference || property.Name.StartsWith("GameObject") || property.Name.StartsWith("UnityEngine.GameObject"))
                     {
                         string name = "Object Child";
-                        int GetCustomName = property.Name.IndexOf('|');
+                        int GetCustomName = property.Name.LastIndexOf('|');
                         if (GetCustomName != -1)
                         {
                             name = property.Name.Substring(GetCustomName + 1);
@@ -518,7 +539,6 @@ namespace Nuterra.BlockInjector
                         {
                             if (GetReferenceFromBlockResource(name, out object refTarget))
                             {
-
                                 GameObject refObject = null;
                                 if (refTarget is GameObject _refObject)
                                 {
@@ -590,7 +610,7 @@ namespace Nuterra.BlockInjector
                                 newGameObject.transform.parent = result.transform;
                             }
                         }
-                        CreateGameObject(property.Value as JObject, newGameObject, Spacing +  m_tab);
+                        CreateGameObject_Internal(property.Value as JObject, newGameObject, Spacing +  m_tab);
                     }
                     else
                     {
@@ -619,7 +639,6 @@ namespace Nuterra.BlockInjector
                                 }
                                //Console.WriteLine(Spacing + "Created " + property.Name);
                             }
-                            SearchTransform = result.transform;
                             ApplyValues(component, componentType, property.Value as JObject, Spacing);
                            //Console.WriteLine(Spacing + "Set values of " + property.Name);
                         }
@@ -665,7 +684,9 @@ namespace Nuterra.BlockInjector
                     {
                         //UseMethod = tMethod != null;
                         //if (!UseMethod)
-                            continue;
+
+                        Console.WriteLine(Spacing + "!!! Property '" + name + "' does not exist in type '" + instanceType.Name + "'");
+                        continue;
                     }
                     #region if (UseMethod)
                     //if (UseMethod)
@@ -702,59 +723,9 @@ namespace Nuterra.BlockInjector
                     //}
                     #endregion 
 
-                    if (jsonProperty.Value is JObject)
+                    if (jsonProperty.Value is JObject jObject)
                     {
-                        if (UseField)
-                        {
-                            object original, rewrite;
-                            if (!Wipe)
-                            {
-                                original = tField.GetValue(instance);
-                                if (Instantiate)
-                                {
-                                    bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
-                                    var nObj = Component.Instantiate(original as Component);
-                                    nObj.gameObject.SetActive(isActive);
-                                    //Console.WriteLine(Spacing + m_tab + ">Instantiating");
-                                    CreateGameObject(jsonProperty.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
-                                    Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                                    rewrite = nObj;
-                                }
-                                else rewrite = ApplyValues(original, tField.FieldType, jsonProperty.Value as JObject, Spacing + m_tab);
-                            }
-                            else
-                            {
-                                original = Activator.CreateInstance(tField.FieldType);
-                                rewrite = ApplyValues(original, tField.FieldType, jsonProperty.Value as JObject, Spacing + m_tab);
-                            }
-                            try { tField.SetValue(_instance, rewrite); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
-                        }
-                        else
-                        {
-                            object original, rewrite;
-                            if (!Wipe)
-                            {
-                                original = tProp.GetValue(instance, null);
-                                if (Instantiate)
-                                {
-                                    bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
-                                    var nObj = Component.Instantiate(original as Component);
-                                    nObj.gameObject.SetActive(isActive);
-                                    //Console.WriteLine(Spacing + m_tab + ">Instantiating");
-                                    CreateGameObject(jsonProperty.Value as JObject, nObj.gameObject, Spacing + m_tab + m_tab);
-                                    Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                                    rewrite = nObj;
-                                }
-                                else rewrite = ApplyValues(original, tProp.PropertyType, jsonProperty.Value as JObject, Spacing + m_tab);
-                            }
-                            else
-                            {
-                                original = Activator.CreateInstance(tProp.PropertyType);
-                                rewrite = ApplyValues(original, tProp.PropertyType, jsonProperty.Value as JObject, Spacing + m_tab);
-                            }
-                            if (tProp.CanWrite)
-                                try { tProp.SetValue(_instance, rewrite, null); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
-                        }
+                        SetJSONObject(jObject, ref instance, Spacing, Wipe, Instantiate, tField, tProp, UseField);
                     }
                     else if (jsonProperty.Value is JArray jArray)
                     {

@@ -8,8 +8,8 @@ namespace Nuterra.BlockInjector
 {
     public sealed class BlockPrefabBuilder
     {
-        public static Dictionary<string, GameObject> PrefabList = new Dictionary<string, GameObject>();
-        public static Dictionary<int, string> OverrideValidity = new Dictionary<int, string>();
+        //public static Dictionary<string, GameObject> PrefabList = new Dictionary<string, GameObject>();
+        //public static Dictionary<int, string> OverrideValidity = new Dictionary<int, string>();
         internal static Dictionary<int, uint> ReparseVersion = new Dictionary<int, uint>();
         internal class RegisterTimer : MonoBehaviour
         {
@@ -212,15 +212,45 @@ namespace Nuterra.BlockInjector
 
         public GameObject Prefab { get => _customBlock.Prefab; }
 
-        public BlockPrefabBuilder RegisterLater(float Time = 5f)
+
+
+        /// <summary>
+        /// NOTE: Only for use if the block has already been registered!
+        /// </summary>
+        /// <returns></returns>
+        public BlockPrefabBuilder OverlapExistingRegister()
         {
             ThrowIfFinished();
-            string name = _customBlock.Name;
+            if (!BlockLoader.AcceptOverwrite || !BlockLoader.CustomBlocks.ContainsKey(_customBlock.BlockID))
+            {
+                throw new InvalidOperationException($"OverlapExistingRegister : Block {_customBlock.Name} ({_customBlock.BlockID}) has not been registered before!");
+            }
+            OptimizeCellsForAP();
+            BlockLoader.Register(_customBlock);
+            Prefab.SetActive(false);
+            _finished = true;
+            return this;
+        }
 
-            while (PrefabList.ContainsKey(name)) name += "+";
-            _customBlock.Prefab.name = name;
-            PrefabList.Add(name, _customBlock.Prefab);
-            OverrideValidity.Add(_customBlock.BlockID, _customBlock.Prefab.name);
+        public BlockPrefabBuilder RegisterLater(float Time = 5f)
+        {
+            if (BlockLoader.CustomBlocks.TryGetValue(_customBlock.BlockID, out CustomBlock overlap))
+            {
+                if (!BlockLoader.AcceptOverwrite)
+                {
+                    throw new Exception($"Block {_customBlock.Name} ({_customBlock.BlockID}) overlaps with predefined block {overlap.Name} ({_customBlock.BlockID})!");
+                }
+                Console.WriteLine($"RegisterLater : Block {_customBlock.Name} ({_customBlock.BlockID}) overlaps with predefined block {overlap.Name} ({_customBlock.BlockID})! Invoking OverlapExistingRegister()");
+                return OverlapExistingRegister();
+            }
+            ThrowIfFinished();
+            //string name = _customBlock.Name;
+            //while (PrefabList.ContainsKey(name)) name += "+";
+            //_customBlock.Prefab.name = name;
+            //PrefabList.Add(name, _customBlock.Prefab);
+            _customBlock.Prefab.name = _customBlock.Name;
+
+            //OverrideValidity.Add(_customBlock.BlockID, _customBlock.Name);
             //_customBlock.Prefab.transform.position = Vector3.down * 1000f;
             new GameObject().AddComponent<RegisterTimer>().CallBlockPrefabBuilder(Time, this, _customBlock);
             _finished = true;
@@ -435,7 +465,7 @@ namespace Nuterra.BlockInjector
         /// Define only the cells, without touching APs
         /// </summary>
         /// <param name="cells">Cells used to define the used space in a tech's grid</param>
-        /// <param name="IgnoreFaults">Do not throw exception when given invalid arguments</param>
+        /// <param name="IgnoreFaults">Unused property</param>
         /// <returns></returns>
         public BlockPrefabBuilder SetSizeManual(IntVector3[] cells, bool IgnoreFaults = false)
         {
@@ -443,11 +473,6 @@ namespace Nuterra.BlockInjector
             var gravityScale = new float[cells.Length];
             for (int i = 0; i < cells.Length; i++)
             {
-                var cell = cells[i];
-                if (!IgnoreFaults && (cell.x < 0f) || (cell.y < 0f) || (cell.z < 0f))
-                {
-                    throw new Exception("There is a cell out of range! (" + cell.x.ToString() + ", " + cell.y.ToString() + ", " + cell.z.ToString() + ")\nMake sure that cells do not go below 0 in any axis. Check your APs as well");
-                }
                 gravityScale[i] = 1f;
             }
             TankBlock.filledCells = cells;
