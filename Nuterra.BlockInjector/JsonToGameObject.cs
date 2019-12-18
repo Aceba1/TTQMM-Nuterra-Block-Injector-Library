@@ -589,7 +589,7 @@ namespace Nuterra.BlockInjector
                         }
                         else
                         {
-                            if (Duplicate && name.Contains('/') || name.Contains('.'))
+                            if (Duplicate && name.Contains('/'))
                                 newGameObject = (SearchTransform.RecursiveFindWithProperties(name) as Component)?.gameObject;
                             if (newGameObject == null)
                                 newGameObject = result.transform.Find(name)?.gameObject;
@@ -871,17 +871,15 @@ namespace Nuterra.BlockInjector
                     original = tField.GetValue(instance);
                     if (Instantiate)
                     {
-                        var origComp = original as Component;
-                        bool isActive = origComp.gameObject.activeInHierarchy;
-                        GameObject nObj = GameObject.Instantiate(origComp.gameObject);
-                        nObj.name = origComp.name;
-                        nObj.SetActive(isActive);
+                        bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
+                        var nObj = Component.Instantiate(original as Component);
+                        nObj.gameObject.SetActive(isActive);
                         //Console.WriteLine(Spacing + m_tab + ">Instantiating");
                         var cacheSearchTransform = SearchTransform;
-                        CreateGameObject(jObject, nObj, Spacing + m_tab + m_tab);
+                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
                         SearchTransform = cacheSearchTransform;
                         //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                        rewrite = nObj.GetComponent(tField.FieldType);
+                        rewrite = nObj;
                     }
                     else rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
                 }
@@ -900,17 +898,15 @@ namespace Nuterra.BlockInjector
                     original = tProp.GetValue(instance, null);
                     if (Instantiate)
                     {
-                        var origComp = original as Component;
-                        bool isActive = origComp.gameObject.activeInHierarchy;
-                        GameObject nObj = GameObject.Instantiate(origComp.gameObject);
-                        nObj.name = origComp.name;
-                        nObj.SetActive(isActive);
+                        bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
+                        var nObj = Component.Instantiate(original as Component);
+                        nObj.gameObject.SetActive(isActive);
                         //Console.WriteLine(Spacing + m_tab + ">Instantiating");
                         var cacheSearchTransform = SearchTransform;
-                        CreateGameObject(jObject, nObj, Spacing + m_tab + m_tab);
+                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
                         SearchTransform = cacheSearchTransform;
                         //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                        rewrite = nObj.GetComponent(tProp.PropertyType);
+                        rewrite = nObj;
                     }
                     else rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
                 }
