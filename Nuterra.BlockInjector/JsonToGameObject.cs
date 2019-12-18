@@ -589,7 +589,7 @@ namespace Nuterra.BlockInjector
                         }
                         else
                         {
-                            if (Duplicate && name.Contains('/'))
+                            if (Duplicate && name.Contains('/') || name.Contains('.'))
                                 newGameObject = (SearchTransform.RecursiveFindWithProperties(name) as Component)?.gameObject;
                             if (newGameObject == null)
                                 newGameObject = result.transform.Find(name)?.gameObject;
@@ -871,15 +871,17 @@ namespace Nuterra.BlockInjector
                     original = tField.GetValue(instance);
                     if (Instantiate)
                     {
-                        bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
-                        var nObj = Component.Instantiate(original as Component);
-                        nObj.gameObject.SetActive(isActive);
+                        var origComp = original as Component;
+                        bool isActive = origComp.gameObject.activeInHierarchy;
+                        GameObject nObj = GameObject.Instantiate(origComp.gameObject);
+                        nObj.name = origComp.name;
+                        nObj.SetActive(isActive);
                         //Console.WriteLine(Spacing + m_tab + ">Instantiating");
                         var cacheSearchTransform = SearchTransform;
-                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                        CreateGameObject(jObject, nObj, Spacing + m_tab + m_tab);
                         SearchTransform = cacheSearchTransform;
                         //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                        rewrite = nObj;
+                        rewrite = nObj.GetComponent(tField.FieldType);
                     }
                     else rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
                 }
@@ -898,15 +900,17 @@ namespace Nuterra.BlockInjector
                     original = tProp.GetValue(instance, null);
                     if (Instantiate)
                     {
-                        bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
-                        var nObj = Component.Instantiate(original as Component);
-                        nObj.gameObject.SetActive(isActive);
+                        var origComp = original as Component;
+                        bool isActive = origComp.gameObject.activeInHierarchy;
+                        GameObject nObj = GameObject.Instantiate(origComp.gameObject);
+                        nObj.name = origComp.name;
+                        nObj.SetActive(isActive);
                         //Console.WriteLine(Spacing + m_tab + ">Instantiating");
                         var cacheSearchTransform = SearchTransform;
-                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                        CreateGameObject(jObject, nObj, Spacing + m_tab + m_tab);
                         SearchTransform = cacheSearchTransform;
                         //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                        rewrite = nObj;
+                        rewrite = nObj.GetComponent(tProp.PropertyType);
                     }
                     else rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
                 }
@@ -965,7 +969,8 @@ namespace Nuterra.BlockInjector
             {
                 try
                 {
-                    return SearchTransform.RecursiveFindWithProperties(searchFull); // Get value from this block
+                    var recursive = SearchTransform.RecursiveFindWithProperties(searchFull);
+                    if (recursive != null) return recursive; // Get value from this block
                 }
                 catch { }
                 if (outType.IsSubclassOf(t_uobj))
