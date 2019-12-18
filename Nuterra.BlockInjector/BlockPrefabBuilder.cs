@@ -253,6 +253,10 @@ namespace Nuterra.BlockInjector
             //_customBlock.Prefab.name = name;
             _customBlock.Prefab.name = _customBlock.Name;
 
+            if (_gameBlocksNameDict == null)
+            {
+                PopulateRefDictionaries();
+            }
             _gameBlocksNameDict[TrimForSafeSearch(_customBlock.Name)] = _customBlock.Prefab;
             _gameBlocksIDDict[_customBlock.BlockID] = _customBlock.Prefab;
 
