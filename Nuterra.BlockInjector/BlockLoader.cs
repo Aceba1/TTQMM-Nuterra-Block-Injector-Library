@@ -751,7 +751,7 @@ namespace Nuterra.BlockInjector
                         }
                     }
 
-                    Console.WriteLine("\nCorps Levels");
+                    /*Console.WriteLine("\nCorps Levels");
                     foreach (var data in __instance.m_ThresholdData)
                     {
                         Console.WriteLine(data.faction.ToString());
@@ -762,14 +762,14 @@ namespace Nuterra.BlockInjector
                             Console.Write(lvl + " ");
                         }
                         Console.WriteLine("\n");
-                    }
+                    }*/
                 }
             }
 
             [HarmonyPatch(typeof(ManPurchases), "Init")]
             private static class ManPurchases_Init
             {
-                private static void Postfix(ref ManPurchases __instance)
+                private static void Prefix(ref ManPurchases __instance)
                 {
                     //if (!__instance.AvailableCorporations.Contains((FactionSubTypes)8)) __instance.AvailableCorporations.Add((FactionSubTypes)8);
                     foreach (var cc in CustomCorps)
@@ -886,22 +886,22 @@ namespace Nuterra.BlockInjector
                 }
             }
 
-            [HarmonyPatch(typeof(UICorpToggle), "SetCorp")]
+            /*[HarmonyPatch(typeof(UICorpToggle), "SetCorp")]
             private static class UICorpToggle_SetCorp
             {
 
-                /*private static bool Prefix(ref UICorpToggle __instance, ref FactionSubTypes corp)
-                {
-                    if (corp > last)
-                    {
-                        m_Corp.SetValue(__instance, corp);
-                        ((Image)m_Icon.GetValue(__instance)).sprite = Singleton.Manager<ManUI>.inst.GetCorpIcon(FactionSubTypes.GSO);
-                        ((Image)m_SelectedIcon.GetValue(__instance)).sprite = Singleton.Manager<ManUI>.inst.GetSelectedCorpIcon(FactionSubTypes.GSO);
-                        ((TooltipComponent)m_TooltipComponent.GetValue(__instance)).SetText("TEST");
-                        return false;
-                    }
-                    return true;
-                }*/
+                //private static bool Prefix(ref UICorpToggle __instance, ref FactionSubTypes corp)
+                //{
+                //    if (corp > last)
+                //    {
+                //        m_Corp.SetValue(__instance, corp);
+                //        ((Image)m_Icon.GetValue(__instance)).sprite = Singleton.Manager<ManUI>.inst.GetCorpIcon(FactionSubTypes.GSO);
+                //        ((Image)m_SelectedIcon.GetValue(__instance)).sprite = Singleton.Manager<ManUI>.inst.GetSelectedCorpIcon(FactionSubTypes.GSO);
+                //        ((TooltipComponent)m_TooltipComponent.GetValue(__instance)).SetText("TEST");
+                //        return false;
+                //    }
+                //    return true;
+                //}
 
                 private static void Postfix(ref UICorpToggle __instance, ref FactionSubTypes corp)
                 {
@@ -910,7 +910,7 @@ namespace Nuterra.BlockInjector
                         ((TooltipComponent)m_TooltipComponent.GetValue(__instance)).SetText(CustomCorps[(int)corp].Name);
                     }
                 }
-            }
+            }*/
 
             /*[HarmonyPatch(typeof(UISkinsPaletteHUD), "OnSpawn")]
             private static class UISkinsPaletteHUD_OnSpawn
@@ -1112,6 +1112,14 @@ namespace Nuterra.BlockInjector
                     if (CustomChunks.TryGetValue(EnumValue, out chunk))
                     {
                         Result = chunk.Description;
+                        return Result != null && Result != "";
+                    }
+                    break;
+
+                case LocalisationEnums.StringBanks.Corporations:
+                    if(CustomCorps.TryGetValue(EnumValue, out CustomCorporation corp))
+                    {
+                        Result = corp.Name;
                         return Result != null && Result != "";
                     }
                     break;
