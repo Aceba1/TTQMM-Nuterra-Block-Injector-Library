@@ -513,6 +513,7 @@ namespace Nuterra.BlockInjector
                 {
                     private static void Postfix(ref ManUI __instance)
                     {
+                        if (CustomCorps.Count == 0) return;
                         /*var icons = ((Sprite[])m_CorpIcons.GetValue(__instance.m_SpriteFetcher)).ToList();
                         icons.Add(icons[1]);
                         m_CorpIcons.SetValue(__instance.m_SpriteFetcher, icons.ToArray());
@@ -670,6 +671,7 @@ namespace Nuterra.BlockInjector
             {
                 private static void Prefix(ref BlockUnlockTable __instance)
                 {
+                    if (CustomCorps.Count == 0) return;
                     var blockList = m_CorpBlockList.GetValue(__instance) as Array;
                     var temp = Array.CreateInstance(CorpBlockData, CustomCorps.Keys.Max() + 1);
                     blockList.CopyTo(temp, 0);
@@ -734,6 +736,7 @@ namespace Nuterra.BlockInjector
 							m_XPLevels = new int[] { 10 }
 						}
 					});*/
+                    if (CustomCorps.Count == 0) return;
 
                     foreach (var cc in CustomCorps)
                     {
@@ -772,6 +775,7 @@ namespace Nuterra.BlockInjector
                 private static void Prefix(ref ManPurchases __instance)
                 {
                     //if (!__instance.AvailableCorporations.Contains((FactionSubTypes)8)) __instance.AvailableCorporations.Add((FactionSubTypes)8);
+                    if (CustomCorps.Count == 0) return;
                     foreach (var cc in CustomCorps)
                     {
                         if (!__instance.AvailableCorporations.Contains((FactionSubTypes)cc.Key)) __instance.AvailableCorporations.Add((FactionSubTypes)cc.Key);
@@ -784,6 +788,7 @@ namespace Nuterra.BlockInjector
             {
                 private static void Postfix(ref Type enumType, ref string[] __result)
                 {
+                    if (CustomCorps.Count == 0) return;
                     if (enumType == typeof(FactionSubTypes))
                     {
                         Array.Resize(ref __result, 9);
@@ -797,6 +802,7 @@ namespace Nuterra.BlockInjector
             {
                 private static void Postfix(ref Type enumType, ref Array __result)
                 {
+                    if (CustomCorps.Count == 0) return;
                     if (enumType == typeof(FactionSubTypes))
                     {
                         var temp = new object[__result.Length + 1];
@@ -873,6 +879,7 @@ namespace Nuterra.BlockInjector
                     private static List<FactionSubTypes> temp;
                     private static void Prefix(ref UICorpToggles __instance)
                     {
+                        if (CustomCorps.Count == 0) return;
                         var corps = ManPurchases.inst.AvailableCorporations;
                         var start = corps.IndexOf(last) + 1;
                         temp = corps.GetRange(start, corps.Count - start);
@@ -881,6 +888,7 @@ namespace Nuterra.BlockInjector
 
                     private static void Postfix(ref UICorpToggles __instance)
                     {
+                        if (CustomCorps.Count == 0) return;
                         ManPurchases.inst.AvailableCorporations.AddRange(temp);
                     }
                 }
@@ -964,6 +972,7 @@ namespace Nuterra.BlockInjector
             {
                 private static void Prefix(ref ManCustomSkins __instance)
                 {
+                    if (CustomCorps.Count == 0) return;
                     var skinInfos = ((ManCustomSkins.CorporationSkins[])m_SkinInfos.GetValue(__instance)).ToList();
                     foreach (var cc in CustomCorps)
                     {
@@ -974,6 +983,7 @@ namespace Nuterra.BlockInjector
 
                 private static void Postfix(ref ManCustomSkins __instance)
                 {
+                    if (CustomCorps.Count == 0) return;
                     var corpSkin = ((int[])m_CorpSkinSelections.GetValue(__instance)).ToList();
                     corpSkin.Resize(corpSkin.Count + CustomCorps.Count);
                     m_CorpSkinSelections.SetValue(__instance, corpSkin.ToArray());
