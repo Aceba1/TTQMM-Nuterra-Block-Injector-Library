@@ -10,6 +10,13 @@ namespace Nuterra.BlockInjector
     {
         public static void Load()
         {
+            #region Corp
+            /*new CustomCorporation(8, "TestCorp").Register();
+            new CustomCorporation(8, "TestCorpBad").Register();
+            new CustomCorporation(9, "TestCorp2: Electric Boogaloo").Register();
+            new CustomCorporation(10, "TestCorp3: Electric Boogaloo 2").Register();
+            new CustomCorporation(11, "TestCorp4: Electric Boogaloo Overflow").Register();*/
+            #endregion
             Stopwatch sw = new Stopwatch();
             sw.Start();
             #region Blocks
