@@ -529,6 +529,10 @@ namespace Nuterra.BlockInjector
                             selectedCorpIcons = ((Sprite[])m_SelectedCorpIcons.GetValue(__instance.m_SpriteFetcher)).ToList(),
                             modernCorpIcons = ((Sprite[])m_ModernCorpIcons.GetValue(__instance.m_SpriteFetcher)).ToList();
 
+                        var max = CustomCorps.Keys.Max();
+                        corpIcons.Resize(max + 1, null);
+                        selectedCorpIcons.Resize(max + 1, null);
+                        modernCorpIcons.Resize(max + 1, null);
                         foreach (var cc in CustomCorps)
                         {
                             corpIcons.Insert(cc.Key, cc.Value.CorpIcon ?? corpIcons[(int)FactionSubTypes.GSO]);
