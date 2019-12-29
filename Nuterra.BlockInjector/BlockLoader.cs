@@ -855,22 +855,46 @@ namespace Nuterra.BlockInjector
 
                     private static void Postfix(ref UICorpToggles __instance)
                     {
-                        //GameObject.DestroyImmediate(___m_SpawnedCorpSkinImages[8].GetComponent<UnityEngine.UI.Image>());
-                        var images = typeof(UICorpToggles).GetField("m_SpawnedCorpSkinImages", binding).GetValue(__instance) as List<Transform>;
-                        //if (images.Count > (int)last + 1) GameObject.DestroyImmediate(images[8].GetComponent<UnityEngine.UI.Image>());
-
-                        if (images.Count > (int)last + 1)
+                        try
                         {
-                            for (int i = (int)last + 1; i < images.Count; i++)
+                            //GameObject.DestroyImmediate(___m_SpawnedCorpSkinImages[8].GetComponent<UnityEngine.UI.Image>());
+                            var images = typeof(UICorpToggles).GetField("m_SpawnedCorpSkinImages", binding).GetValue(__instance) as List<Transform>;
+                            //if (images.Count > (int)last + 1) GameObject.DestroyImmediate(images[8].GetComponent<UnityEngine.UI.Image>());
+
+                            if (images.Count > (int)last + 1)
                             {
-                                try
+                                for (int i = (int)last + 1; i < images.Count; i++)
                                 {
-                                    GameObject.DestroyImmediate(images[i].GetComponent<UnityEngine.UI.Image>());
+                                    try
+                                    {
+                                        GameObject.DestroyImmediate(images[i].GetComponent<UnityEngine.UI.Image>());
+                                    }
+                                    catch { }
                                 }
-                                catch { }
                             }
                         }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                        }
                     }
+
+                    /*static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                    {
+                        var codes = new List<CodeInstruction>(instructions);
+                        var m_CorpLayoutGroup = typeof(UICorpToggles).GetField("m_CorpLayoutGroup", binding);
+                        var getTogglesParent = codes.Find(ci => ci.opcode == OpCodes.Ldfld && (FieldInfo)ci.operand == m_CorpLayoutGroup);
+                        getTogglesParent.opcode = OpCodes.Call;
+                        getTogglesParent.operand = typeof(BlockLoader).GetMethod("GetCorpToggleParent", BindingFlags.Public | BindingFlags.Static);
+                        var start = codes.FindLastIndex(ci => ci.opcode == OpCodes.Blt) + 1;
+                        var end = codes.FindLastIndex(ci => ci.opcode == OpCodes.Brfalse_S) - 3;
+                        //var nop = new CodeInstruction(OpCodes.Nop);
+                        for (int i = start; i < end; i++)
+                        {
+                            codes[i].opcode = OpCodes.Nop;
+                        }
+                        return codes;
+                    }*/
                 }
 
                 [HarmonyPatch(typeof(UICorpToggles), "UpdateMiniPalette")]
@@ -1012,6 +1036,105 @@ namespace Nuterra.BlockInjector
                     return corp <= last;
                 }
             }
+
+            [HarmonyPatch(typeof(UIPaletteBlockSelect), "OnSpawn")]
+            private static class UIPaletteBlockSelect_OnSpawn
+            {
+                private static void Prefix(ref UIPaletteBlockSelect __instance)
+                {
+                    //CreateScrollView(__instance.GetType().GetField("m_CorpToggles", binding).GetValue(__instance) as UICorpToggles);
+                }
+            }
+
+            [HarmonyPatch(typeof(UIShopBlockSelect), "OnSpawn")]
+            private static class UIShopBlockSelect_OnSpawn
+            {
+                private static void Prefix(ref UIShopBlockSelect __instance)
+                {
+                    //CreateScrollView(__instance.GetType().GetField("m_CorpToggles", binding).GetValue(__instance) as UICorpToggles);
+                }
+            }
+        }
+
+        private static Dictionary<UICorpToggles, Component> corpToggleParents = new Dictionary<UICorpToggles, Component>();
+        public static Component GetCorpToggleParent(UICorpToggles uiCorpToggles)
+        {
+            return corpToggleParents[uiCorpToggles];
+        }
+
+        internal static void CreateScrollView(UICorpToggles uiCorpToggles)
+        {
+            var togglesParent = (uiCorpToggles.GetType().GetField("m_CorpLayoutGroup", binding).GetValue(uiCorpToggles) as LayoutGroup).gameObject;
+            try
+            {
+                GameObject.DestroyImmediate(togglesParent.GetComponent<HorizontalLayoutGroup>());
+                GameObject.DestroyImmediate(togglesParent.GetComponent<VerticalLayoutGroup>());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            try
+            {
+                var lgrect = togglesParent.GetComponent<RectTransform>();
+
+                GameObject scrollView = new GameObject("Scroll View");
+                var swrect = scrollView.AddComponent<RectTransform>();
+                swrect.anchoredPosition3D = lgrect.anchoredPosition3D;
+                swrect.anchorMin = lgrect.anchorMin;
+                swrect.anchorMax = lgrect.anchorMax;
+                swrect.pivot = lgrect.pivot;
+                swrect.sizeDelta = lgrect.sizeDelta;
+
+                GameObject viewport = new GameObject("Viewport");
+                viewport.layer = scrollView.layer;
+                var vprect = viewport.AddComponent<RectTransform>();
+                vprect.anchorMin = Vector2.zero;
+                vprect.anchorMax = Vector2.one;
+                vprect.sizeDelta = Vector2.zero;
+                vprect.pivot = Vector2.up;
+                var vpmask = viewport.AddComponent<Mask>();
+                vpmask.showMaskGraphic = false;
+                viewport.transform.SetParent(scrollView.transform, false);
+                scrollView.transform.SetParent(togglesParent.transform.parent, false);
+                togglesParent.transform.SetParent(viewport.transform, false);
+
+
+                lgrect.anchorMin = Vector2.up;
+                lgrect.anchorMax = Vector2.one;
+                lgrect.pivot = Vector2.up;
+
+
+                var glg = togglesParent.AddComponent<GridLayoutGroup>();
+                glg.childAlignment = TextAnchor.UpperLeft;
+                glg.padding = new RectOffset(8, 0, 16, 0);
+                glg.cellSize = new Vector2(24f, 24f);
+                glg.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                glg.constraintCount = 1;
+                glg.spacing = new Vector2(8f, 8f);
+
+                var csf = togglesParent.AddComponent<ContentSizeFitter>();
+                csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+                csf.verticalFit = ContentSizeFitter.FitMode.MinSize;
+
+                var swscrollrect = scrollView.AddComponent<ScrollRect>();
+                swscrollrect.horizontal = false;
+                swscrollrect.vertical = true;
+                swscrollrect.viewport = vprect;
+                swscrollrect.content = lgrect;
+                swscrollrect.decelerationRate = 0.135f;
+                swscrollrect.elasticity = 0.1f;
+                swscrollrect.inertia = true;
+                swscrollrect.movementType = ScrollRect.MovementType.Elastic;
+                swscrollrect.verticalScrollbarSpacing = -3;
+                swscrollrect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+
+                corpToggleParents.Add(uiCorpToggles, glg);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         internal static void FixBlockUnlockTable(CustomBlock block)
@@ -1127,7 +1250,7 @@ namespace Nuterra.BlockInjector
                     break;
 
                 case LocalisationEnums.StringBanks.Corporations:
-                    if(CustomCorps.TryGetValue(EnumValue, out CustomCorporation corp))
+                    if (CustomCorps.TryGetValue(EnumValue, out CustomCorporation corp))
                     {
                         Result = corp.Name;
                         return Result != null && Result != "";
