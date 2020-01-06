@@ -15,7 +15,9 @@ namespace Nuterra.BlockInjector
         private bool IsActive;
         private Camera camera;
         private const float FOV = 75f;
+        private const float MIN = 0.1f;
         private float originalFOV = 0f;
+        private float originalMIN = 0f;
         private Vector3 _mouseStart = Vector3.zero;
         private bool _mouseDragging => Input.GetMouseButton(1);
         private bool _mouseStartDragging => Input.GetMouseButtonDown(1);
@@ -64,11 +66,13 @@ namespace Nuterra.BlockInjector
             {
                 Singleton.cameraTrans.parent = null;
                 camera.fieldOfView = originalFOV;
+                camera.nearClipPlane = originalMIN;
                 camera = null;
             }
-            Console.WriteLine("Camera: Switched to TankCamera");
+            //Console.WriteLine("Camera: Switched to TankCamera");
             TankCamera.inst.FreezeCamera(false);
             TankCamera.inst.Enable();
+            TankCamera.inst.SetCameraShake(.5f, 1f, 2f);
             CurrentModule = -1;
         }
 
@@ -80,8 +84,10 @@ namespace Nuterra.BlockInjector
             if (originalFOV == 0f)
             {
                 originalFOV = camera.fieldOfView;
+                originalMIN = camera.nearClipPlane;
             }
             camera.fieldOfView = FOV;
+            camera.nearClipPlane = MIN;
             TankCamera.inst.FreezeCamera(true);
             if (CurrentModule <= -2)
             {
@@ -89,64 +95,91 @@ namespace Nuterra.BlockInjector
             }
             Singleton.cameraTrans.parent = Module[CurrentModule].transform;
             Singleton.cameraTrans.localPosition = Vector3.zero;
-            Console.WriteLine("Camera: Switched to FirstPersonCamera " + CurrentModule.ToString());
+            //Console.WriteLine("Camera: Switched to FirstPersonCamera " + CurrentModule.ToString());
         }
 
         private void Update()
         {
-            if (Input.GetKeyDown(key))
+            try
             {
-                if (Input.GetKey(KeyCode.LeftControl))
+                if (ManGameMode.inst.LockPlayerControls)
                 {
-                    Awake();
+                    if (IsActive)
+                        DisableFPVState();
+                    return;
                 }
-                else
+                if (Input.GetKeyDown(key))
                 {
-                    bool flag = GetModule();
-                    CurrentModule += Input.GetKey(KeyCode.LeftShift) ? -1 : 1;
-                    if (CurrentModule >= Module.Count || CurrentModule <= -1)
+                    if (Input.GetKey(KeyCode.LeftControl))
+                    {
+                        Awake();
+                    }
+                    else
+                    {
+                        bool flag = GetModule();
+                        CurrentModule += Input.GetKey(KeyCode.LeftShift) ? -1 : 1;
+                        if (CurrentModule >= Module.Count || CurrentModule <= -1)
+                        {
+                            if (IsActive)
+                                DisableFPVState();
+                            return;
+                        }
+                        if (flag)
+                        {
+                            EnableFPVState();
+                        }
+                        else if (IsActive)
+                        {
+                            //Console.WriteLine("Could not find camera module");
+                            DisableFPVState();
+                        }
+                        else
+                        {
+                            CurrentModule = -1;
+                        }
+                    }
+                }
+
+                if (!IsActive)
+                    return;
+
+                if (Module.Count != 0 || !Module[CurrentModule] || Tank != _Tank || Module[CurrentModule].thisBlock != _Tank)
+                {
+                    IsActive = GetModule();
+                    if (!IsActive)
                     {
                         DisableFPVState();
                         return;
                     }
-                    if (flag)
-                    {
-                        EnableFPVState();
-                    }
-                    else if (IsActive)
-                    {
-                        Console.WriteLine("Could not find camera module");
-                        DisableFPVState();
-                    }
                 }
-            }
 
-            if (!IsActive)
-                return;
+                if (_mouseStartDragging)
+                    BeginSpinControl();
 
-            if (Module.Count != 0 || !Module[CurrentModule] || Tank != _Tank || Module[CurrentModule].thisBlock != _Tank)
-            {
-                IsActive = GetModule();
-                if (!IsActive)
+                try
                 {
+                    EnsureCameraState();
+                    UpdateLocalRotation();
+                    UpdateCamera();
+                }
+                catch (Exception E)
+                {
+                    Console.WriteLine("Something bad happened while updating the FPV camera!");
+                    Console.WriteLine(E);
                     DisableFPVState();
-                    return;
                 }
             }
-
-            if (_mouseStartDragging)
-                BeginSpinControl();
-
-            try
+            catch (Exception E)
             {
-                UpdateLocalRotation();
-                UpdateCamera();
+                Console.WriteLine("Unknown error in FPV script: " + E);
             }
-            catch
-            {
-                Console.WriteLine("Something bad happened while updating the fpv camera!");
-                DisableFPVState();
-            }
+        }
+
+        private void EnsureCameraState()
+        {
+            //camera.fieldOfView = FOV;
+            //camera.nearClipPlane = MIN;
+            TankCamera.inst.FreezeCamera(true);
         }
 
         private void UpdateLocalRotation()
@@ -167,7 +200,6 @@ namespace Nuterra.BlockInjector
                     changeAroundX -= 360f;
                 }
 
-                float before = changeAroundX;
                 changeAroundX = Mathf.Clamp(changeAroundX, -80, 80);
                 Quaternion newRotation = Quaternion.Euler(changeAroundX, changeAroundY, 0);
                 _rotation = newRotation;
@@ -180,6 +212,7 @@ namespace Nuterra.BlockInjector
             Singleton.cameraTrans.parent = module.transform;
             Singleton.cameraTrans.localPosition = Vector3.zero;
             Singleton.cameraTrans.rotation = (module.AdaptToMainRot ? Tank.control.FirstController.block.transform.rotation : module.transform.rotation) * _rotation;
+            TankCamera.inst.FreezeCamera(true);
         }
 
         internal void BeginSpinControl()
