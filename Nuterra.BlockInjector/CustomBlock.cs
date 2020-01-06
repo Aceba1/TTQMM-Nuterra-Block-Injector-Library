@@ -6,6 +6,9 @@ namespace Nuterra.BlockInjector
 {
     public sealed class CustomBlock
     {
+        //public int RuntimeID { get; internal set; }
+        public int RuntimeID { get => BlockID; internal set => BlockID = value; }
+        //public string BlockID { get; internal set; }
         public int BlockID { get; internal set; }
         public string Name { get; internal set; }
         public string Description { get; internal set; }
