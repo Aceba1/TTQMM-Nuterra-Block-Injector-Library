@@ -228,6 +228,7 @@ namespace Nuterra.BlockInjector
                 throw new InvalidOperationException($"OverlapExistingRegister : Block {_customBlock.Name} ({_customBlock.BlockID}) has not been registered before! Use RegisterLater()");
             }
             OptimizeCellsForAP();
+            RegisterRecipe();
             BlockLoader.Register(_customBlock);
             _gameBlocksNameDict[TrimForSafeSearch(_customBlock.Name)] = _customBlock.Prefab;
             _gameBlocksIDDict[_customBlock.BlockID] = _customBlock.Prefab;
@@ -263,6 +264,7 @@ namespace Nuterra.BlockInjector
             //OverrideValidity.Add(_customBlock.BlockID, _customBlock.Name);
             //_customBlock.Prefab.transform.position = Vector3.down * 1000f;
             OptimizeCellsForAP();
+            RegisterRecipe();
             new GameObject().AddComponent<RegisterTimer>().CallBlockPrefabBuilder(Time, this, _customBlock);
             _finished = true;
             return this;
@@ -787,6 +789,36 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        CustomRecipe.RecipeInput[] _recipeQueue;
+        string _recipeTable;
+
+        public BlockPrefabBuilder SetRecipe(params ChunkTypes[] RecipeItems)
+        {
+            ThrowIfFinished();
+            _recipeQueue = CustomRecipe.RecipeInput.FromChunkTypesArray(RecipeItems);
+            return this;
+        }
+
+        public BlockPrefabBuilder SetRecipe(Dictionary<ChunkTypes, int> ItemCountRecipe)
+        {
+            ThrowIfFinished();
+            _recipeQueue = new CustomRecipe.RecipeInput[ItemCountRecipe.Count];
+            int iter = 0;
+            foreach (var pair in ItemCountRecipe)
+            {
+                _recipeQueue[iter++] = new CustomRecipe.RecipeInput((int)pair.Key, pair.Value);
+            }
+            return this;
+        }
+
+        public BlockPrefabBuilder SetCustomRecipeTable(string customRecipeTable)
+        {
+            ThrowIfFinished();
+            _recipeTable = customRecipeTable;
+            return this;
+        }
+
+
         private void OptimizeCellsForAP()
         {
             List<int> croppedCells = new List<int>();
@@ -822,6 +854,14 @@ namespace Nuterra.BlockInjector
                 }
                 NewCellOrder.InsertRange(0, InjectedCells);
                 TankBlock.filledCells = NewCellOrder.ToArray();
+            }
+        }
+
+        private void RegisterRecipe()
+        {
+            if (_recipeQueue != null)
+            {
+                CustomRecipe.RegisterRecipe(_recipeQueue, _customBlock.RuntimeID, _recipeTable ?? CustomRecipe.FabricatorFromFactionType(_customBlock.Faction));
             }
         }
     }
