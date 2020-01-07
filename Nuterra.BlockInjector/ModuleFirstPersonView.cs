@@ -120,7 +120,8 @@ namespace Nuterra.BlockInjector
                     {
                         bool flag = GetModule();
                         CurrentModule += Input.GetKey(KeyCode.LeftShift) ? -1 : 1;
-                        if (CurrentModule >= Module.Count || CurrentModule <= -1)
+                        CurrentModule = ((CurrentModule + 1) % (Module.Count + 1)) - 1;
+                        if (CurrentModule == -1)
                         {
                             if (IsActive)
                                 DisableFPVState();
