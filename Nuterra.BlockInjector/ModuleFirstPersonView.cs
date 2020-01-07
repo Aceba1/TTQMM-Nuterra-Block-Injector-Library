@@ -14,8 +14,6 @@ namespace Nuterra.BlockInjector
         
         private bool IsActive;
         private Camera camera;
-        private const float FOV = 75f;
-        private float originalFOV = 0f;
         const float SMOOTH = 25f;
         float Smooth => Mathf.Clamp01(SMOOTH * Time.deltaTime);
         const float MIN = 0.1f;
@@ -69,7 +67,7 @@ namespace Nuterra.BlockInjector
             if (camera)
             {
                 Singleton.cameraTrans.parent = null;
-                camera.fieldOfView = originalFOV;
+                //camera.fieldOfView = originalFOV;
                 camera.nearClipPlane = originalMIN;
                 camera = null;
             }
@@ -84,13 +82,13 @@ namespace Nuterra.BlockInjector
         {
             IsActive = true;
             Awake();
-            camera = Camera.current;
-            if (originalFOV == 0f)
+            camera = Singleton.camera;
+            if (originalMIN == -1f)
             {
-                originalFOV = camera.fieldOfView;
+                //originalFOV = camera.fieldOfView;
                 originalMIN = camera.nearClipPlane;
             }
-            camera.fieldOfView = FOV;
+            //camera.fieldOfView = FOV;
             camera.nearClipPlane = MIN;
             TankCamera.inst.FreezeCamera(true);
             if (CurrentModule <= -2)
@@ -182,7 +180,7 @@ namespace Nuterra.BlockInjector
         private void EnsureCameraState()
         {
             //camera.fieldOfView = FOV;
-            //camera.nearClipPlane = MIN;
+            camera.nearClipPlane = MIN;
             TankCamera.inst.FreezeCamera(true);
         }
 
