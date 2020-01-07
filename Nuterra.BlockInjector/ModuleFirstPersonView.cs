@@ -15,7 +15,7 @@ namespace Nuterra.BlockInjector
         private bool IsActive;
         private Camera camera;
         const float SMOOTH = 25f;
-        float Smooth => Mathf.Clamp01(SMOOTH * Time.deltaTime);
+        float Smooth => Mathf.Clamp(SMOOTH * Time.deltaTime, 0f, 0.93f);
         const float MIN = 0.1f;
         private float originalMIN = -1f;
         private Vector3 _mouseStart = Vector3.zero;
