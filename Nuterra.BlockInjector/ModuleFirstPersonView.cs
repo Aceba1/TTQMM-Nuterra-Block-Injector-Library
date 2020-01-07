@@ -59,6 +59,7 @@ namespace Nuterra.BlockInjector
             _rotation = Quaternion.identity;
             changeAroundX = 0f;
             changeAroundY = 0f;
+            CreateLineMaterial();
         }
 
         public void DisableFPVState()
@@ -239,6 +240,100 @@ namespace Nuterra.BlockInjector
         {
             _mouseStart = Input.mousePosition;
             _rotationStart = Quaternion.Euler(m_changeAroundX, m_changeAroundY, 0);
+        }
+
+        static void DrawBox(float xMin, float xMax, float yMin, float yMax)
+        {
+            GL.Vertex3(xMin, yMin, 0); // bottom left
+            GL.Vertex3(xMax, yMin, 0); // bottom right
+            GL.Vertex3(xMax, yMax, 0); // top right
+
+            GL.Vertex3(xMax, yMax, 0); // top right
+            GL.Vertex3(xMin, yMin, 0); // bottom left
+            GL.Vertex3(xMin, yMax, 0); // top left
+        }
+        static void DrawTri(float xA, float yA, float xB, float yB, float xC, float yC)
+        {
+            GL.Vertex3(xA, yA, 0);
+            GL.Vertex3(xB, yB, 0);
+            GL.Vertex3(xC, yC, 0);
+        }
+
+        public float arrowWidthRatio = 0.012f;
+        public float arrowLengthRatio = 0.02f;
+
+        static Material lineMaterial;
+        static void CreateLineMaterial()
+        {
+            if (!lineMaterial)
+            {
+                // Unity has a built-in shader that is useful for drawing
+                // simple colored things.
+                Shader shader = Shader.Find("Hidden/Internal-Colored");
+                lineMaterial = new Material(shader)
+                {
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+                // Turn on alpha blending
+                lineMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                lineMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                // Turn backface culling off
+                lineMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+                // Turn off depth writes
+                lineMaterial.SetInt("_ZWrite", 0);
+            }
+        }
+
+        public void OnRenderObject()
+        {
+            if (!IsActive) return;
+
+            // Apply the line material
+            lineMaterial.SetPass(0);
+
+            GL.PushMatrix();
+            GL.LoadPixelMatrix();
+
+            float fov = Camera.main.fieldOfView;
+            float X = Screen.width, Y = Screen.height,
+                arrowWidth = arrowWidthRatio * Y, arrowLength = arrowLengthRatio * Y, arrowLength2 = arrowLength + arrowLength,
+                centerX = (((changeAroundY + 180) % 360) - 180) / fov * -Y + 0.5f * X, centerY = (changeAroundX / fov + 0.5f) * Y;
+
+            // Draw lines
+            GL.Begin(GL.TRIANGLES);
+            GL.Color(new Color(0f, 0f, 0f, 0.4f));
+
+            //Bottom arrow
+            DrawTri(centerX, arrowLength2,
+                centerX + arrowWidth, arrowLength,
+                centerX - arrowWidth, arrowLength);
+            DrawBox(centerX - arrowWidth, centerX + arrowWidth,
+                0, arrowLength);
+
+            //Top Arrow
+            DrawTri(centerX, Y - arrowLength2,
+                centerX - arrowWidth, Y - arrowLength,
+                centerX + arrowWidth, Y - arrowLength);
+            DrawBox(centerX - arrowWidth, centerX + arrowWidth,
+                Y - arrowLength, Y);
+
+            //Left Arrow
+            DrawTri(arrowLength2, centerY,
+                arrowLength, centerY + arrowWidth,
+                arrowLength, centerY - arrowWidth);
+            DrawBox(0, arrowLength,
+                centerY - arrowWidth, centerY + arrowWidth);
+
+            //Right Arrow
+            DrawTri(X - arrowLength2, centerY,
+                X - arrowLength, centerY - arrowWidth,
+                X - arrowLength, centerY + arrowWidth);
+            DrawBox(X, X - arrowLength,
+                centerY - arrowWidth, centerY + arrowWidth);
+
+            GL.End();
+
+            GL.PopMatrix();
         }
     }
 
