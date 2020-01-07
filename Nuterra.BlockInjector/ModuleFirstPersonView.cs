@@ -15,9 +15,11 @@ namespace Nuterra.BlockInjector
         private bool IsActive;
         private Camera camera;
         private const float FOV = 75f;
-        private const float MIN = 0.1f;
         private float originalFOV = 0f;
-        private float originalMIN = 0f;
+        const float SMOOTH = 25f;
+        float Smooth => Mathf.Clamp01(SMOOTH * Time.deltaTime);
+        const float MIN = 0.1f;
+        private float originalMIN = -1f;
         private Vector3 _mouseStart = Vector3.zero;
         private bool _mouseDragging => Input.GetMouseButton(1);
         private bool _mouseStartDragging => Input.GetMouseButtonDown(1);
@@ -57,6 +59,8 @@ namespace Nuterra.BlockInjector
         public void Awake()
         {
             _rotation = Quaternion.identity;
+            changeAroundX = 0f;
+            changeAroundY = 0f;
         }
 
         public void DisableFPVState()
@@ -182,6 +186,9 @@ namespace Nuterra.BlockInjector
             TankCamera.inst.FreezeCamera(true);
         }
 
+        float changeAroundX, changeAroundY;
+        float m_changeAroundX, m_changeAroundY;
+
         private void UpdateLocalRotation()
         {
             if (_mouseDragging)
@@ -189,26 +196,30 @@ namespace Nuterra.BlockInjector
                 Vector3 mouseDelta = Input.mousePosition - _mouseStart;
 
                 mouseDelta = mouseDelta / Screen.width;
-                float changeAroundY = mouseDelta.x * 200f * Globals.inst.m_RuntimeCameraSpinSensHorizontal;
-                float changeAroundX = mouseDelta.y * 200f * Globals.inst.m_RuntimeCameraSpinSensVertical;
+                m_changeAroundY = mouseDelta.x * 200f * Globals.inst.m_RuntimeCameraSpinSensHorizontal;
+                m_changeAroundX = mouseDelta.y * 200f * Globals.inst.m_RuntimeCameraSpinSensVertical;
 
-                changeAroundY += _rotationStart.eulerAngles.y;
-                changeAroundX += _rotationStart.eulerAngles.x;
+                m_changeAroundY += _rotationStart.eulerAngles.y;
+                m_changeAroundX += _rotationStart.eulerAngles.x;
 
-                if (changeAroundX > 180f)
+                if (m_changeAroundX > 180f)
                 {
-                    changeAroundX -= 360f;
+                    m_changeAroundX -= 360f;
                 }
 
-                changeAroundX = Mathf.Clamp(changeAroundX, -80, 80);
-                Quaternion newRotation = Quaternion.Euler(changeAroundX, changeAroundY, 0);
-                _rotation = newRotation;
+                m_changeAroundX = Mathf.Clamp(m_changeAroundX, -80, 80);
             }
         }
 
         private void UpdateCamera()
         {
             var module = Module[CurrentModule];
+            float diffY = m_changeAroundX - changeAroundX;
+            float smooth = Smooth;
+            changeAroundX += diffY * smooth;
+            float diffX = (m_changeAroundY - changeAroundY + 180) % 360 - 180;
+            changeAroundY += diffX * smooth;
+            _rotation = Quaternion.Euler(changeAroundX, changeAroundY, 0);
             Singleton.cameraTrans.parent = module.transform;
             Singleton.cameraTrans.localPosition = Vector3.zero;
             Singleton.cameraTrans.rotation = (module.AdaptToMainRot ? Tank.control.FirstController.block.transform.rotation : module.transform.rotation) * _rotation;
@@ -218,7 +229,7 @@ namespace Nuterra.BlockInjector
         internal void BeginSpinControl()
         {
             _mouseStart = Input.mousePosition;
-            _rotationStart = _rotation;
+            _rotationStart = Quaternion.Euler(m_changeAroundX, m_changeAroundY, 0);
         }
     }
 
