@@ -813,7 +813,7 @@ namespace Nuterra.BlockInjector
                     Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
                     if (jBlock.Recipe is JValue rString)
                     {
-                        string[] recipe = rString.ToObject<string>().Replace(" ", "").Split(',');
+                        string[] recipe = rString.ToObject<string>().Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                         foreach (string item in recipe)
                         {
                             RecipePrice += AppendToRecipe(RecipeBuilder, item, 1);
