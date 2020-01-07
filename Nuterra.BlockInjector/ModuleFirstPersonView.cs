@@ -182,6 +182,16 @@ namespace Nuterra.BlockInjector
         {
             //camera.fieldOfView = FOV;
             camera.nearClipPlane = MIN;
+            var DOF = Singleton.Manager<CameraManager>.inst.DOF;
+            if (DOF != null)
+            {
+                var settings = DOF.settings;
+                settings.focusDistance = 2f;
+                settings.aperture = 2f;
+                settings.focalLength = 2f;
+                // Why, 2, you may ask? Because Unity documents aren't of help and I have no idea what any of this means. That is why.
+                DOF.settings = settings;
+            }
             TankCamera.inst.FreezeCamera(true);
         }
 
