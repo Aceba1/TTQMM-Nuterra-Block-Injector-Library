@@ -22,7 +22,7 @@ namespace Nuterra.BlockInjector
                     var bacon = new BlockPrefabBuilder(/*"GSOBlock(111)", true*/)
                         .SetBlockID(10000) // Eventually, IDs could be either simple numbers (with or without quotes), or strings preferably with an author/pack naming scheme. Such as "author:block"
                         .SetName("GSO Bacon strip")
-                        .SetDescription("A long strip of bacon with bullet absoring grease.\nOriginating from back when the Nuterra API was still being worked on, and was the first block to be recovered after their vanish...\n" +
+                        .SetDescription("A long strip of bacon with bullet absoring grease.\n\nOriginating from back when the Nuterra API was still being worked on, and was the first block to be recovered after their vanish...\n" +
                         "\n" +
                         "<b>HeX</b>: uuuhhhhh\n" +
                         "one day a pig was born\n" +
@@ -33,10 +33,10 @@ namespace Nuterra.BlockInjector
                         "he yelled\n" +
                         "then turned into the bacon\n" +
                         "<b>Aceba1</b>: ...I think I'll add that to the description of the block\n" +
-                        "<b>HeX<b/>: yay\n" +
+                        "<b>HeX</b>: yay\n" +
                         "credit me\n" +
                         "\n" +
-                        "  - <i><b>HeX</b>, 8/22/2018</i>")
+                        "  - <b>HeX</b>, 8/22/2018")
                         .SetPrice(500)
                         .SetFaction(FactionSubTypes.GSO)
                         .SetCategory(BlockCategories.Standard)
@@ -191,7 +191,7 @@ namespace Nuterra.BlockInjector
                     var cockpit_l = new BlockPrefabBuilder(11, Vector3.one * 0.5f, true) /*"GSOLightStud(111)"*/
                         .SetBlockID(9001)
                         .SetName("GSO Observatory")
-                        .SetDescription("Mount this gigantic hamsterball to your tech to be right in the action!\nThis reorients itself to the direction of the cab\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)\n\n")
+                        .SetDescription("Mount this gigantic hamsterball to your tech to be right in the action!\nThis reorients itself to the direction of the cab\n\nRight click and drag to look and Cycle views with R (and backwards with Shift held down)\n\nAnother recovery from the original Nuterra API, along with the FPV Top Cockpit. This model remains intact.")
                         .SetPrice(500)
                         .SetHP(2500)
                         .SetGrade(1)
