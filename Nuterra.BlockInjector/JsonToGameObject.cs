@@ -883,25 +883,18 @@ namespace Nuterra.BlockInjector
                             SearchTransform = cacheSearchTransform;
                             //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
                             rewrite = nObj;
-                            goto doneField;
                         }
                         else
                         {
-                            Console.WriteLine("Cannot Instantiate field that is not of type Component! (" + tField.Name + ")");
+                            object newObj = Activator.CreateInstance(tField.FieldType);
+                            ShallowCopy(tField.FieldType, original, newObj);
+                            rewrite = ApplyValues(newObj, tField.FieldType, jObject, Spacing + m_tab);
                         }
                     }
-                    if (tField.FieldType.IsClass)
+                    else
                     {
-                        try
-                        {
-                            object newobj = Activator.CreateInstance(tField.FieldType);
-                            ShallowCopy(tField.FieldType, original, newobj);
-                            original = newobj;
-                        }
-                        catch { }
+                        rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
                     }
-                    rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
-                    doneField:;
                 }
                 else
                 {
@@ -929,25 +922,18 @@ namespace Nuterra.BlockInjector
                             SearchTransform = cacheSearchTransform;
                             //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
                             rewrite = nObj;
-                            goto doneProp;
                         }
                         else
                         {
-                            Console.WriteLine("Cannot Instantiate property that is not of type Component! (" + tProp.Name + ")");
+                            object newObj = Activator.CreateInstance(tProp.PropertyType);
+                            ShallowCopy(tProp.PropertyType, original, newObj);
+                            rewrite = ApplyValues(newObj, tProp.PropertyType, jObject, Spacing + m_tab);
                         }
                     }
-                    if (tProp.PropertyType.IsClass)
+                    else
                     {
-                        try
-                        {
-                            object newobj = Activator.CreateInstance(tProp.PropertyType);
-                            ShallowCopy(tProp.PropertyType, original, newobj);
-                            original = newobj;
-                        }
-                        catch { }
+                        rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
                     }
-                    rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
-                    doneProp:;
                 }
                 else
                 {
