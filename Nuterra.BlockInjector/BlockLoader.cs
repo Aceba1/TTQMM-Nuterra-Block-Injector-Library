@@ -6,6 +6,8 @@ using System.Reflection.Emit;
 using Harmony;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Nuterra.BlockInjector
 {
@@ -141,40 +143,46 @@ namespace Nuterra.BlockInjector
         public static readonly Dictionary<int, CustomCorporation> CustomCorps = new Dictionary<int, CustomCorporation>();
         public static readonly Dictionary<int, CustomBlock> CustomBlocks = new Dictionary<int, CustomBlock>();
         public static readonly Dictionary<int, CustomChunk> CustomChunks = new Dictionary<int, CustomChunk>();
+        //public static readonly Dictionary<string, int> NameIDToRuntimeIDTable = new Dictionary<string, int>();
+        //public static string GetNameIDFromRuntimeID(int runtimeID) => CustomBlocks[runtimeID].BlockID;
 
         public static bool Register(CustomBlock block)
         {
             try
             {
-                int blockID = block.BlockID;
-                bool Overwriting = AcceptOverwrite && CustomBlocks.ContainsKey(blockID);
-                Console.WriteLine($"Registering block: {block.GetType()} #{block.BlockID} '{block.Name}'");
-                Timer.Log($" - #{blockID} - \"{block.Name}\"");
+                int blockID = block.BlockID, runtimeID = block.RuntimeID;
+                bool AlreadyExists = CustomBlocks.ContainsKey(blockID); //NameIDToRuntimeIDTable.ContainsKey(blockID);
+                bool Overwriting = AcceptOverwrite && AlreadyExists;
+                Console.WriteLine($"Registering block: #{blockID} '{block.Name}'"); 
+                //Console.WriteLine($"Registering block: {block.GetType()} #({block.RuntimeID}){block.BlockID} '{block.Name}'");
+                Timer.Log($" - #{runtimeID} - \"{block.Name}\""); 
                 ManSpawn spawnManager = ManSpawn.inst;
                 if (!Overwriting)
                 {
-                    if (CustomBlocks.ContainsKey(blockID))
+                    if (AlreadyExists)
                     {
                         Timer.AddToLast(" - FAILED: Custom Block already exists!");
-                        Console.WriteLine("Registering block failed: A block with the same ID already exists");
+                        Console.WriteLine("Registering block failed: A block with the same ID already exists \n" + blockID);
                         return false;
                     }
-                    bool BlockExists = spawnManager.IsValidBlockToSpawn((BlockTypes)blockID);
+
+                    bool BlockExists = spawnManager.IsValidBlockToSpawn((BlockTypes)runtimeID);
                     if (BlockExists)
                     {
                         Timer.AddToLast(" - ID already exists");
                         Console.WriteLine("Registering block incomplete: A block with the same ID already exists");
                         return false;
                     }
-                    CustomBlocks.Add(blockID, block);
+                    CustomBlocks.Add(runtimeID, block);
+                    //NameIDToRuntimeIDTable.Add(block.BlockID, block.RuntimeID);
                 }
                 else
                 {
-                    CustomBlocks[blockID] = block;
-                    UnpermitSpriteGeneration.Remove(blockID);
+                    CustomBlocks[runtimeID] = block;
+                    UnpermitSpriteGeneration.Remove(runtimeID);
                 }
 
-                int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, blockID);
+                int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, runtimeID);
                 spawnManager.VisibleTypeInfo.SetDescriptor<FactionSubTypes>(hashCode, block.Faction);
                 spawnManager.VisibleTypeInfo.SetDescriptor<BlockCategories>(hashCode, block.Category);
                 spawnManager.VisibleTypeInfo.SetDescriptor<BlockRarity>(hashCode, block.Rarity);
@@ -183,23 +191,23 @@ namespace Nuterra.BlockInjector
                     if (Overwriting)
                     {
                         var prefabs = (BlockPrefabs.GetValue(ManSpawn.inst) as Dictionary<int, Transform>);
-                        var previous = ManSpawn.inst.GetBlockPrefab((BlockTypes)blockID);
+                        var previous = ManSpawn.inst.GetBlockPrefab((BlockTypes)runtimeID);
 
                         DepoolItems.Invoke(ComponentPool.inst, new object[] { LookupPool.Invoke(ComponentPool.inst, new object[] { previous }), int.MaxValue });
                         GameObject.Destroy(previous.gameObject);
-                        prefabs[blockID] = block.Prefab.transform;
+                        prefabs[runtimeID] = block.Prefab.transform;
 
                     }
                     else
                     {
-                        AddBlockToDictionary.Invoke(spawnManager, new object[] { block.Prefab });
-                        (LoadedBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)block.BlockID);
-                        (LoadedActiveBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)block.BlockID);
+                        ManSpawn.inst.AddBlockToDictionary(block.Prefab);
+
+                        (LoadedActiveBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)runtimeID);
                     }
 
                     var m_BlockPriceLookup = BlockPriceLookup.GetValue(RecipeManager.inst) as Dictionary<int, int>;
-                    if (m_BlockPriceLookup.ContainsKey(blockID)) m_BlockPriceLookup[blockID] = block.Price;
-                    else m_BlockPriceLookup.Add(blockID, block.Price);
+                    if (m_BlockPriceLookup.ContainsKey(runtimeID)) m_BlockPriceLookup[runtimeID] = block.Price;
+                    else m_BlockPriceLookup.Add(runtimeID, block.Price);
 
                     try
                     {
@@ -277,9 +285,9 @@ namespace Nuterra.BlockInjector
         }
 
         const BindingFlags binding = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
-        static readonly FieldInfo LoadedBlocks = typeof(ManSpawn).GetField("m_LoadedBlocks", binding);
+        //static readonly FieldInfo LoadedBlocks = typeof(ManSpawn).GetField("m_LoadedBlocks", binding);
         static readonly FieldInfo LoadedActiveBlocks = typeof(ManSpawn).GetField("m_LoadedActiveBlocks", binding);
-        static readonly MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", binding);
+        //static readonly MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", binding);
         static readonly FieldInfo BlockPrefabs = typeof(ManSpawn).GetField("m_BlockPrefabs", binding);
         static readonly FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", binding);
         static readonly MethodInfo LookupPool = typeof(ComponentPool).GetMethod("LookupPool", binding);
@@ -322,6 +330,7 @@ namespace Nuterra.BlockInjector
 
         public static void PostModsLoaded()
         {
+            if (Input.GetKey(KeyCode.T)) CapInjectedID++; // Debug test, offset everything by 1
             var harmony = HarmonyInstance.Create("nuterra.block.injector");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
@@ -361,94 +370,179 @@ namespace Nuterra.BlockInjector
             inst = T_ManPurchases.GetField("inst", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
 
         static FactionSubTypes last = FactionSubTypes.BF;
+        internal static readonly int CapVanillaID = EnumNamesIterator<BlockTypes>.Names.Length;
+        internal static int CapInjectedID = CapVanillaID;
+
+        internal static int GetNextAvailableID() => ++CapInjectedID;
+
+        internal const string NameIDProtocolStart = "_C_BLOCK:";
+
         internal class Patches
         {
-            /*
-             * static int[] s_AttachPointsTemp;
-             * static Dictionary<int, int[]> s_APFilledCellsPerBlock;
-             * Pre_InitAPFilledCells()
-             * {
-             *     // Copy what is in InitAPFilledCells, but fill the int[] array inside the dictionary instead of the byte[] array
-             *     s_AttachPointsTemp = block.attachPoints;
-             *     block.attachPoints = new Vector3[0]; // This bit prevents the crash in InitFilledAPCells() base version by making it loop 0 times
-             * }
-             * Post_InitAPFilledCells()
-             * {
-             *     block.attackPoints = s_AttachPointsTemp;
-             *     block.m_APFilledCells = new byte[s_AttachPointsTemp.Length];
-             * }
-             * Post_GetFilledCellForAPIndex()
-             * {
-             *     return filledCells[s_APFilledCellsPerBlock[block.blockID][index]];
-             * }
-             */
-            //private static class FlansPatch
-            //{
-            //    static Dictionary<int, int[]> s_APFilledCellsPerBlock = new Dictionary<int, int[]>();
-            //    static FieldInfo m_APFilledCells = typeof(TankBlock).GetField("m_APFilledCells", binding);
+#if false
+            // Rename all block GameObjects to _C_BLOCK:<ID>
+            // BlockSpec.block is grabbed from the GameObject name
+            static void NameToRuntimeIDProtocol(ref TankPreset.BlockSpec b)
+            {
+                //Console.Write(b.block + "," + b.m_BlockType + ";");
+                if (b.block.StartsWith(NameIDProtocolStart))
+                {
+                    string nameID = b.block.Substring(NameIDProtocolStart.Length);
+                    if (BlockLoader.NameIDToRuntimeIDTable.TryGetValue(nameID, out int runtimeID))
+                    {
+                        Console.WriteLine("Found custom block " + nameID + "(" + runtimeID + ") <= (" + b.m_BlockType + ")!");
+                        b.m_BlockType = (BlockTypes)runtimeID;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Could not find custom block " + nameID + "(" + b.m_BlockType + ")!");
+                    }
+                }
+                else if ((int)b.m_BlockType >= CapVanillaID || (int)b.m_BlockType < 0)
+                {
+                    //Console.WriteLine("IRREGULARITY DETECTED");
+                    Console.WriteLine("HERESY DETECTED: " + b.m_BlockType);
+                    Console.WriteLine(new System.Diagnostics.StackTrace().ToString());
+                }
+                //Console.WriteLine(b.block + "," + b.m_BlockType + ";");
+            }
 
-            //    [HarmonyPatch(typeof(TankBlock), "InitAPFilledCells")]
-            //    private static class FlansPatch_InitAPFilledCells
-            //    {
-            //        private static bool Prefix(ref TankBlock __instance)
-            //        {
-            //            if (__instance.filledCells.Length > 255)
-            //            {
-            //                List<Vector3> croppedAPs = new List<Vector3>();
-            //                List<int> APFilledCells = new List<int>();
-            //                bool NotifyError = true;
-            //                for (int i = 0; i < __instance.attachPoints.Length; i++)
-            //                {
-            //                    Vector3 attachPoint = __instance.attachPoints[i];
-            //                    IntVector3 ScaledAP = attachPoint * 2f;
-            //                    IntVector3 FlooredAP = ScaledAP.PadHalfDown();
-            //                    IntVector3 RoofedAP = FlooredAP + ScaledAP.AxisUnit();
-            //                    for (int cell = 0; cell < __instance.filledCells.Length; cell++)
-            //                    {
-            //                        bool FlooredCell = __instance.filledCells[cell] == FlooredAP,
-            //                             RoofedCell = __instance.filledCells[cell] == RoofedAP;
-            //                        if (FlooredCell || RoofedCell)
-            //                        {
-            //                            if (FlooredCell && RoofedCell)
-            //                            {
-            //                                Console.WriteLine($"Block {__instance.name} has an AP crushed between two cells! ({attachPoint})");
-            //                                NotifyError = false;
-            //                                break;
-            //                            }
-            //                            APFilledCells.Add(cell);
-            //                            croppedAPs.Add(attachPoint);
-            //                            NotifyError = false;
-            //                            break;
-            //                        }
-            //                    }
-            //                    if (NotifyError)
-            //                    {
-            //                        Console.WriteLine($"Block {__instance.name} has an AP without a cell! ({attachPoint})");
-            //                    }
-            //                }
-            //                s_APFilledCellsPerBlock[__instance.GetComponent<Visible>().ItemType] = APFilledCells.ToArray();
-            //                m_APFilledCells.SetValue(__instance, new byte[APFilledCells.Count]);
-            //                __instance.attachPoints = croppedAPs.ToArray();
-            //                return false;
-            //            }
-            //            return true;
-            //        }
-            //    }
+            // Patches:
+            //TankPreset.BlockSpec.NetDeserialize
+            [HarmonyPatch(typeof(TankPreset.BlockSpec), "NetDeserialize")]
+            static class BlockSpec_NetDeserialize
+            {
+                static void Postfix(ref TankPreset.BlockSpec __instance)
+                {
+                    NameToRuntimeIDProtocol(ref __instance);
+                }
+            }
 
-            //    [HarmonyPatch(typeof(TankBlock), "GetFilledCellForAPIndex")]
-            //    private static class FlansPatch_GetFilledCellForAPIndex
-            //    {
-            //        private static bool Prefix(ref TankBlock __instance, ref IntVector3 __result, int index)
-            //        {
-            //            if (s_APFilledCellsPerBlock.TryGetValue(__instance.visible.ID, out int[] APCellArray))
-            //            {
-            //                __result = __instance.filledCells[APCellArray[index]];
-            //                return false;
-            //            }
-            //            return true;
-            //        }
-            //    }
-            //}
+            //TankPreset.BlockSpec.OnDeserialize
+            [HarmonyPatch(typeof(TankPreset.BlockSpec), "OnDeserialize")]
+            static class BlockSpec_OnDeserialize
+            {
+                static void Postfix(ref TankPreset.BlockSpec __instance)
+                {
+                    if ((int)__instance.m_BlockType >= CapVanillaID || (int)__instance.m_BlockType < 0)
+                    {
+                        //Console.WriteLine("IRREGULARITY DETECTED");
+                        Console.WriteLine(__instance.m_BlockType);
+                        try
+                        {
+                            Console.WriteLine(__instance.block);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Oop, block name is literally uncomprehendable");
+                        }
+                    }
+                    NameToRuntimeIDProtocol(ref __instance);
+                }
+            }
+
+            [HarmonyPatch(typeof(TechData), "UpdateFromDeprecatedBounds")]
+            static class TechData_OnDeserialize
+            {
+                static void Postfix(ref TechData __instance)
+                {
+                    var specs = __instance.m_BlockSpecs;
+                    for (int i = 0; i < specs.Count; i++)
+                    {
+                        var item = specs[i];
+                        NameToRuntimeIDProtocol(ref item);
+                        specs[i] = item;
+                    }
+                }
+            }
+
+            [HarmonyPatch(typeof(InventoryJsonConverter), "WriteJson")]
+            static class InventoryJsonConverter_WriteJson
+            {
+                static bool Prefix(JsonWriter writer, object value)
+                {
+                    IInventory<BlockTypes> inventory = (IInventory<BlockTypes>)value;
+                    if (inventory != null)
+                    {
+                        Dictionary<string, int> moddedBlocks = new Dictionary<string, int>();
+
+                        writer.WriteStartObject();
+                        // Standard inventory populator
+                        writer.WritePropertyName("m_InventoryList");
+                        writer.WriteStartArray();
+                        foreach (KeyValuePair<BlockTypes, int> keyValuePair in inventory)
+                        {
+                            if ((int)keyValuePair.Key >= CapVanillaID)
+                            {
+                                moddedBlocks.Add(GetNameIDFromRuntimeID((int)keyValuePair.Key), keyValuePair.Value);
+                                continue;
+                            }
+                            writer.WriteStartObject();
+                            writer.WritePropertyName("m_BlockType");
+                            writer.WriteValue((int)keyValuePair.Key);
+                            writer.WritePropertyName("m_Quantity");
+                            writer.WriteValue(keyValuePair.Value);
+                            writer.WriteEndObject();
+                        }
+                        writer.WriteEndArray();
+                        // Special inventory populator
+                        writer.WritePropertyName("m_InventoryListInjected");
+                        writer.WriteStartArray();
+                        foreach (KeyValuePair<string, int> keyValuePair in moddedBlocks)
+                        {
+                            writer.WriteStartObject();
+                            writer.WritePropertyName("m_BlockType");
+                            writer.WriteValue(keyValuePair.Key);
+                            writer.WritePropertyName("m_Quantity");
+                            writer.WriteValue(keyValuePair.Value);
+                            writer.WriteEndObject();
+                        }
+                        writer.WriteEndArray();
+                        // End
+                        writer.WriteEndObject();
+                    }
+                    return false; // Do not run the original method (Override the method)
+                }
+            }
+
+            [HarmonyPatch(typeof(InventoryJsonConverter), "ReadJson")]
+            static class InventoryJsonConverter_ReadJson
+            {
+                static bool Prefix(JsonReader reader, object existingValue, out object __result)
+                {
+                    if (reader.TokenType == JsonToken.StartObject)
+                    {
+                        IInventory<BlockTypes> inventory = (IInventory<BlockTypes>)existingValue;
+                        inventory.Clear();
+                        JObject jobject = JObject.Load(reader);
+                        foreach (JToken jtoken in jobject["m_InventoryList"]) // Standard inventory loader
+                        {
+                            JObject item = (JObject)jtoken;
+                            inventory.SetBlockCount(
+                                item["m_BlockType"].ToObject<BlockTypes>(), 
+                                item["m_Quantity"].ToObject<int>());
+                        }
+                        foreach (JToken jtoken in jobject["m_InventoryListInjected"]) // Special inventory loader
+                        {
+                            JObject item = (JObject)jtoken;
+                            string name = item["m_BlockType"].ToObject<string>();
+                            if (NameIDToRuntimeIDTable.TryGetValue(name, out int injectedBlock))
+                            {
+                                int count = item["m_Quantity"].ToObject<int>();
+                                inventory.SetBlockCount((BlockTypes)injectedBlock, count);
+                            }
+                            else
+                            {
+                                Console.WriteLine("InventoryJsonConverter.ReadJson Exception: Item (NameID: " + name + ") not found in current session table!");
+                            }
+                        }
+                        __result = inventory;
+                    }
+                    else __result = null;
+                    return false; // Do not run the original method (Override the method)
+                }
+            }
+#endif
 
             static Type BTT = typeof(BlockTypes);
 
@@ -1141,7 +1235,7 @@ namespace Nuterra.BlockInjector
         {
             try
             {
-                ManLicenses.inst.DiscoverBlock((BlockTypes)block.BlockID);
+                ManLicenses.inst.DiscoverBlock((BlockTypes)block.RuntimeID);
                 Array blockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
 
 
@@ -1150,7 +1244,7 @@ namespace Nuterra.BlockInjector
                 Array.Resize(ref unlocked, unlocked.Length + 1);
                 unlocked[unlocked.Length - 1] = new BlockUnlockTable.UnlockData
                 {
-                    m_BlockType = (BlockTypes)block.BlockID,
+                    m_BlockType = (BlockTypes)block.RuntimeID,
                     m_BasicBlock = true,
                     m_DontRewardOnLevelUp = true
                 };
@@ -1162,8 +1256,8 @@ namespace Nuterra.BlockInjector
                 ((m_CorpBlockLevelLookup
                     .GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array)
                     .GetValue((int)block.Faction) as Dictionary<BlockTypes, int>)
-                    .Add((BlockTypes)block.BlockID, block.Grade);
-                ManLicenses.inst.DiscoverBlock((BlockTypes)block.BlockID);
+                    .Add((BlockTypes)block.RuntimeID, block.Grade);
+                ManLicenses.inst.DiscoverBlock((BlockTypes)block.RuntimeID);
             }
             catch (Exception E)
             {
@@ -1174,6 +1268,7 @@ namespace Nuterra.BlockInjector
 
         //static int lastFrameRendered;
         static List<int> UnpermitSpriteGeneration = new List<int>();
+        private static MethodInfo RenderSnapshotFromTechDataInternal = typeof(ManScreenshot).GetMethod("RenderSnapshotFromTechDataInternal", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
         private static bool ResourceLookup_OnSpriteLookup(ObjectTypes objectType, int itemType, ref UnityEngine.Sprite result)
         {
             if (objectType == ObjectTypes.Block)
@@ -1182,16 +1277,16 @@ namespace Nuterra.BlockInjector
                 if (CustomBlocks.TryGetValue(itemType, out block))
                 {
                     result = block.DisplaySprite;
-                    if (result == null && !UnpermitSpriteGeneration.Contains(itemType))// && lastFrameRendered != Time.frameCount)
+                    if (result == null && !UnpermitSpriteGeneration.Contains(itemType)) // Create a sprite right now
                     {
                         /*try
                         {
                             //lastFrameRendered = Time.frameCount;
-                            var b = new TankPreset.BlockSpec() { block = block.Name, m_BlockType = (BlockTypes)block.BlockID, m_SkinID = 0, m_VisibleID = -1, orthoRotation = 0, position = IntVector3.zero, saveState = new Dictionary<int, Module.SerialData>(), textSerialData = new List<string>() };
-                            var image = ManScreenshot.inst.RenderSnapshotFromTechData(new TechData() { m_BlockSpecs = new List<TankPreset.BlockSpec> { b } }, new IntVector2(256, 256));
+                            var b = new TankPreset.BlockSpec() { block = block.Name, m_BlockType = (BlockTypes)block.RuntimeID, m_SkinID = 0, m_VisibleID = -1, orthoRotation = 0, position = IntVector3.zero, saveState = new Dictionary<int, Module.SerialData>(), textSerialData = new List<string>() };
+                            Texture2D image = RenderSnapshotFromTechDataInternal.Invoke(ManScreenshot.inst, new object[] { new TechData() { m_BlockSpecs = new List<TankPreset.BlockSpec> { b } }, new IntVector2(256, 256) }) as Texture2D; // Devs why did you make this private
 
                             //float x = image.height / (float)image.width;
-                            float x = 1f;
+                            //float x = 1f;
                             result = GameObjectJSON.SpriteFromImage(image);//GameObjectJSON.CropImage(image, new Rect((1f - x) * 0.5f, 0f, x, 1f)));
                         }
                         catch { UnpermitSpriteGeneration.Add(itemType); }*/

@@ -20,7 +20,7 @@ namespace Nuterra.BlockInjector
             public bool KeepColliders;
             public JValue GamePrefabReference;
             public JValue DeathExplosionReference;
-            public int ID;
+            public int ID; //public JValue ID;
             public string IconName;
             public string MeshName;
             public string ColliderMeshName;
@@ -264,13 +264,16 @@ namespace Nuterra.BlockInjector
                 JObject jObject = JObject.Parse(StripComments(File.ReadAllText(Json.FullName)));
                 BlockBuilder jBlock = jObject.ToObject<BlockBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
                 BlockPrefabBuilder blockbuilder;
+                //string ID = jBlock.ID.ToObject<string>();
 
                 L("Read JSON", l);
-                /*Local*/bool BlockAlreadyExists = BlockLoader.CustomBlocks.TryGetValue(jBlock.ID, out var ExistingJSONBlock);
+                /*Local*/
+                bool BlockAlreadyExists = BlockLoader.CustomBlocks.TryGetValue(jBlock.ID, out var ExistingJSONBlock); //BlockLoader.NameIDToRuntimeIDTable.TryGetValue(ID, out int overlap);
                 if (BlockAlreadyExists && !BlockLoader.AcceptOverwrite)
                 {
-                    Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\nBlock ID collides with " + ExistingJSONBlock.Name);
-                    BlockLoader.Timer.Log($" ! Could not read #{Json.Name} - Block ID collides with {ExistingJSONBlock.Name}!");
+                    string name = ExistingJSONBlock.Name;//BlockLoader.CustomBlocks[overlap].Name;
+                    Console.WriteLine("Could not read block " + Json.Name + "\n at " + Json.FullName + "\n\nBlock ID collides with " + name);
+                    BlockLoader.Timer.Log($" ! Could not read #{Json.Name} - Block ID collides with { name }!");
                     return;
                 }
 
@@ -341,9 +344,9 @@ namespace Nuterra.BlockInjector
                     if (!string.IsNullOrEmpty(der))
                     {
                         if (int.TryParse(der, out int derID))
-                            blockbuilder.DeathExplosionReference(derID);
+                            blockbuilder.SetDeathExplosionReference(derID);
                         else
-                            blockbuilder.DeathExplosionReference(der);
+                            blockbuilder.SetDeathExplosionReference(der);
                     }
                 }
 
@@ -360,7 +363,7 @@ namespace Nuterra.BlockInjector
                 }
 
                 L("Set ID", l);
-                blockbuilder.SetBlockID(jBlock.ID);
+                blockbuilder.SetBlockID(jBlock.ID); //blockbuilder.SetBlockID(ID);
 
                 //Set Category
                 L("Set Category", l);
@@ -810,7 +813,7 @@ namespace Nuterra.BlockInjector
                     Dictionary<int, int> RecipeBuilder = new Dictionary<int, int>();
                     if (jBlock.Recipe is JValue rString)
                     {
-                        string[] recipe = rString.ToObject<string>().Replace(" ", "").Split(',');
+                        string[] recipe = rString.ToObject<string>().Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                         foreach (string item in recipe)
                         {
                             RecipePrice += AppendToRecipe(RecipeBuilder, item, 1);
@@ -853,7 +856,7 @@ namespace Nuterra.BlockInjector
                     }
 
                     CustomRecipe.RegisterRecipe(Input, new CustomRecipe.RecipeOutput[1] {
-                                new CustomRecipe.RecipeOutput(jBlock.ID)
+                                new CustomRecipe.RecipeOutput(blockbuilder.RuntimeID)
                             }, RecipeTable.Recipe.OutputType.Items, fab);
                 }
 
@@ -904,7 +907,7 @@ namespace Nuterra.BlockInjector
             {
                 if (!RecipeBuilder.ContainsKey((int)chunk))
                 {
-                    RecipeBuilder.Add((int)chunk, 1);
+                    RecipeBuilder.Add((int)chunk, Count);
                 }
                 else
                 {

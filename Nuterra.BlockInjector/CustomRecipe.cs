@@ -12,6 +12,32 @@ namespace Nuterra.BlockInjector
             new GameObject().AddComponent<RecipeTimer>().CallRecipeRegister(new CustomRecipeStruct(Inputs, Outputs, OutputType, NameOfFabricator + "_reverse", BuildTime));
         }*/
 
+        internal static Dictionary<FactionSubTypes, string> FabNameDict = new Dictionary<FactionSubTypes, string>()
+        {
+            { FactionSubTypes.GSO, "gsofab" },
+            { FactionSubTypes.GC, "gcfab" },
+            { FactionSubTypes.VEN, "venfab" },
+            { FactionSubTypes.HE, "hefab" },
+            { FactionSubTypes.BF, "bffab" }
+        };
+
+        public static string FabricatorFromFactionType(FactionSubTypes faction)
+        {
+            if (FabNameDict.TryGetValue(faction, out string result))
+                return result;
+            return null;
+        }
+
+        public static void RegisterRecipe(ChunkTypes[] Inputs, int OutputID, string NameOfFabricator = "gsofab")
+        {
+            RegisterRecipe(RecipeInput.FromChunkTypesArray(Inputs), new RecipeOutput[] { new RecipeOutput(OutputID) }, NameOfFabricator: NameOfFabricator);
+        }
+
+        public static void RegisterRecipe(RecipeInput[] Inputs, int OutputID, string NameOfFabricator = "gsofab")
+        {
+            RegisterRecipe(Inputs, new RecipeOutput[] { new RecipeOutput(OutputID) }, NameOfFabricator: NameOfFabricator);
+        }
+
         public static void RegisterRecipe(RecipeInput[] Inputs, RecipeOutput[] Outputs, RecipeTable.Recipe.OutputType OutputType = RecipeTable.Recipe.OutputType.Items, string NameOfFabricator = "gsofab", float BuildTime = 1f)
         {
             new GameObject().AddComponent<RecipeTimer>().CallRecipeRegister(new CustomRecipeStruct(Inputs, Outputs, OutputType, NameOfFabricator, BuildTime));
@@ -105,6 +131,27 @@ namespace Nuterra.BlockInjector
 
         public struct RecipeInput
         {
+            public static RecipeInput[] FromChunkTypesArray(ChunkTypes[] source)
+            {
+                var buildup = new Dictionary<int, int>(); // Group identical chunks
+                for (int i = 0; i < source.Length; i++)
+                {
+                    int item = (int)source[i];
+                    if (buildup.ContainsKey(item))
+                        buildup[item]++;
+                    else
+                        buildup.Add(item, 1);
+                }
+
+                RecipeInput[] result = new RecipeInput[source.Length]; // Convert to RecipeInput array
+                int inc = 0;
+                foreach (var pair in buildup)
+                {
+                    result[inc++] = new RecipeInput(pair.Key, pair.Value);
+                }
+                return result;
+            }
+
             public RecipeInput(int ID, int Quantity = 1, ObjectTypes Type = ObjectTypes.Chunk)
             {
                 this.ID = ID;

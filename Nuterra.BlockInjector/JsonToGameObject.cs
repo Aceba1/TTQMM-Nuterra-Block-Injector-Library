@@ -19,6 +19,7 @@ namespace Nuterra.BlockInjector
 
         static Type t_shader = typeof(Shader);
         static Type t_uobj = typeof(UnityEngine.Object);
+        static Type t_comp = typeof(UnityEngine.Component);
         public static Material MaterialFromShader(string ShaderName = "StandardTankBlock")
         {
             var shader = GetObjectFromGameResources<Shader>(t_shader, ShaderName, true);
@@ -871,17 +872,29 @@ namespace Nuterra.BlockInjector
                     original = tField.GetValue(instance);
                     if (Instantiate)
                     {
-                        bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
-                        var nObj = Component.Instantiate(original as Component);
-                        nObj.gameObject.SetActive(isActive);
-                        //Console.WriteLine(Spacing + m_tab + ">Instantiating");
-                        var cacheSearchTransform = SearchTransform;
-                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
-                        SearchTransform = cacheSearchTransform;
-                        //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                        rewrite = nObj;
+                        if (tField.FieldType.IsSubclassOf(t_comp))
+                        {
+                            bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
+                            var nObj = Component.Instantiate(original as Component);
+                            nObj.gameObject.SetActive(isActive);
+                            //Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                            var cacheSearchTransform = SearchTransform;
+                            CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                            SearchTransform = cacheSearchTransform;
+                            //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
+                            rewrite = nObj;
+                        }
+                        else
+                        {
+                            object newObj = Activator.CreateInstance(tField.FieldType);
+                            ShallowCopy(tField.FieldType, original, newObj);
+                            rewrite = ApplyValues(newObj, tField.FieldType, jObject, Spacing + m_tab);
+                        }
                     }
-                    else rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
+                    else
+                    {
+                        rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
+                    }
                 }
                 else
                 {
@@ -898,17 +911,29 @@ namespace Nuterra.BlockInjector
                     original = tProp.GetValue(instance, null);
                     if (Instantiate)
                     {
-                        bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
-                        var nObj = Component.Instantiate(original as Component);
-                        nObj.gameObject.SetActive(isActive);
-                        //Console.WriteLine(Spacing + m_tab + ">Instantiating");
-                        var cacheSearchTransform = SearchTransform;
-                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
-                        SearchTransform = cacheSearchTransform;
-                        //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                        rewrite = nObj;
+                        if (tProp.PropertyType.IsSubclassOf(t_comp))
+                        {
+                            bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
+                            var nObj = Component.Instantiate(original as Component);
+                            nObj.gameObject.SetActive(isActive);
+                            //Console.WriteLine(Spacing + m_tab + ">Instantiating");
+                            var cacheSearchTransform = SearchTransform;
+                            CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                            SearchTransform = cacheSearchTransform;
+                            //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
+                            rewrite = nObj;
+                        }
+                        else
+                        {
+                            object newObj = Activator.CreateInstance(tProp.PropertyType);
+                            ShallowCopy(tProp.PropertyType, original, newObj);
+                            rewrite = ApplyValues(newObj, tProp.PropertyType, jObject, Spacing + m_tab);
+                        }
                     }
-                    else rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
+                    else
+                    {
+                        rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
+                    }
                 }
                 else
                 {

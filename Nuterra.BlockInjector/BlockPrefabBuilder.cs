@@ -11,6 +11,7 @@ namespace Nuterra.BlockInjector
         //public static Dictionary<string, GameObject> PrefabList = new Dictionary<string, GameObject>();
         //public static Dictionary<int, string> OverrideValidity = new Dictionary<int, string>();
         internal static Dictionary<int, uint> ReparseVersion = new Dictionary<int, uint>();
+
         internal class RegisterTimer : MonoBehaviour
         {
             public BlockPrefabBuilder prefabToRegister;
@@ -45,7 +46,6 @@ namespace Nuterra.BlockInjector
         public TankBlock TankBlock { get; private set; }
         private Damageable _damageable;
         private ModuleDamage _moduleDamage;
-        private AutoSpriteRenderer _spriteRenderer;
         private CustomBlock _customBlock;
 //        private UnityEngine.Networking.NetworkIdentity _netid;
 //        private NetBlock _netblock;
@@ -63,23 +63,28 @@ namespace Nuterra.BlockInjector
                 Initialize(prefab, false);
         }
 
-        public BlockPrefabBuilder(int PrefabFromResource, bool RemoveRenderers = true)
-        {
+        public BlockPrefabBuilder(BlockTypes PrefabFromResource, bool RemoveRenderers = true) =>
+            CreateFromRes((int)PrefabFromResource, RemoveRenderers);
+        public BlockPrefabBuilder(int PrefabFromResource, bool RemoveRenderers = true) =>
             CreateFromRes(PrefabFromResource, RemoveRenderers);
-        }
+        public BlockPrefabBuilder(string PrefabFromResource, bool RemoveRenderers = true) =>
+            CreateFromRes(PrefabFromResource, RemoveRenderers);
 
-        public BlockPrefabBuilder(string PrefabFromResource, bool RemoveRenderers = true)
-        {
-            CreateFromRes(PrefabFromResource, RemoveRenderers);
-        }
+        public BlockPrefabBuilder(BlockTypes PrefabFromResource, Vector3 Offset, bool RemoveRenderers = true) : this(PrefabFromResource, RemoveRenderers) =>
+            OffsetChildren(Offset);
+        public BlockPrefabBuilder(int PrefabFromResource, Vector3 Offset, bool RemoveRenderers = true) : this(PrefabFromResource, RemoveRenderers) =>
+            OffsetChildren(Offset);
+        public BlockPrefabBuilder(string PrefabFromResource, Vector3 Offset, bool RemoveRenderers = true) : this(PrefabFromResource, RemoveRenderers) =>
+            OffsetChildren(Offset);
 
-        public BlockPrefabBuilder(string PrefabFromResource, Vector3 Offset, bool RemoveRenderers = true)
+        public BlockPrefabBuilder OffsetChildren(Vector3 Offset)
         {
-            CreateFromRes(PrefabFromResource, RemoveRenderers);
+            ThrowIfFinished();
             for (int i = 0; i < Prefab.transform.childCount; i++)
             {
                 Prefab.transform.GetChild(i).localPosition += Offset;
             }
+            return this;
         }
 
         static string TrimForSafeSearch(string Value) => Value.Replace("(", "").Replace(")", "").Replace("_", "").Replace(" ", "").ToLower();
@@ -128,12 +133,7 @@ namespace Nuterra.BlockInjector
 
         internal void CreateFromRes(int PrefabID, bool RemoveRenderers)
         {
-            GameObject original = null;
-            if (!GameBlocksByID(PrefabID, out original))
-            {
-
-            }
-            if (original == null)
+            if (!GameBlocksByID(PrefabID, out GameObject original))
             {
                 string errStr = $"No prefab with ID '{PrefabID}' could be found...";
                 Console.WriteLine(errStr);
@@ -150,12 +150,7 @@ namespace Nuterra.BlockInjector
 
         internal void CreateFromRes(string PrefabName, bool RemoveRenderers)
         {
-            GameObject original = null;
-            if (!GameBlocksByName(PrefabName, out original))
-            {
-
-            }
-            if (original == null)
+            if (!GameBlocksByName(PrefabName, out GameObject original))
             {
                 string errStr = $"No prefab named '{PrefabName}' could be found...";
                 Console.WriteLine(errStr);
@@ -171,12 +166,13 @@ namespace Nuterra.BlockInjector
         }
 
         const BindingFlags b = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
-        static readonly PropertyInfo visible = typeof(TankBlock).GetProperty("visible", b);
-        static readonly FieldInfo m_VisibleComponent = typeof(Visible).GetField("m_VisibleComponent", b);
-        static readonly FieldInfo FilledCellsGravityScaleFactors = typeof(TankBlock).GetField("FilledCellsGravityScaleFactors", b);
+        static readonly PropertyInfo TankBlock_visible = typeof(TankBlock).GetProperty("visible", b);
+        static readonly PropertyInfo Visible_block = typeof(Visible).GetProperty("block", b);
+        static readonly FieldInfo TankBlock_FilledCellsGravityScaleFactors = typeof(TankBlock).GetField("FilledCellsGravityScaleFactors", b);
         private void Initialize(GameObject prefab, bool clearGridInfo)
         {
             _customBlock = new CustomBlock();
+            //_customBlock.RuntimeID = BlockLoader.GetNextAvailableID();
             _customBlock.Prefab = prefab;
             _customBlock.Prefab.SetActive(false);
             GameObject.DontDestroyOnLoad(_customBlock.Prefab);
@@ -186,22 +182,21 @@ namespace Nuterra.BlockInjector
 
             _damageable = _customBlock.Prefab.EnsureComponent<Damageable>();
             _moduleDamage = _customBlock.Prefab.EnsureComponent<ModuleDamage>();
-            _spriteRenderer = _customBlock.Prefab.EnsureComponent<AutoSpriteRenderer>();
 
             TankBlock = _customBlock.Prefab.EnsureComponent<TankBlock>();
 
             _visible = _customBlock.Prefab.EnsureComponent<Visible>();
 
-//            _netid = _customBlock.Prefab.EnsureComponent<UnityEngine.Networking.NetworkIdentity>();
-//            _netblock = _customBlock.Prefab.EnsureComponent<NetBlock>();
+            //            _netid = _customBlock.Prefab.EnsureComponent<UnityEngine.Networking.NetworkIdentity>();
+            //            _netblock = _customBlock.Prefab.EnsureComponent<NetBlock>();
 
-            visible.SetValue(TankBlock, _visible, null);
-            m_VisibleComponent.SetValue(_visible, TankBlock as Component);
+            TankBlock_visible.SetValue(TankBlock, _visible, null);
+            Visible_block.SetValue(_visible, TankBlock);
             if (clearGridInfo)
             {
                 TankBlock.attachPoints = new Vector3[] { };
                 TankBlock.filledCells = new IntVector3[] { new Vector3(0, 0, 0) };
-                FilledCellsGravityScaleFactors.SetValue(TankBlock, new float[] { 1f });
+                TankBlock_FilledCellsGravityScaleFactors.SetValue(TankBlock, new float[] { 1f });
             }
 
             _mcb = _customBlock.Prefab.EnsureComponent<ModuleCustomBlock>();
@@ -214,7 +209,15 @@ namespace Nuterra.BlockInjector
 
         public GameObject Prefab { get => _customBlock.Prefab; }
 
-
+        public int RuntimeID
+        {
+            get => _customBlock.RuntimeID;
+            //get
+            //{
+            //    if (string.IsNullOrEmpty(_customBlock.BlockID)) throw new ArgumentException("Tried to get RuntimeID before SetBlockID() was called!");
+            //    return _customBlock.RuntimeID;
+            //}
+        }
 
         /// <summary>
         /// NOTE: Only for use if the block has already been registered!
@@ -223,14 +226,16 @@ namespace Nuterra.BlockInjector
         public BlockPrefabBuilder OverlapExistingRegister()
         {
             ThrowIfFinished();
-            if (!BlockLoader.AcceptOverwrite || !BlockLoader.CustomBlocks.ContainsKey(_customBlock.BlockID))
+            if (!BlockLoader.AcceptOverwrite || !BlockLoader.CustomBlocks.ContainsKey(_customBlock.BlockID))//!BlockLoader.NameIDToRuntimeIDTable.TryGetValue(_customBlock.BlockID, out _))
             {
-                throw new InvalidOperationException($"OverlapExistingRegister : Block {_customBlock.Name} ({_customBlock.BlockID}) has not been registered before! Use RegisterLater()");
+                throw new InvalidOperationException($"OverlapExistingRegister : Block {_customBlock.Name} ({_customBlock.RuntimeID}) has not been registered before! Use RegisterLater()");
             }
             OptimizeCellsForAP();
+            RegisterRecipe();
             BlockLoader.Register(_customBlock);
             _gameBlocksNameDict[TrimForSafeSearch(_customBlock.Name)] = _customBlock.Prefab;
             _gameBlocksIDDict[_customBlock.BlockID] = _customBlock.Prefab;
+            //_gameBlocksNameDict[_customBlock.BlockID] = _customBlock.Prefab;
             Prefab.SetActive(false);
             _finished = true;
             return this;
@@ -238,20 +243,22 @@ namespace Nuterra.BlockInjector
 
         public BlockPrefabBuilder RegisterLater(float Time = 5f)
         {
-            if (BlockLoader.CustomBlocks.TryGetValue(_customBlock.BlockID, out CustomBlock overlap))
+            //if (BlockLoader.NameIDToRuntimeIDTable.TryGetValue(_customBlock.BlockID, out int overlap))
+            if (BlockLoader.CustomBlocks.TryGetValue(_customBlock.BlockID, out CustomBlock _overlap))
             {
+                int overlap = _overlap.RuntimeID;
                 if (!BlockLoader.AcceptOverwrite)
                 {
-                    throw new Exception($"Block {_customBlock.Name} ({_customBlock.BlockID}) overlaps with predefined block {overlap.Name} ({_customBlock.BlockID})!");
+                    throw new Exception($"Block {_customBlock.Name} ({_customBlock.BlockID}) overlaps with predefined block #{overlap} ({_customBlock.BlockID})!");
                 }
-                Console.WriteLine($"RegisterLater : Block {_customBlock.Name} ({_customBlock.BlockID}) overlaps with predefined block {overlap.Name} ({_customBlock.BlockID})! Invoking OverlapExistingRegister()");
+                Console.WriteLine($"RegisterLater : Block {_customBlock.Name} ({_customBlock.BlockID}) overlaps with predefined block #{overlap} ({_customBlock.BlockID})! Invoking OverlapExistingRegister()");
                 return OverlapExistingRegister();
             }
             ThrowIfFinished();
             //string name = _customBlock.Name;
             //while (PrefabList.ContainsKey(name)) name += "+";
             //_customBlock.Prefab.name = name;
-            _customBlock.Prefab.name = _customBlock.Name;
+            _customBlock.Prefab.name = BlockLoader.NameIDProtocolStart + _customBlock.BlockID;
 
             if (_gameBlocksNameDict == null)
             {
@@ -259,10 +266,11 @@ namespace Nuterra.BlockInjector
             }
             _gameBlocksNameDict[TrimForSafeSearch(_customBlock.Name)] = _customBlock.Prefab;
             _gameBlocksIDDict[_customBlock.BlockID] = _customBlock.Prefab;
+            //_gameBlocksNameDict[_customBlock.RuntimeID] = _customBlock.Prefab;
 
-            //OverrideValidity.Add(_customBlock.BlockID, _customBlock.Name);
-            //_customBlock.Prefab.transform.position = Vector3.down * 1000f;
+            _customBlock.Prefab.transform.position = Vector3.down * 1000f;
             OptimizeCellsForAP();
+            RegisterRecipe();
             new GameObject().AddComponent<RegisterTimer>().CallBlockPrefabBuilder(Time, this, _customBlock);
             _finished = true;
             return this;
@@ -392,9 +400,10 @@ namespace Nuterra.BlockInjector
 
         public BlockPrefabBuilder SetBlockID(int id)
         {
+            //return SetBlockID(id.ToString());
             ThrowIfFinished();
             _customBlock.BlockID = id;
-            _visible.m_ItemType = new ItemTypeInfo(ObjectTypes.Block, id);
+            _customBlock.RuntimeID = id;
             if (ReparseVersion.TryGetValue(id, out uint reparse))
             {
                 if (!BlockLoader.AcceptOverwrite) throw new ArgumentException("A block with the same ID (" + id.ToString() + ") has already been defined!");
@@ -402,18 +411,37 @@ namespace Nuterra.BlockInjector
             }
             else
             {
-                ReparseVersion[id] = 0; _mcb.reparse_version_cache = 0;
+                ReparseVersion[_customBlock.RuntimeID] = 0; _mcb.reparse_version_cache = 0;
             }
+            _visible.m_ItemType = new ItemTypeInfo(ObjectTypes.Block, _customBlock.RuntimeID);
             return this;
         }
+
+        //public BlockPrefabBuilder SetBlockID(string id)
+        //{
+        //    ThrowIfFinished();
+        //    if (string.IsNullOrEmpty(id)) throw new ArgumentException("The ID parameter cannot be null or empty!");
+        //    if (!string.IsNullOrEmpty(_customBlock.BlockID)) throw new ArgumentException("This block's ID has already been defined");
+        //    if (BlockLoader.NameIDToRuntimeIDTable.TryGetValue(id, out int existentID))
+        //    {
+        //        if (!BlockLoader.AcceptOverwrite) throw new ArgumentException("A block with the same ID (" + id + ") has already been defined! #" + existentID); //Else, this is going to be an overwriten block
+        //        ReparseVersion[existentID] += 1; _mcb.reparse_version_cache = ReparseVersion[existentID];
+        //        _customBlock.RuntimeID = existentID;
+        //        BlockLoader.CapInjectedID--; // The ID reserved for this block can be used
+        //    }
+        //    else
+        //    {
+        //        ReparseVersion[_customBlock.RuntimeID] = 0; _mcb.reparse_version_cache = 0;
+        //    }
+        //    _customBlock.BlockID = id;
+        //    _visible.m_ItemType = new ItemTypeInfo(ObjectTypes.Block, _customBlock.RuntimeID);
+        //    return this;
+        //}
 
         [Obsolete("Hex code is unnecessary, please supply only an ID")]
         public BlockPrefabBuilder SetBlockID(int id, string Net128HashHex)
         {
-            SetBlockID(id);
-            //if (Net128HashHex != "")
-            //    typeof(UnityEngine.Networking.NetworkIdentity).GetField("m_AssetId", b).SetValue(_netid, UnityEngine.Networking.NetworkHash128.Parse(Net128HashHex
-            return this;
+            return SetBlockID(id);
         }
 
         public BlockPrefabBuilder SetDescription(string description)
@@ -487,7 +515,7 @@ namespace Nuterra.BlockInjector
                 gravityScale[i] = 1f;
             }
             TankBlock.filledCells = cells;
-            FilledCellsGravityScaleFactors.SetValue(TankBlock, gravityScale);
+            TankBlock_FilledCellsGravityScaleFactors.SetValue(TankBlock, gravityScale);
             return this;
         }
 
@@ -554,7 +582,7 @@ namespace Nuterra.BlockInjector
             {
                 gravityScale[i] = 1f;
             }
-            FilledCellsGravityScaleFactors.SetValue(TankBlock, gravityScale);
+            TankBlock_FilledCellsGravityScaleFactors.SetValue(TankBlock, gravityScale);
             TankBlock.filledCells = cells.ToArray();
             return this;
         }
@@ -613,7 +641,7 @@ namespace Nuterra.BlockInjector
             {
                 gravityScale[i] = 1f;
             }
-            FilledCellsGravityScaleFactors.SetValue(TankBlock, gravityScale);
+            TankBlock_FilledCellsGravityScaleFactors.SetValue(TankBlock, gravityScale);
             TankBlock.filledCells = cells.ToArray();
             TankBlock.attachPoints = aps.ToArray();
             return this;
@@ -643,8 +671,12 @@ namespace Nuterra.BlockInjector
                 transform.parent = Prefab.transform;
             }
             transform.localPosition = CenterOfMass;
-            transform = Prefab.transform.Find("aCol");
-            if (transform != null) transform.localPosition = CenterOfMass;
+            for (int i = 0; i < Prefab.transform.childCount; i++)
+            {
+                transform = Prefab.transform.GetChild(i);
+                if (transform.name.Length < 5 && transform.name.EndsWith("col")) // "[a-z]col"
+                    transform.localPosition = CenterOfMass;
+            }
             _mcb.HasInjectedCenterOfMass = true;
             _mcb.InjectedCenterOfMass = CenterOfMass;
             return this;
@@ -767,7 +799,7 @@ namespace Nuterra.BlockInjector
             }
         }
 
-        public BlockPrefabBuilder DeathExplosionReference(int ReferenceID)
+        public BlockPrefabBuilder SetDeathExplosionReference(int ReferenceID)
         {
             ThrowIfFinished();
             if (GameBlocksByID(ReferenceID, out GameObject refBlock))
@@ -777,7 +809,7 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
-        public BlockPrefabBuilder DeathExplosionReference(string ReferenceName)
+        public BlockPrefabBuilder SetDeathExplosionReference(string ReferenceName)
         {
             ThrowIfFinished();
             if (GameBlocksByName(ReferenceName, out GameObject refBlock))
@@ -786,6 +818,36 @@ namespace Nuterra.BlockInjector
                 Console.WriteLine($"Cound not find block '{ReferenceName}' for explosion effect");
             return this;
         }
+
+        CustomRecipe.RecipeInput[] _recipeQueue;
+        string _recipeTable;
+
+        public BlockPrefabBuilder SetRecipe(params ChunkTypes[] RecipeItems)
+        {
+            ThrowIfFinished();
+            _recipeQueue = CustomRecipe.RecipeInput.FromChunkTypesArray(RecipeItems);
+            return this;
+        }
+
+        public BlockPrefabBuilder SetRecipe(Dictionary<ChunkTypes, int> ItemCountRecipe)
+        {
+            ThrowIfFinished();
+            _recipeQueue = new CustomRecipe.RecipeInput[ItemCountRecipe.Count];
+            int iter = 0;
+            foreach (var pair in ItemCountRecipe)
+            {
+                _recipeQueue[iter++] = new CustomRecipe.RecipeInput((int)pair.Key, pair.Value);
+            }
+            return this;
+        }
+
+        public BlockPrefabBuilder SetCustomRecipeTable(string customRecipeTable)
+        {
+            ThrowIfFinished();
+            _recipeTable = customRecipeTable;
+            return this;
+        }
+
 
         private void OptimizeCellsForAP()
         {
@@ -822,6 +884,14 @@ namespace Nuterra.BlockInjector
                 }
                 NewCellOrder.InsertRange(0, InjectedCells);
                 TankBlock.filledCells = NewCellOrder.ToArray();
+            }
+        }
+
+        private void RegisterRecipe()
+        {
+            if (_recipeQueue != null)
+            {
+                CustomRecipe.RegisterRecipe(_recipeQueue, _customBlock.RuntimeID, _recipeTable ?? CustomRecipe.FabricatorFromFactionType(_customBlock.Faction));
             }
         }
     }
