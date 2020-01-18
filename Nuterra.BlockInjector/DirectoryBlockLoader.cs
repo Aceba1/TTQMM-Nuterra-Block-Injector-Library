@@ -907,7 +907,7 @@ namespace Nuterra.BlockInjector
             {
                 if (!RecipeBuilder.ContainsKey((int)chunk))
                 {
-                    RecipeBuilder.Add((int)chunk, 1);
+                    RecipeBuilder.Add((int)chunk, Count);
                 }
                 else
                 {
