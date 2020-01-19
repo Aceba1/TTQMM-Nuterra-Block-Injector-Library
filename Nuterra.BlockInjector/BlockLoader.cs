@@ -1103,7 +1103,7 @@ namespace Nuterra.BlockInjector
                 {
                     if (CustomCorps.Count == 0) return;
                     var corpSkin = ((int[])m_CorpSkinSelections.GetValue(__instance)).ToList();
-                    corpSkin.Resize(corpSkin.Count + CustomCorps.Count);
+                    corpSkin.Resize(corpSkin.Count + CustomCorps.Count, 0);
                     m_CorpSkinSelections.SetValue(__instance, corpSkin.ToArray());
                 }
             }
@@ -1119,6 +1119,54 @@ namespace Nuterra.BlockInjector
                         return false;
                     }
                     return true;
+                }
+            }
+
+            [HarmonyPatch(typeof(ManCustomSkins), "DoPaintBlock")]
+            private static class ManCustomSkins_DoPaintBlock
+            {
+                private static bool Prefix(ref ManCustomSkins __instance, ref TankBlock block)
+                {
+                    return (m_CorpSkinSelections.GetValue(__instance) as Array).Length > (int)Singleton.Manager<ManSpawn>.inst.GetCorporation(block.BlockType);
+                }
+            }
+
+            [HarmonyPatch(typeof(ManCustomSkins), "SkinIndexToID")]
+            private static class ManCustomSkins_SkinIndexToID
+            {
+                private static bool Prefix(ref ManCustomSkins __instance, ref FactionSubTypes corp)
+                {
+                    return (m_CorpSkinSelections.GetValue(__instance) as Array).Length > (int)corp;
+                }
+            }
+
+            [HarmonyPatch(typeof(ManTechMaterialSwap), "Start")]
+            private static class ManTechMaterialSwap_Start
+            {
+                private static void Prefix(ref ManTechMaterialSwap __instance)
+                {
+                    Console.WriteLine("m_MinEmissivePerCorporation");
+                    var m_MinEmissivePerCorporation = typeof(ManTechMaterialSwap).GetField("m_MinEmissivePerCorporation", binding);
+                    var emissive = m_MinEmissivePerCorporation.GetValue(__instance) as float[];
+                    /*for (int i = 0; i < emissive.Length; i++)
+                    {
+                        Console.WriteLine(((FactionSubTypes)i).ToString() + " " + emissive[i].ToString());
+                    }*/
+                    var emissiveList = emissive.ToList();
+                    foreach (var item in CustomCorps)
+                    {
+                        emissiveList.Add(0f);
+                    }
+                    m_MinEmissivePerCorporation.SetValue(__instance, emissiveList.ToArray());
+                }
+            }
+
+            [HarmonyPatch(typeof(TankBlock), "SetSkinIndex")]
+            private static class TankBlock_SetSkinIndex
+            {
+                private static bool Prefix(ref TankBlock __instance)
+                {
+                    return (m_CorpSkinSelections.GetValue(ManCustomSkins.inst) as Array).Length > (int)Singleton.Manager<ManSpawn>.inst.GetCorporation(__instance.BlockType);
                 }
             }
 

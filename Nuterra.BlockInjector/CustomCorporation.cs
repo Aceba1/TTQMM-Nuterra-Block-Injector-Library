@@ -21,7 +21,7 @@ namespace Nuterra.BlockInjector
         {
             CorpID = corpID;
             Name = name;
-            GradesAmount = Math.Min(1, gradesAmount);
+            GradesAmount = Math.Max(1, gradesAmount);
             XPLevels = xpLevels;
             HasLicense = false;
             CorpIcon = corpIcon;
