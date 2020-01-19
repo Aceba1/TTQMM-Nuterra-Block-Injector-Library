@@ -789,7 +789,7 @@ namespace Nuterra.BlockInjector
 
                     m_CorpBlockList.SetValue(__instance, blockList);
 
-
+                    //ManCustomSkins.inst.Invoke("Awake", 0);
                     /*var ud = new BlockUnlockTable.UnlockData[] {
                         new BlockUnlockTable.UnlockData()
                         {
@@ -885,8 +885,12 @@ namespace Nuterra.BlockInjector
                     if (CustomCorps.Count == 0) return;
                     if (enumType == typeof(FactionSubTypes))
                     {
-                        Array.Resize(ref __result, 9);
-                        __result[8] = "8";
+                        var resList = __result.ToList();
+                        foreach (var cc in CustomCorps)
+                        {
+                            resList.Add(cc.Value.Name);
+                        }
+                        __result = resList.ToArray();
                     }
                 }
             }
@@ -899,10 +903,12 @@ namespace Nuterra.BlockInjector
                     if (CustomCorps.Count == 0) return;
                     if (enumType == typeof(FactionSubTypes))
                     {
-                        var temp = new object[__result.Length + 1];
-                        __result.CopyTo(temp, 0);
-                        temp[8] = (FactionSubTypes)8;
-                        __result = temp as Array;
+                        var resList = ((FactionSubTypes[])__result).ToList();
+                        foreach (var cc in CustomCorps)
+                        {
+                            resList.Add((FactionSubTypes)cc.Value.CorpID);
+                        }
+                        __result = resList.ToArray();
                     }
                 }
             }
@@ -1106,6 +1112,65 @@ namespace Nuterra.BlockInjector
                     corpSkin.Resize(corpSkin.Count + CustomCorps.Count, 0);
                     m_CorpSkinSelections.SetValue(__instance, corpSkin.ToArray());
                 }
+
+                /*
+                IL_000A: ldarg.0
+		        IL_000B: ldsfld    !0[] valuetype EnumValuesIterator`1<valuetype FactionSubTypes>::Values
+		        IL_0010: ldlen
+		        IL_0011: conv.i4
+		        IL_0012: newarr    [mscorlib]System.Int32
+		        IL_0017: stfld     int32[] ManCustomSkins::m_CorpSkinSelections
+
+                IL_000A: ldarg.0
+		        IL_000B: ldtoken   FactionSubTypes
+		        IL_0010: call      class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+		        IL_0015: call      class [mscorlib]System.Array [mscorlib]System.Enum::GetValues(class [mscorlib]System.Type)
+		        IL_001A: callvirt  instance int32 [mscorlib]System.Array::get_Length()
+		        IL_001F: newarr    [mscorlib]System.Int32
+		        IL_0024: stfld     int32[] ManCustomSkins::m_CorpSkinSelections
+
+
+                IL_0060: ldsfld    !0[] valuetype EnumValuesIterator`1<valuetype FactionSubTypes>::Values
+		        IL_0065: stloc.0
+		        IL_0066: ldc.i4.0
+		        IL_0067: stloc.1
+		        IL_0068: br        IL_011A
+
+                IL_0060: ldtoken   FactionSubTypes
+		        IL_0065: call      class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+		        IL_006A: call      class [mscorlib]System.Array [mscorlib]System.Enum::GetValues(class [mscorlib]System.Type)
+		        IL_006F: castclass valuetype FactionSubTypes[]
+		        IL_0074: stloc.0
+		        IL_0075: ldc.i4.0
+		        IL_0076: stloc.1
+		        IL_0077: br        IL_0129
+                */
+
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    var GetTypeFromHandle = typeof(Type).GetMethod("GetTypeFromHandle", BindingFlags.Public | BindingFlags.Static);
+                    var GetValues = typeof(Enum).GetMethod("GetValues", BindingFlags.Public | BindingFlags.Static);
+                    var codes = new List<CodeInstruction>(instructions);
+                    var corpSkinSelectionsLengthI = codes.FindIndex(ci => ci.opcode == OpCodes.Ldsfld);
+                    var cssli = corpSkinSelectionsLengthI;
+                    codes[cssli] = new CodeInstruction(OpCodes.Ldtoken, typeof(FactionSubTypes));
+                    codes[cssli + 1] = new CodeInstruction(OpCodes.Call, GetTypeFromHandle);
+                    codes[cssli + 2] = new CodeInstruction(OpCodes.Call, GetValues);
+                    codes.Insert(cssli + 3, new CodeInstruction(OpCodes.Callvirt, typeof(Array).GetMethod("get_Length", binding)));
+
+                    var factionsListI = codes.FindIndex(ci => ci.opcode == OpCodes.Br) - 4;
+                    var fli = factionsListI;
+                    codes[fli] = new CodeInstruction(OpCodes.Ldtoken, typeof(FactionSubTypes));
+                    codes.Insert(fli + 1, new CodeInstruction(OpCodes.Castclass, typeof(FactionSubTypes[])));
+                    codes.Insert(fli + 1, new CodeInstruction(OpCodes.Call, GetValues));
+                    codes.Insert(fli + 1, new CodeInstruction(OpCodes.Call, GetTypeFromHandle));
+
+                    /*foreach (var ci in codes)
+                    {
+                        Console.WriteLine(ci.opcode.ToString());
+                    }*/
+                    return codes;
+                }
             }
 
             [HarmonyPatch(typeof(ManCustomSkins), "ShowCorpInUI")]
@@ -1140,12 +1205,32 @@ namespace Nuterra.BlockInjector
                 }
             }
 
+            [HarmonyPatch(typeof(ManCustomSkins), "SkinIDToIndex")]
+            private static class ManCustomSkins_SkinIDToIndex
+            {
+                private static bool Prefix(ref ManCustomSkins __instance, ref FactionSubTypes corp)
+                {
+                    return (m_CorpSkinSelections.GetValue(__instance) as Array).Length > (int)corp;
+                }
+            }
+
+            [HarmonyPatch(typeof(ManCustomSkins), "CanUseSkin")]
+            private static class ManCustomSkins_CanUseSkin
+            {
+                private static bool Prefix(ref ManCustomSkins __instance, ref FactionSubTypes corp, ref int skinIndex, ref bool __result)
+                {
+                    if((m_CorpSkinSelections.GetValue(__instance) as Array).Length > (int)corp) return true;
+                    
+                    __result = skinIndex == 0;
+                    return false;
+                }
+            }
+
             [HarmonyPatch(typeof(ManTechMaterialSwap), "Start")]
             private static class ManTechMaterialSwap_Start
             {
                 private static void Prefix(ref ManTechMaterialSwap __instance)
                 {
-                    Console.WriteLine("m_MinEmissivePerCorporation");
                     var m_MinEmissivePerCorporation = typeof(ManTechMaterialSwap).GetField("m_MinEmissivePerCorporation", binding);
                     var emissive = m_MinEmissivePerCorporation.GetValue(__instance) as float[];
                     /*for (int i = 0; i < emissive.Length; i++)
