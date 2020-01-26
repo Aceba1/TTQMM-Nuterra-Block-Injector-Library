@@ -653,6 +653,21 @@ namespace Nuterra.BlockInjector
             All,
         }
 
+        public enum EmissionMode : byte
+        {
+            None,
+            Active,
+            ActiveAtNight,
+            ActiveWhenAnchored
+        }
+
+        public BlockPrefabBuilder SetCustomEmissionMode(EmissionMode Mode)
+        {
+            ThrowIfFinished();
+            _mcb.EmissionMode = Mode;
+            return this;
+        }
+
         public BlockPrefabBuilder SetMass(float mass)
         {
             ThrowIfFinished();
@@ -694,7 +709,7 @@ namespace Nuterra.BlockInjector
             if (Mesh != null)
             {
                 model.AddComponent<MeshFilter>().sharedMesh = Mesh;
-                model.AddComponent<MeshRenderer>().material = Material == null ? GameObjectJSON.MaterialFromShader() : Material;
+                model.AddComponent<MeshRenderer>().material = Material == null ? GameObjectJSON.MaterialFromShader(Color.white) : Material;
             }
             if (CreateBoxCollider)
             {

@@ -31,6 +31,7 @@ namespace Nuterra.BlockInjector
             public string MeshTextureName;
             public string MeshGlossTextureName;
             public string MeshEmissionTextureName;
+            public int EmissionMode;
             public string MeshMaterialName;
             public int Faction;
             public int Category;
@@ -350,6 +351,13 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
+                if (jBlock.EmissionMode != 0)
+                {
+                    L("Set EmissionMode", l);
+                    blockbuilder.SetCustomEmissionMode((BlockPrefabBuilder.EmissionMode)jBlock.EmissionMode);
+                }
+
+
                 //If gameobjectJSON exists, use it
                 if (jBlock.Deserializer != null)
                 {
@@ -463,7 +471,7 @@ namespace Nuterra.BlockInjector
                 }
                 if (localmat == null)
                 {
-                    localmat = GameObjectJSON.MaterialFromShader();
+                    localmat = GameObjectJSON.MaterialFromShader(Color.white);
                 }
 
                 //-Texture Material

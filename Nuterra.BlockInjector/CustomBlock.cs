@@ -46,8 +46,14 @@ namespace Nuterra.BlockInjector
     {
         public bool HasInjectedCenterOfMass;
         public Vector3 InjectedCenterOfMass;
-        bool rbodyExists = false;
+        public BlockPrefabBuilder.EmissionMode EmissionMode;
+        
         internal uint reparse_version_cache;
+
+        private bool rbodyExists = false;
+        private float emissionTimeDelay = 0f;
+
+
         static Type T_ComponentPool = typeof(ComponentPool);
         static FieldInfo m_ReturnToPoolIndex = T_ComponentPool.GetField("m_ReturnToPoolIndex", BindingFlags.Instance | BindingFlags.NonPublic);
         void OnRecycle()
@@ -59,8 +65,96 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        public void SetEmissionColor(Color EmissionColor)
+        {
+            foreach (var ren in gameObject.GetComponentsInChildren<Renderer>(true))
+            {
+                if (ren.material.IsKeywordEnabled("StandardTankBlock"))
+                    ren.material.SetColor("_EmissionColor", EmissionColor);
+            }
+        }
+
+        public void SetEmissionOn()
+        {
+            block.SwapMaterialTime(true);
+            SetEmissionColor(Color.white);
+        }
+        public void SetEmissionOff()
+        {
+            block.SwapMaterialTime(false);
+            SetEmissionColor(Color.black);
+        }
+
+        void ChangeTimeEmission(bool _)
+        {
+            emissionTimeDelay = UnityEngine.Random.value * 2f + 1f;
+        }
+
+        void ChangeAnchorEmission(ModuleAnchor _, bool isAnchored, bool __)
+        {
+            if (isAnchored)
+                SetEmissionOn();
+            else
+                SetEmissionOff();
+        }
+        void HookAnchorEmission()
+        {
+            if (block.tank.IsAnchored) SetEmissionOn();
+            block.tank.AnchorEvent.Subscribe(ChangeAnchorEmission);
+        }
+        void UnhookAnchorEmission()
+        {
+            block.tank.AnchorEvent.Unsubscribe(ChangeAnchorEmission);
+            SetEmissionOff();
+        }
+
+        void OnSpawn()
+        {
+            switch (EmissionMode)
+            {
+                case BlockPrefabBuilder.EmissionMode.Active:
+                    SetEmissionOn(); break;
+
+                case BlockPrefabBuilder.EmissionMode.ActiveAtNight:
+                    if (ManTimeOfDay.inst.NightTime)
+                        SetEmissionOn();
+                    else
+                        SetEmissionOff();
+                    break;
+            }
+        }
+
+        void OnPool()
+        {
+            switch (EmissionMode)
+            {
+                case BlockPrefabBuilder.EmissionMode.ActiveAtNight:
+                    ManTimeOfDay.inst.DayEndEvent.Subscribe(ChangeTimeEmission); break;
+
+                case BlockPrefabBuilder.EmissionMode.ActiveWhenAnchored:
+                    {
+                        block.AttachEvent.Subscribe(HookAnchorEmission);
+                        block.DetachEvent.Subscribe(UnhookAnchorEmission);
+                        break;
+                    }
+                default: break;
+            }
+        }
+
         void Update()
         {
+            if (emissionTimeDelay > 0f)
+            {
+                emissionTimeDelay -= Time.deltaTime;
+                if (emissionTimeDelay <= 0f)
+                {
+                    emissionTimeDelay = 0f;
+                    if (ManTimeOfDay.inst.NightTime)
+                        SetEmissionOn();
+                    else
+                        SetEmissionOff();
+                }
+            }
             if (HasInjectedCenterOfMass)
             {
                 bool re = block.rbody.IsNotNull();

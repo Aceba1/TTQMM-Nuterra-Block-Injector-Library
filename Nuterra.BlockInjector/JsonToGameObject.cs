@@ -25,6 +25,13 @@ namespace Nuterra.BlockInjector
             var shader = GetObjectFromGameResources<Shader>(t_shader, ShaderName, true);
             return new Material(shader);
         }
+        public static Material MaterialFromShader(Color EmissionColor, string ShaderName = "StandardTankBlock")
+        {
+            var shader = GetObjectFromGameResources<Shader>(t_shader, ShaderName, true);
+            var material = new Material(shader);
+            material.SetColor("_EmissionColor", EmissionColor);
+            return material;
+        }
 
         public static Material SetTexturesToMaterial(bool MakeCopy, Material material, Texture2D Alpha = null, Texture2D MetallicGloss = null, Texture2D Emission = null)
         {
