@@ -33,7 +33,7 @@
   /*  OR  */
   "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GC_Main", "VEN_Main", "BF_Main", and "HE_Main",. This material flashes and everything! (You can use this in combination with the above)
 
-  //"EmissionMode": 2, // No change = 0, No glow = 1, Glow = 2, Glow at night = 3, Glow when anchored = 4
+  //"EmissionMode": 2, // No change = 0, Glow = 1, Glow at night = 2, Glow when anchored = 3
 
   "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make an upright box collider relative to the mesh's extents
   "SupressBoxColliderFallback": false, //Disable creation of BoxCollider. Useful for if a collider will be already provided
