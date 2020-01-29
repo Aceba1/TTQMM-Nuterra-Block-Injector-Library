@@ -566,7 +566,7 @@ namespace Nuterra.BlockInjector
                                             object component = result.GetComponent(refType);
                                             if (component as Component == null)
                                                 component = result.AddComponent(refType);
-                                            ShallowCopy(refType, refTarget, component);
+                                            ShallowCopy(refType, refTarget, component, false);
                                             ApplyValues(component, refType, property.Value as JObject, Spacing);
                                             continue;
                                         }
@@ -782,10 +782,12 @@ namespace Nuterra.BlockInjector
             return instance;
         }
 
-        private static void ShallowCopy(Type sharedType, object source, object target)
+        public static void ShallowCopy(Type sharedType, object source, object target, bool DeclaredVarsOnly)
         {
-            var fields = sharedType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-            var props = sharedType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+            var bf = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
+            if (DeclaredVarsOnly) bf |= BindingFlags.DeclaredOnly;
+            var fields = sharedType.GetFields(bf);
+            var props = sharedType.GetProperties(bf);
             foreach (var field in fields)
             {
                 try
@@ -840,7 +842,7 @@ namespace Nuterra.BlockInjector
                         item = Activator.CreateInstance(itemType); // Create instance, because is needed
                         if (sourceList.Count != 0) // Copy current or last element
                         {
-                            ShallowCopy(itemType, sourceList[Math.Min(i, sourceList.Count - 1)], item); // Helpful, trust me
+                            ShallowCopy(itemType, sourceList[Math.Min(i, sourceList.Count - 1)], item, true); // Helpful, trust me
                         }
                     }
                     item = ApplyValues(item, itemType, _jObject, Spacing);
@@ -894,7 +896,7 @@ namespace Nuterra.BlockInjector
                         else
                         {
                             object newObj = Activator.CreateInstance(tField.FieldType);
-                            ShallowCopy(tField.FieldType, original, newObj);
+                            ShallowCopy(tField.FieldType, original, newObj, true);
                             rewrite = ApplyValues(newObj, tField.FieldType, jObject, Spacing + m_tab);
                         }
                     }
@@ -933,7 +935,7 @@ namespace Nuterra.BlockInjector
                         else
                         {
                             object newObj = Activator.CreateInstance(tProp.PropertyType);
-                            ShallowCopy(tProp.PropertyType, original, newObj);
+                            ShallowCopy(tProp.PropertyType, original, newObj, true);
                             rewrite = ApplyValues(newObj, tProp.PropertyType, jObject, Spacing + m_tab);
                         }
                     }
