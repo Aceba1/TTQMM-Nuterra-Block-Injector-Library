@@ -641,6 +641,8 @@ namespace Nuterra.BlockInjector
                             if (ren != null)
                             {
                                 mat = ren.material;
+                                if (ren is ParticleSystemRenderer psren)
+                                    psren.trailMaterial = mat;
                             }
                         }
                         if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
@@ -704,7 +706,11 @@ namespace Nuterra.BlockInjector
                             {
                                 L("-Set Material", l);
                                 foreach (var renderer in renderers)
+                                {
                                     renderer.material = mat;
+                                    if (renderer is ParticleSystemRenderer psrenderer)
+                                        psrenderer.trailMaterial = mat;
+                                }
                             }
                         }
 
