@@ -287,22 +287,22 @@ namespace Nuterra.BlockInjector
                     else
                         blockbuilder = new BlockPrefabBuilder(gpr, false);
 
-                    if (jBlock.KeepRenderers)
+                    if (jBlock.KeepRenderers) // Keep renderers
                     {
-                        if (!jBlock.KeepColliders)
+                        if (!jBlock.KeepColliders) // Don't keep colliders
                         {
                             blockbuilder.RemoveChildrenWithComponent(true, null, typeof(Collider));
                         }
                     }
-                    else if (!jBlock.KeepReferenceRenderers)
+                    else if (!jBlock.KeepReferenceRenderers) // Don't keep renderers
                     {
-                        if (!jBlock.KeepColliders)
+                        if (!jBlock.KeepColliders) // Don't keep colliders
                         {
-                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(SkinnedMeshRenderer), typeof(MeshFilter), typeof(Collider));
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(TankTrack), typeof(SkinnedMeshRenderer), typeof(MeshFilter), typeof(Collider));
                         }
-                        else
+                        else // Keep colliders
                         {
-                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(SkinnedMeshRenderer), typeof(MeshFilter));
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(TankTrack), typeof(SkinnedMeshRenderer), typeof(MeshFilter));
                         }
                     }
 
@@ -416,7 +416,7 @@ namespace Nuterra.BlockInjector
                 L("Set Rarity", l);
                 blockbuilder.SetRarity((BlockRarity)jBlock.Rarity);
 
-                if (jBlock.IconName != null && jBlock.IconName != "")
+                if (!string.IsNullOrEmpty(jBlock.IconName))
                 {
                     L("Set Icon", l);
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(SpriteT, jBlock.IconName);
@@ -448,7 +448,7 @@ namespace Nuterra.BlockInjector
                 }
                 else
                 {
-                    if (jBlock.MeshMaterialName != null && jBlock.MeshMaterialName != "")
+                    if (!string.IsNullOrEmpty(jBlock.MeshMaterialName))
                     {
                         L("Get Material", l);
                         string matName = jBlock.MeshMaterialName.Replace("Venture_", "VEN_")
@@ -463,19 +463,17 @@ namespace Nuterra.BlockInjector
                     if (localmat == null)
                         localmat = GameObjectJSON.MaterialFromShader(Color.white);
 
+                    if (!missingflags)
                     {
-                        if (!missingflags)
-                        {
-                            L("Texture Material", l);
-                            localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
-                                missingflag1 ? null :
-                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshTextureName),
-                                missingflag2 ? null :
-                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
-                                missingflag3 ? null :
-                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
-                            CustomMatCache.Add(DupeCheck, localmat);
-                        }
+                        L("Texture Material", l);
+                        localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
+                            missingflag1 ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshTextureName),
+                            missingflag2 ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
+                            missingflag3 ? null :
+                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
+                        CustomMatCache.Add(DupeCheck, localmat);
                     }
                 }
 
