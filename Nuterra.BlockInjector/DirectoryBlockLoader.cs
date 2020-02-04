@@ -443,7 +443,7 @@ namespace Nuterra.BlockInjector
                 string DupeCheck = "M:" + jBlock.MeshMaterialName + ";A:" + jBlock.MeshTextureName + ";G:" + jBlock.MeshGlossTextureName + ";E:" + jBlock.MeshEmissionTextureName;
                 if (!missingflags && CustomMatCache.TryGetValue(DupeCheck, out Material localcustomMat))
                 {
-                    L("Get Cached Material", l);
+                    L("Get Cached Material (" + DupeCheck + ")", l);
                     localmat = localcustomMat;
                 }
                 else
@@ -634,10 +634,10 @@ namespace Nuterra.BlockInjector
                             smissingflag3 = string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName),
                             smissingflags = smissingflag1 && smissingflag2 && smissingflag3;
 
-                        string SubDupeCheck = "M:" + sub.MeshMaterialName??jBlock.MeshMaterialName + ";A:" + sub.MeshTextureName + ";G:" + sub.MeshGlossTextureName + ";E:" + sub.MeshEmissionTextureName;
+                        string SubDupeCheck = "M:" + (sub.MeshMaterialName??jBlock.MeshMaterialName) + ";A:" + sub.MeshTextureName + ";G:" + sub.MeshGlossTextureName + ";E:" + sub.MeshEmissionTextureName;
                         if (!smissingflags && CustomMatCache.TryGetValue(SubDupeCheck, out Material customMat))
                         {
-                            L("-Get Cached Material", l);
+                            L("-Get Cached Material (" + SubDupeCheck + ")", l);
                             mat = customMat;
                         }
                         else
