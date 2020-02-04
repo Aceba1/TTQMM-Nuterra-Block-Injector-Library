@@ -422,23 +422,7 @@ namespace Nuterra.BlockInjector
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(SpriteT, jBlock.IconName);
                     if (Spr == null)
                     {
-                        //var Tex = GameObjectJSON.GetObjectFromGameResources<Texture2D>(Texture2DT, jBlock.IconName);
-                        //if (Tex == null)
-                        //{
-                        //    Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(jBlock.IconName);
-                        //    if (Spr == null)
-                        //    {
-                                blockbuilder.SetIcon((Sprite)null);
-                        //    }
-                        //    else
-                        //    {
-                        //        blockbuilder.SetIcon(Spr);
-                        //    }
-                        //}
-                        //else
-                        //{
-                        //    blockbuilder.SetIcon(Tex);
-                        //}
+                        blockbuilder.SetIcon((Sprite)null);
                     }
                     else
                     {

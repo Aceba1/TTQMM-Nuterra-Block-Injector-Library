@@ -743,7 +743,7 @@ namespace Nuterra.BlockInjector
             if (ColliderMesh != null)
             {
                 var mc = model.AddComponent<MeshCollider>();
-                mc.convex = ConvexCollider;
+                //mc.convex = ConvexCollider;
                 mc.sharedMesh = ColliderMesh;
                 mc.sharedMaterial = PhysicMaterial;
             }
