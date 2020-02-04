@@ -18,21 +18,32 @@ namespace Nuterra.BlockInjector
             public bool KeepReferenceRenderers; // Legacy
             public bool KeepRenderers;
             public bool KeepColliders;
+            public JValue PrefabReference { set => GamePrefabReference = value; }
             public JValue GamePrefabReference;
             public JValue DeathExplosionReference;
             public int ID; //public JValue ID;
             public string IconName;
             public string MeshName;
+            public string MeshColliderName { set => ColliderMeshName = value; }
             public string ColliderMeshName;
+
+            public bool NoBoxCollider { set => SupressBoxColliderFallback = value; }
             public bool SupressBoxColliderFallback;
+
             public float? Friction;
             public float? StaticFriction;
             public float? Bounciness;
+            public string TextureName { set => MeshTextureName = value; }
             public string MeshTextureName;
+            public string GlossTextureName { set => MeshGlossTextureName = value; }
             public string MeshGlossTextureName;
+            public string EmissionTextureName { set => MeshEmissionTextureName = value; }
             public string MeshEmissionTextureName;
+
             public int EmissionMode;
+            public string MaterialName { set => MeshMaterialName = value; }
             public string MeshMaterialName;
+
             public int Faction;
             public int Category;
             public int Grade;
@@ -40,43 +51,71 @@ namespace Nuterra.BlockInjector
             public int HP;
             public int? DamageableType;
             public int Rarity;
+            public float DetachFragility{ set => Fragility = value; }
             public float? Fragility;
+
             public float Mass;
             public Vector3? CenterOfMass;
             public IntVector3? BlockExtents;
+            public bool MakeAPsAtBottom { set => APsOnlyAtBottom = value; }
             public bool APsOnlyAtBottom;
             public IntVector3[] Cells;
             public Vector3[] APs;
+
+            public Vector3 PrefabOffset { set => ReferenceOffset = value; }
+            public Vector3 PrefabPosition { set => ReferenceOffset = value; }
             public Vector3? ReferenceOffset;
+            
+            public Vector3 PrefabScale { set => ReferenceScale = value; }
             public Vector3? ReferenceScale;
+            
+            public Vector3 PrefabRotation { set => ReferenceRotationOffset = value; }
             public Vector3? ReferenceRotationOffset;
+            
             public JToken Recipe;
             public string RecipeTable;
             public SubObj[] SubObjects;
 
+            public JObject JSONBLOCK { set => Deserializer = value; }
             public JObject Deserializer;
-            public JObject JSONBLOCK;
 
             public struct SubObj
             {
+                public string OverrideName { set => SubOverrideName = value; }
+                public string ObjectName { set => SubOverrideName = value; }
                 public string SubOverrideName;
+
                 public string MeshName;
                 public int? Layer;
+                public bool DestroyColliders { set => DestroyExistingColliders = value; }
                 public bool DestroyExistingColliders;
+                public bool DestroyExistingRenderers { set => DestroyExistingRenderer = value; }
+                public bool DestroyRenderers { set => DestroyExistingRenderer = value; }
+                public bool DestroyExistingRenderer;
+
                 public bool MakeBoxCollider;
                 public bool MakeSphereCollider;
+                public string MeshColliderName { set => ColliderMeshName = value; }
                 public string ColliderMeshName;
+
                 public float? Friction;
                 public float? StaticFriction;
                 public float? Bounciness;
+                public string TextureName { set => MeshTextureName = value; }
                 public string MeshTextureName;
+                public string GlossTextureName { set => MeshGlossTextureName = value; }
                 public string MeshGlossTextureName;
+                public string EmissionTextureName { set => MeshEmissionTextureName = value; }
                 public string MeshEmissionTextureName;
+                public string MaterialName { set => MeshMaterialName = value; }
                 public string MeshMaterialName;
+
+                public Vector3 Position { set => SubPosition = value; }
                 public Vector3? SubPosition;
+                public Vector3 Scale { set => SubScale = value; }
                 public Vector3? SubScale;
+                public Vector3 Rotation { set => SubRotation = value; }
                 public Vector3? SubRotation;
-                public bool DestroyExistingRenderer;
                 //PUT ANIMATION CURVES HERE
                 public AnimInfo[] Animations;
                 public struct AnimInfo
@@ -362,12 +401,7 @@ namespace Nuterra.BlockInjector
                 if (jBlock.Deserializer != null)
                 {
                     L("Use Deserializer", l);
-                    GameObjectJSON.CreateGameObject(jObject["Deserializer"].ToObject<JObject>(), blockbuilder.Prefab);
-                }
-                else if (jBlock.JSONBLOCK != null)
-                {
-                    L("Use Deserializer", l);
-                    GameObjectJSON.CreateGameObject(jObject["JSONBLOCK"].ToObject<JObject>(), blockbuilder.Prefab);
+                    GameObjectJSON.CreateGameObject(jBlock.Deserializer, blockbuilder.Prefab);
                 }
 
                 L("Set ID", l);
