@@ -254,49 +254,49 @@ namespace Nuterra.BlockInjector
             } 
         }
 
-        public struct AnimationCurveStruct
-        {
-            internal static AnimationCurveStruct[] ConvertToStructArray(DirectoryBlockLoader.BlockBuilder.SubObj.AnimInfo.Curve[] curves)
-            {
-                var result = new AnimationCurveStruct[curves.Length];
-                for (int i = 0; i < curves.Length; i++)
-                {
-                    result[i] = new AnimationCurveStruct(curves[i].ComponentName, curves[i].PropertyName, curves[i].ToAnimationCurve());
-                }
-                return result;
-            }
+        //public struct AnimationCurveStruct
+        //{
+        //    internal static AnimationCurveStruct[] ConvertToStructArray(DirectoryBlockLoader.BlockBuilder.SubObj.AnimInfo.Curve[] curves)
+        //    {
+        //        var result = new AnimationCurveStruct[curves.Length];
+        //        for (int i = 0; i < curves.Length; i++)
+        //        {
+        //            result[i] = new AnimationCurveStruct(curves[i].ComponentName, curves[i].PropertyName, curves[i].ToAnimationCurve());
+        //        }
+        //        return result;
+        //    }
 
-            public AnimationCurveStruct(string Type, string PropertyName, AnimationCurve Curve)
-            {
-                this.Type = GameObjectJSON.GetType(Type);
-                this.PropertyName = PropertyName;
-                this.Curve = Curve;
-            }
-            public Type Type;
-            public string PropertyName;
-            public AnimationCurve Curve;
-        }
+        //    public AnimationCurveStruct(string Type, string PropertyName, AnimationCurve Curve)
+        //    {
+        //        this.Type = GameObjectJSON.GetType(Type);
+        //        this.PropertyName = PropertyName;
+        //        this.Curve = Curve;
+        //    }
+        //    public Type Type;
+        //    public string PropertyName;
+        //    public AnimationCurve Curve;
+        //}
 
-        public static void ModifyAnimation(Animator animator, string clipName, string path, AnimationCurveStruct[] curves)
-        {
-            for(int i = 0; i < animator.layerCount; i++)
-            {
-                var clips = animator.GetCurrentAnimatorClipInfo(i);
-                for (int j = 0; j < clips.Length; j++)
-                {
-                    var clip = clips[j];
-                    if (clips[j].clip.name == clipName)
-                    {
-                        foreach (var curve in curves)
-                        {
-                            clip.clip.SetCurve(path, curve.Type, curve.PropertyName, curve.Curve);
-                            clips[j] = clip;
-                        }
-                        return;
-                    }
-                }
-            }
-        }
+        //public static void ModifyAnimation(Animator animator, string clipName, string path, AnimationCurveStruct[] curves)
+        //{
+        //    for(int i = 0; i < animator.layerCount; i++)
+        //    {
+        //        var clips = animator.GetCurrentAnimatorClipInfo(i);
+        //        for (int j = 0; j < clips.Length; j++)
+        //        {
+        //            var clip = clips[j];
+        //            if (clips[j].clip.name == clipName)
+        //            {
+        //                foreach (var curve in curves)
+        //                {
+        //                    clip.clip.SetCurve(path, curve.Type, curve.PropertyName, curve.Curve);
+        //                    clips[j] = clip;
+        //                }
+        //                return;
+        //            }
+        //        }
+        //    }
+        //}
 
         public static object GetValueFromPath(this Component component, string PropertyPath)
         {

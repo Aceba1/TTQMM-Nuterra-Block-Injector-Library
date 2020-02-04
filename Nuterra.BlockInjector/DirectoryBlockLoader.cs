@@ -116,51 +116,6 @@ namespace Nuterra.BlockInjector
                 public Vector3? SubScale;
                 public Vector3 Rotation { set => SubRotation = value; }
                 public Vector3? SubRotation;
-                //PUT ANIMATION CURVES HERE
-                public AnimInfo[] Animations;
-                public struct AnimInfo
-                {
-                    public string ClipName;
-                    public Curve[] Curves;
-
-                    public AnimationCurve[] GetAnimationCurves()
-                    {
-                        var result = new AnimationCurve[Curves.Length];
-                        for (int i = 0; i < Curves.Length; i++)
-                        {
-                            result[i] = Curves[i].ToAnimationCurve();
-                        }
-                        return result;
-                    }
-
-                    public struct Curve
-                    {
-                        public string ComponentName;
-                        public string PropertyName;
-                        public Key[] Keys;
-                        public AnimationCurve ToAnimationCurve()
-                        {
-                            var Keyframes = new Keyframe[Keys.Length];
-                            for (int i = 0; i < Keys.Length; i++)
-                            {
-                                Keyframes[i] = Keys[i].ToKeyframe();
-                            }
-                            return new AnimationCurve(Keyframes);
-                        }
-
-                        public struct Key
-                        {
-                            public float Time;
-                            public float Value;
-                            public float inTangent;
-                            public float outTangent;
-                            public Keyframe ToKeyframe()
-                            {
-                                return new Keyframe(Time, Value, inTangent, outTangent);
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -791,21 +746,6 @@ namespace Nuterra.BlockInjector
                         {
                             L("-Set Size", l);
                             childT.localScale = sub.SubScale.Value;
-                        }
-                        //-Animation
-                        if (sub.Animations != null)
-                        {
-                            Console.WriteLine("Animation block detected");
-                            var mA = tr.GetComponentsInChildren<ModuleAnimator>(true);
-                            if (mA.Length != 0)
-                            {
-                                var Animator = mA[0];
-                                GameObjectJSON.DumpAnimation(Animator);
-                                foreach (var anim in sub.Animations)
-                                {
-                                    GameObjectJSON.ModifyAnimation(Animator.Animator, anim.ClipName, childT.GetPath(Animator.transform), GameObjectJSON.AnimationCurveStruct.ConvertToStructArray(anim.Curves));
-                                }
-                            }
                         }
                     }
                 }
