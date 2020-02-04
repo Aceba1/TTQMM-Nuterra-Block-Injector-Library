@@ -439,17 +439,17 @@ namespace Nuterra.BlockInjector
             type = Type.GetType(Name, new Func<AssemblyName, Assembly>(AssemblyResolver), new Func<Assembly, string, bool, Type>(TypeResolver), false, true);
             if (type == null)
             {
-                //type = Type.GetType(Name + ", " + typeof(TankBlock).Assembly.FullName);
-                //if (type == null)
-                //{
-                //    type = Type.GetType(Name + ", " + typeof(GameObject).Assembly.FullName);
-                //    if (type == null)
-                //    {
-                Console.WriteLine(Name + " is not a known type! If you are using a Unity type, you might need to prefix the class with \"UnityEngine.\", for example, \"UnityEngine.LineRenderer\". If it is not from Unity or the game itself, it needs the class's Assembly's `FullName`, for example: \"" + typeof(TankBlock).Assembly.FullName + "\", in which it'd be used as \"" + typeof(TankBlock).AssemblyQualifiedName + "\"");
-                stringtypecache.Add(Name, null);
-                return null;
-                //    }
-                //}
+                type = Type.GetType("UnityEngine." + Name, new Func<AssemblyName, Assembly>(AssemblyResolver), new Func<Assembly, string, bool, Type>(TypeResolver), false, true);
+                if (type != null)
+                {
+                    Console.WriteLine("GetType(string): Warning! \"UnityEngine.\" should be added before search term \"" + Name + "\" to avoid searching twice!");
+                }
+                else
+                {
+                    Console.WriteLine("GetType(string): " + Name + " is not a known type! It may need the proper namespace defined before it (ex: \"UnityEngine.LineRenderer\"), or it needs the class's Assembly's `FullName` (ex: \"" + typeof(ModuleFirstPerson).Assembly.FullName + "\", in which it'd be used as \"" + typeof(ModuleFirstPerson).AssemblyQualifiedName + "\"");
+                    stringtypecache.Add(Name, null);
+                    return null;
+                }
             }
             stringtypecache.Add(Name, type);
             return type;
