@@ -11,6 +11,7 @@ namespace Nuterra.BlockInjector
 {
     internal static class DirectoryBlockLoader
     {
+        static Dictionary<string, Material> CustomMatCache = new Dictionary<string, Material>();
         internal struct BlockBuilder
         {
             public string Name;
@@ -445,39 +446,52 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
-                L("Get Material", l);
+
+
                 /*Local*/
                 Material localmat = null;
-                if (jBlock.MeshMaterialName != null && jBlock.MeshMaterialName != "")
-                {
-                    jBlock.MeshMaterialName.Replace("Venture_", "VEN_");
-                    jBlock.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                    try
-                    {
-                        localmat = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, jBlock.MeshMaterialName);
-                    }
-                    catch { Console.WriteLine(jBlock.MeshMaterialName + " is not a valid Game Material!"); }
-                }
-                if (localmat == null)
-                {
-                    localmat = GameObjectJSON.MaterialFromShader(Color.white);
-                }
 
-                //-Texture Material
+                bool missingflag1 = string.IsNullOrWhiteSpace(jBlock.MeshTextureName),
+                    missingflag2 = string.IsNullOrWhiteSpace(jBlock.MeshGlossTextureName),
+                    missingflag3 = string.IsNullOrWhiteSpace(jBlock.MeshEmissionTextureName),
+                    missingflags = missingflag1 && missingflag2 && missingflag3;
+
+                string DupeCheck = "M:" + jBlock.MeshMaterialName + ";A:" + jBlock.MeshTextureName + ";G:" + jBlock.MeshGlossTextureName + ";E:" + jBlock.MeshEmissionTextureName;
+                if (!missingflags && CustomMatCache.TryGetValue(DupeCheck, out Material localcustomMat))
                 {
-                    bool missingflag1 = string.IsNullOrWhiteSpace(jBlock.MeshTextureName),
-                        missingflag2 = string.IsNullOrWhiteSpace(jBlock.MeshGlossTextureName),
-                        missingflag3 = string.IsNullOrWhiteSpace(jBlock.MeshEmissionTextureName);
-                    if (!missingflag1 || !missingflag2 || !missingflag3)
+                    L("Get Cached Material", l);
+                    localmat = localcustomMat;
+                }
+                else
+                {
+                    if (jBlock.MeshMaterialName != null && jBlock.MeshMaterialName != "")
                     {
-                        L("-Texture Material", l);
-                        localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
-                            missingflag1 ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshTextureName),
-                            missingflag2 ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
-                            missingflag3 ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
+                        L("Get Material", l);
+                        string matName = jBlock.MeshMaterialName.Replace("Venture_", "VEN_")
+                                                                .Replace("GeoCorp_", "GC_");
+                        try
+                        {
+                            localmat = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, matName);
+                            if (localmat == null) Console.WriteLine(matName + " is not a valid Game Material!", l);
+                        }
+                        catch { Console.WriteLine(jBlock.MeshMaterialName + " is not a valid Game Material!"); }
+                    }
+                    if (localmat == null)
+                        localmat = GameObjectJSON.MaterialFromShader(Color.white);
+
+                    {
+                        if (!missingflags)
+                        {
+                            L("Texture Material", l);
+                            localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
+                                missingflag1 ? null :
+                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshTextureName),
+                                missingflag2 ? null :
+                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
+                                missingflag3 ? null :
+                                GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
+                            CustomMatCache.Add(DupeCheck, localmat);
+                        }
                     }
                 }
 
@@ -624,39 +638,50 @@ namespace Nuterra.BlockInjector
 
                         //-Get Material
                         Material mat = localmat;
+
                         if (!New && !sub.DestroyExistingRenderer)
                         {
                             var ren = childG.GetComponent<Renderer>();
-                            if (ren != null)
-                            {
-                                mat = ren.material;
-                                if (ren is ParticleSystemRenderer psren)
-                                    psren.trailMaterial = mat;
-                            }
+                            if (ren) mat = ren.material;
                         }
-                        if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
+
+                        bool smissingflag1 = string.IsNullOrWhiteSpace(sub.MeshTextureName),
+                            smissingflag2 = string.IsNullOrWhiteSpace(sub.MeshGlossTextureName),
+                            smissingflag3 = string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName),
+                            smissingflags = smissingflag1 && smissingflag2 && smissingflag3;
+
+                        string SubDupeCheck = "M:" + sub.MeshMaterialName??jBlock.MeshMaterialName + ";A:" + sub.MeshTextureName + ";G:" + sub.MeshGlossTextureName + ";E:" + sub.MeshEmissionTextureName;
+                        if (!smissingflags && CustomMatCache.TryGetValue(SubDupeCheck, out Material customMat))
                         {
-                            L("-Get Material", l);
-                            string matName = sub.MeshMaterialName.Replace("Venture_", "VEN_")
-                                                                 .Replace("GeoCorp_", "GC_");
-                            if (matName == jBlock.MeshMaterialName) mat = localmat;
-                            else try
+                            L("-Get Cached Material", l);
+                            mat = customMat;
+                        }
+                        else
+                        {
+                            if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
+                            {
+                                L("-Get Material", l);
+                                string matName = sub.MeshMaterialName.Replace("Venture_", "VEN_")
+                                                                     .Replace("GeoCorp_", "GC_");
+                                try
                                 {
                                     var mat2 = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, matName);
                                     if (mat2 == null) Console.WriteLine(matName + " is not a valid Game Material!", l);
                                     else mat = mat2;
                                 }
                                 catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
-                        }
+                            }
 
-                        L("-Texture Material", l);
-                        mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
-                            string.IsNullOrWhiteSpace(sub.MeshTextureName) ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
-                            string.IsNullOrWhiteSpace(sub.MeshGlossTextureName) ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
-                            string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName) ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
+                            if (!smissingflags)
+                            {
+                                L("-Texture Material", l);
+                                mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
+                                    smissingflag1 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
+                                    smissingflag2 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
+                                    smissingflag3 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
+                                CustomMatCache.Add(SubDupeCheck, mat);
+                            }
+                        }
 
                         PhysicMaterial physmat = localphysmat;
                         if (sub.MakeBoxCollider || sub.MakeSphereCollider || !string.IsNullOrWhiteSpace(sub.ColliderMeshName))
@@ -686,7 +711,7 @@ namespace Nuterra.BlockInjector
                             L("-Set Mesh", l);
                             if (New) childG.AddComponent<MeshFilter>().sharedMesh = submesh;
                             else childG.EnsureComponent<MeshFilter>().sharedMesh = submesh;
-                            childG.EnsureComponent<MeshRenderer>().material = mat;
+                            childG.EnsureComponent<MeshRenderer>().sharedMaterial = mat;
                         }
                         else
                         {
@@ -696,7 +721,7 @@ namespace Nuterra.BlockInjector
                                 L("-Set Material", l);
                                 foreach (var renderer in renderers)
                                 {
-                                    renderer.material = mat;
+                                    renderer.sharedMaterial = mat;
                                     if (renderer is ParticleSystemRenderer psrenderer)
                                         psrenderer.trailMaterial = mat;
                                 }
