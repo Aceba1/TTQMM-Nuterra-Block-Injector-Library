@@ -59,6 +59,8 @@ namespace Nuterra.BlockInjector
             _rotation = Quaternion.identity;
             changeAroundX = 0f;
             changeAroundY = 0f;
+            m_changeAroundX = 0f;
+            m_changeAroundY = 0f;
             CreateLineMaterial();
         }
 
