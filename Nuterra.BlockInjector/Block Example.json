@@ -8,7 +8,7 @@
   "Description": "A very nice block, loaded from the file system\nThis one is magical!", //You can make multiple lines with \n
   "ID": 534968, //A random ID that MUST be unique
 
-  "Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP = 3, Venture = 4, HawkEye = 5, Special = 6, BetterFuture = 7
+  "Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP|RR = 3, Venture = 4, HawkEye = 5, Special = 6, BetterFuture = 7
   "Category": 0, //Control = 1, Standard = 2|0, Wheels = 3, Weapons = 4, Accessories = 5, Power = 6, Base = 7, Flight = 8
   "Grade": 0, //The desired grade minus one
   "Price": 100, //The price is measured by sum of recipe value times 3
@@ -137,7 +137,7 @@
 
   /*
   "Deserializer: {
-    // Things go here
+    // Complicated things go here, will be explained elsewhere. Check out other blocks or the discord for help
   }
   /**/
 

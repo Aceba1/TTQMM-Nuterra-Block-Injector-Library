@@ -526,6 +526,19 @@ namespace Nuterra.BlockInjector
                     return true;
                 }
             }
+
+            [HarmonyPatch(typeof(ModuleLight), "EnableLights")]
+            private static class OverrideEmission
+            {
+                private static void Postfix(ref ModuleLight __instance)
+                {
+                    ModuleCustomBlock cb = __instance.GetComponent<ModuleCustomBlock>();
+                    if (cb != null && cb.EmissionMode != BlockPrefabBuilder.EmissionMode.None)
+                    {
+                        cb.UpdateEmission();
+                    }
+                }
+            }
         }
 
         static Type T_BlockUnlockTable = typeof(BlockUnlockTable),

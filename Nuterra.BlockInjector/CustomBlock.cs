@@ -13,7 +13,7 @@ namespace Nuterra.BlockInjector
         public string Name { get; internal set; }
         public string Description { get; internal set; }
         public int Price { get; internal set; }
-        public FactionSubTypes Faction { get; internal set; } = FactionSubTypes.EXP;
+        public FactionSubTypes Faction { get; internal set; } = FactionSubTypes.GSO;
         public BlockCategories Category { get; internal set; } = BlockCategories.Standard;
         public BlockRarity Rarity { get; internal set; } = BlockRarity.Common;
         public GameObject Prefab { get; internal set; }
@@ -62,6 +62,23 @@ namespace Nuterra.BlockInjector
             {
                 m_ReturnToPoolIndex.SetValue(ComponentPool.inst, (int)m_ReturnToPoolIndex.GetValue(ComponentPool.inst) - 1);
                 GameObject.Destroy(gameObject);
+            }
+        }
+
+        public void UpdateEmission()
+        {
+            switch(EmissionMode)
+            {
+                case BlockPrefabBuilder.EmissionMode.Active:
+                    SetEmissionOn(); return;
+
+                case BlockPrefabBuilder.EmissionMode.ActiveAtNight:
+                    if (ManTimeOfDay.inst.NightTime) SetEmissionOn();
+                    else SetEmissionOff(); return;
+
+                case BlockPrefabBuilder.EmissionMode.ActiveWhenAnchored:
+                    if (block.tank != null && block.tank.IsAnchored) SetEmissionOn();
+                    else SetEmissionOn(); return;
             }
         }
 
@@ -129,15 +146,15 @@ namespace Nuterra.BlockInjector
             switch (EmissionMode)
             {
                 case BlockPrefabBuilder.EmissionMode.ActiveAtNight:
-                    ManTimeOfDay.inst.DayEndEvent.Subscribe(ChangeTimeEmission); break;
+                    ManTimeOfDay.inst.DayEndEvent.Subscribe(ChangeTimeEmission);
+                    return;
 
                 case BlockPrefabBuilder.EmissionMode.ActiveWhenAnchored:
-                    {
-                        block.AttachEvent.Subscribe(HookAnchorEmission);
-                        block.DetachEvent.Subscribe(UnhookAnchorEmission);
-                        break;
-                    }
-                default: break;
+                    block.AttachEvent.Subscribe(HookAnchorEmission);
+                    block.DetachEvent.Subscribe(UnhookAnchorEmission);
+                    return;
+
+                default: return;
             }
         }
 
