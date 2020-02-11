@@ -905,15 +905,14 @@ namespace Nuterra.BlockInjector
                     if (type.IsSubclassOf(t_comp)) // UnityEngine.Component (Module)
                     {
                         var oObj = (GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null);
-                        bool isActive = oObj.activeSelf;
+                        //bool isActive = oObj.activeInHierarchy;//oObj.activeSelf;
                         var nObj = GameObject.Instantiate((original as Component).gameObject);
                         //if (Input.GetKey(KeyCode.Alpha9)) nObj.SetActive(true);
                         //else if (Input.GetKey(KeyCode.Alpha9)) nObj.SetActive(false);
                         //else 
-                        nObj.SetActive(isActive);
+                        nObj.SetActive(false);// isActive && !Input.GetKey(KeyCode.O));
                         nObj.transform.parent = oObj.transform.parent;
                         nObj.transform.position = Vector3.down * 25000f;
-                        //Console.WriteLine(Spacing + m_tab + ">Instantiating");
                         var cacheSearchTransform = SearchTransform;
                         CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
                         SearchTransform = cacheSearchTransform;
