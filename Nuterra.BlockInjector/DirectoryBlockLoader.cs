@@ -11,6 +11,7 @@ namespace Nuterra.BlockInjector
 {
     internal static class DirectoryBlockLoader
     {
+        //public static Dictionary<string, List<Material>>[] TexMatLookup = new Dictionary<string, List<Material>>[] { new Dictionary<string, List<Material>>(), new Dictionary<string, List<Material>>(), new Dictionary<string, List<Material>>() };
         static Dictionary<string, Material> HashMAGE = new Dictionary<string, Material>();
         internal struct BlockBuilder
         {
@@ -176,7 +177,8 @@ namespace Nuterra.BlockInjector
                 yield return null;
                 foreach (FileInfo Png in cbPng)
                 {
-                    if (!FileChanged.TryGetValue(Png.FullName, out DateTime lastEdit) || lastEdit != Png.LastWriteTime)
+                    bool imgReparse = FileChanged.TryGetValue(Png.FullName, out DateTime lastEdit);
+                    if (!imgReparse || lastEdit != Png.LastWriteTime)
                     {
                         try
                         {
@@ -185,6 +187,20 @@ namespace Nuterra.BlockInjector
                             GameObjectJSON.AddObjectToUserResources<Texture>(TextureT, tex, Png.Name);
                             GameObjectJSON.AddObjectToUserResources<Sprite>(SpriteT, GameObjectJSON.SpriteFromImage(tex), Png.Name);
                             FileChanged[Png.FullName] = Png.LastWriteTime;
+                            //if (imgReparse)
+                            //{
+                            //    foreach (var mat in TexMatLookup[0][Png.Name])
+                            //        mat.SetTexture("_MainTex", tex);
+                            //    foreach (var mat in TexMatLookup[1][Png.Name])
+                            //        mat.SetTexture("_MetallicGlossMap", tex);
+                            //    foreach (var mat in TexMatLookup[2][Png.Name])
+                            //        mat.SetTexture("_EmissionMap", tex);
+                            //}
+                            //else
+                            //{
+                            //    for (int i = 0; i < 3; i++)
+                            //        TexMatLookup[i].Add(Png.Name, new List<Material>());
+                            //}
                             Count++;
                         }
                         catch (Exception E)
