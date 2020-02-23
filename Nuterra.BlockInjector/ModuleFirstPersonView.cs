@@ -344,7 +344,7 @@ namespace Nuterra.BlockInjector
         private GameObject _anchor;
         public bool AdaptToMainRot = false;
         public TankBlock thisBlock;
-
+        public bool LockCursor = false; // Make First Person Shooter style
         public void Awake()
         {
             thisBlock = gameObject.GetComponent<TankBlock>();
