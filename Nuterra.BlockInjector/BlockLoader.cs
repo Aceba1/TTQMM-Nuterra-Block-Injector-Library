@@ -82,6 +82,30 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        internal class JsonCorpCoroutine : MonoBehaviour
+        {
+            IEnumerator<object> coroutine;
+            internal static bool RunningCoroutine = false;
+
+            void Update()
+            {
+                if (RunningCoroutine)
+                {
+                    do
+                    {
+                        RunningCoroutine = coroutine.MoveNext();
+                    }
+                    while (RunningCoroutine);
+                }
+            }
+
+            public void BeginCoroutine(bool LoadResources, bool LoadCorps)
+            {
+                RunningCoroutine = true;
+                coroutine = DirectoryCorpLoader.LoadCorps(LoadResources, LoadCorps);
+            }
+        }
+
         internal class JsonBlockCoroutine : MonoBehaviour
         {
             internal static byte LockLinear;
@@ -330,15 +354,29 @@ namespace Nuterra.BlockInjector
 
         public static void PostModsLoaded()
         {
+            var factions = Enum.GetValues(typeof(FactionSubTypes));
+            last = (FactionSubTypes)factions.GetValue(factions.Length - 1);
+
             if (Input.GetKey(KeyCode.T)) CapInjectedID++; // Debug test, offset everything by 1
             var harmony = HarmonyInstance.Create("nuterra.block.injector");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            var running = false;
+            var enumerator = DirectoryCorpLoader.LoadCorps(true, true);
+            do
+            {
+                running = enumerator.MoveNext();
+            } while (running);
 
             new GameObject().AddComponent<Timer>();
             BlockExamples.Load();
             PostStartEvent += NetHandler.Patches.INIT;
 
-            var jsonblockloader = new GameObject().AddComponent<JsonBlockCoroutine>();
+            var loader = new GameObject();
+            /*var jsoncorploader = loader.AddComponent<JsonCorpCoroutine>();
+            jsoncorploader.BeginCoroutine(true, true);*/
+
+            var jsonblockloader = loader.AddComponent<JsonBlockCoroutine>();
             jsonblockloader.BeginCoroutine(true, false);
             PostStartEvent += delegate { jsonblockloader.BeginCoroutine(false, true); };
         }
