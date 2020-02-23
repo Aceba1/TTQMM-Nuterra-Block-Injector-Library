@@ -59,6 +59,8 @@ namespace Nuterra.BlockInjector
             _rotation = Quaternion.identity;
             changeAroundX = 0f;
             changeAroundY = 0f;
+            m_changeAroundX = 0f;
+            m_changeAroundY = 0f;
             CreateLineMaterial();
         }
 
@@ -342,7 +344,7 @@ namespace Nuterra.BlockInjector
         private GameObject _anchor;
         public bool AdaptToMainRot = false;
         public TankBlock thisBlock;
-
+        public bool LockCursor = false; // Make First Person Shooter style
         public void Awake()
         {
             thisBlock = gameObject.GetComponent<TankBlock>();

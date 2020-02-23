@@ -632,6 +632,19 @@ namespace Nuterra.BlockInjector
                 }
             }
 
+            [HarmonyPatch(typeof(ModuleLight), "EnableLights")]
+            private static class OverrideEmission
+            {
+                private static void Postfix(ref ModuleLight __instance)
+                {
+                    ModuleCustomBlock cb = __instance.GetComponent<ModuleCustomBlock>();
+                    if (cb != null && cb.EmissionMode != BlockPrefabBuilder.EmissionMode.None)
+                    {
+                        cb.UpdateEmission();
+                    }
+                }
+            }
+            
             private static class ManUIPatches
             {
                 static Type T_Math = typeof(Math),

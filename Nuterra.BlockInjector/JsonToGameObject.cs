@@ -25,6 +25,13 @@ namespace Nuterra.BlockInjector
             var shader = GetObjectFromGameResources<Shader>(t_shader, ShaderName, true);
             return new Material(shader);
         }
+        public static Material MaterialFromShader(Color EmissionColor, string ShaderName = "StandardTankBlock")
+        {
+            var shader = GetObjectFromGameResources<Shader>(t_shader, ShaderName, true);
+            var material = new Material(shader);
+            material.SetColor("_EmissionColor", EmissionColor);
+            return material;
+        }
 
         public static Material SetTexturesToMaterial(bool MakeCopy, Material material, Texture2D Alpha = null, Texture2D MetallicGloss = null, Texture2D Emission = null)
         {
@@ -247,49 +254,49 @@ namespace Nuterra.BlockInjector
             } 
         }
 
-        public struct AnimationCurveStruct
-        {
-            internal static AnimationCurveStruct[] ConvertToStructArray(DirectoryBlockLoader.BlockBuilder.SubObj.AnimInfo.Curve[] curves)
-            {
-                var result = new AnimationCurveStruct[curves.Length];
-                for (int i = 0; i < curves.Length; i++)
-                {
-                    result[i] = new AnimationCurveStruct(curves[i].ComponentName, curves[i].PropertyName, curves[i].ToAnimationCurve());
-                }
-                return result;
-            }
+        //public struct AnimationCurveStruct
+        //{
+        //    internal static AnimationCurveStruct[] ConvertToStructArray(DirectoryBlockLoader.BlockBuilder.SubObj.AnimInfo.Curve[] curves)
+        //    {
+        //        var result = new AnimationCurveStruct[curves.Length];
+        //        for (int i = 0; i < curves.Length; i++)
+        //        {
+        //            result[i] = new AnimationCurveStruct(curves[i].ComponentName, curves[i].PropertyName, curves[i].ToAnimationCurve());
+        //        }
+        //        return result;
+        //    }
 
-            public AnimationCurveStruct(string Type, string PropertyName, AnimationCurve Curve)
-            {
-                this.Type = GameObjectJSON.GetType(Type);
-                this.PropertyName = PropertyName;
-                this.Curve = Curve;
-            }
-            public Type Type;
-            public string PropertyName;
-            public AnimationCurve Curve;
-        }
+        //    public AnimationCurveStruct(string Type, string PropertyName, AnimationCurve Curve)
+        //    {
+        //        this.Type = GameObjectJSON.GetType(Type);
+        //        this.PropertyName = PropertyName;
+        //        this.Curve = Curve;
+        //    }
+        //    public Type Type;
+        //    public string PropertyName;
+        //    public AnimationCurve Curve;
+        //}
 
-        public static void ModifyAnimation(Animator animator, string clipName, string path, AnimationCurveStruct[] curves)
-        {
-            for(int i = 0; i < animator.layerCount; i++)
-            {
-                var clips = animator.GetCurrentAnimatorClipInfo(i);
-                for (int j = 0; j < clips.Length; j++)
-                {
-                    var clip = clips[j];
-                    if (clips[j].clip.name == clipName)
-                    {
-                        foreach (var curve in curves)
-                        {
-                            clip.clip.SetCurve(path, curve.Type, curve.PropertyName, curve.Curve);
-                            clips[j] = clip;
-                        }
-                        return;
-                    }
-                }
-            }
-        }
+        //public static void ModifyAnimation(Animator animator, string clipName, string path, AnimationCurveStruct[] curves)
+        //{
+        //    for(int i = 0; i < animator.layerCount; i++)
+        //    {
+        //        var clips = animator.GetCurrentAnimatorClipInfo(i);
+        //        for (int j = 0; j < clips.Length; j++)
+        //        {
+        //            var clip = clips[j];
+        //            if (clips[j].clip.name == clipName)
+        //            {
+        //                foreach (var curve in curves)
+        //                {
+        //                    clip.clip.SetCurve(path, curve.Type, curve.PropertyName, curve.Curve);
+        //                    clips[j] = clip;
+        //                }
+        //                return;
+        //            }
+        //        }
+        //    }
+        //}
 
         public static object GetValueFromPath(this Component component, string PropertyPath)
         {
@@ -432,17 +439,17 @@ namespace Nuterra.BlockInjector
             type = Type.GetType(Name, new Func<AssemblyName, Assembly>(AssemblyResolver), new Func<Assembly, string, bool, Type>(TypeResolver), false, true);
             if (type == null)
             {
-                //type = Type.GetType(Name + ", " + typeof(TankBlock).Assembly.FullName);
-                //if (type == null)
-                //{
-                //    type = Type.GetType(Name + ", " + typeof(GameObject).Assembly.FullName);
-                //    if (type == null)
-                //    {
-                Console.WriteLine(Name + " is not a known type! If you are using a Unity type, you might need to prefix the class with \"UnityEngine.\", for example, \"UnityEngine.LineRenderer\". If it is not from Unity or the game itself, it needs the class's Assembly's `FullName`, for example: \"" + typeof(TankBlock).Assembly.FullName + "\", in which it'd be used as \"" + typeof(TankBlock).AssemblyQualifiedName + "\"");
-                stringtypecache.Add(Name, null);
-                return null;
-                //    }
-                //}
+                type = Type.GetType("UnityEngine." + Name, new Func<AssemblyName, Assembly>(AssemblyResolver), new Func<Assembly, string, bool, Type>(TypeResolver), false, true);
+                if (type != null)
+                {
+                    Console.WriteLine("GetType(string): Warning! \"UnityEngine.\" should be added before search term \"" + Name + "\" to avoid searching twice!");
+                }
+                else
+                {
+                    Console.WriteLine("GetType(string): " + Name + " is not a known type! It may need the proper namespace defined before it (ex: \"UnityEngine.LineRenderer\"), or it needs the class's Assembly's `FullName` (ex: \"" + typeof(ModuleFirstPerson).Assembly.FullName + "\", in which it'd be used as \"" + typeof(ModuleFirstPerson).AssemblyQualifiedName + "\"");
+                    stringtypecache.Add(Name, null);
+                    return null;
+                }
             }
             stringtypecache.Add(Name, type);
             return type;
@@ -559,7 +566,7 @@ namespace Nuterra.BlockInjector
                                             object component = result.GetComponent(refType);
                                             if (component as Component == null)
                                                 component = result.AddComponent(refType);
-                                            ShallowCopy(refType, refTarget, component);
+                                            ShallowCopy(refType, refTarget, component, false);
                                             ApplyValues(component, refType, property.Value as JObject, Spacing);
                                             continue;
                                         }
@@ -775,10 +782,12 @@ namespace Nuterra.BlockInjector
             return instance;
         }
 
-        private static void ShallowCopy(Type sharedType, object source, object target)
+        public static void ShallowCopy(Type sharedType, object source, object target, bool DeclaredVarsOnly)
         {
-            var fields = sharedType.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-            var props = sharedType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+            var bf = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
+            if (DeclaredVarsOnly) bf |= BindingFlags.DeclaredOnly;
+            var fields = sharedType.GetFields(bf);
+            var props = sharedType.GetProperties(bf);
             foreach (var field in fields)
             {
                 try
@@ -833,7 +842,7 @@ namespace Nuterra.BlockInjector
                         item = Activator.CreateInstance(itemType); // Create instance, because is needed
                         if (sourceList.Count != 0) // Copy current or last element
                         {
-                            ShallowCopy(itemType, sourceList[Math.Min(i, sourceList.Count - 1)], item); // Helpful, trust me
+                            ShallowCopy(itemType, sourceList[Math.Min(i, sourceList.Count - 1)], item, true); // Helpful, trust me
                         }
                     }
                     item = ApplyValues(item, itemType, _jObject, Spacing);
@@ -866,83 +875,64 @@ namespace Nuterra.BlockInjector
         {
             if (UseField)
             {
-                object original, rewrite;
-                if (!Wipe)
-                {
-                    original = tField.GetValue(instance);
-                    if (Instantiate)
-                    {
-                        if (tField.FieldType.IsSubclassOf(t_comp))
-                        {
-                            bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
-                            var nObj = Component.Instantiate(original as Component);
-                            nObj.gameObject.SetActive(isActive);
-                            //Console.WriteLine(Spacing + m_tab + ">Instantiating");
-                            var cacheSearchTransform = SearchTransform;
-                            CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
-                            SearchTransform = cacheSearchTransform;
-                            //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                            rewrite = nObj;
-                        }
-                        else
-                        {
-                            object newObj = Activator.CreateInstance(tField.FieldType);
-                            ShallowCopy(tField.FieldType, original, newObj);
-                            rewrite = ApplyValues(newObj, tField.FieldType, jObject, Spacing + m_tab);
-                        }
-                    }
-                    else
-                    {
-                        rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
-                    }
-                }
-                else
-                {
-                    original = Activator.CreateInstance(tField.FieldType);
-                    rewrite = ApplyValues(original, tField.FieldType, jObject, Spacing + m_tab);
-                }
+                object rewrite = SetJSONObject_Internal(jObject, Spacing, Wipe, Instantiate, Wipe ? null : tField.GetValue(instance), tField.FieldType, tField.Name);
                 try { tField.SetValue(instance, rewrite); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
             }
             else
             {
-                object original, rewrite;
-                if (!Wipe)
-                {
-                    original = tProp.GetValue(instance, null);
-                    if (Instantiate)
-                    {
-                        if (tProp.PropertyType.IsSubclassOf(t_comp))
-                        {
-                            bool isActive = ((GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null)).activeInHierarchy;
-                            var nObj = Component.Instantiate(original as Component);
-                            nObj.gameObject.SetActive(isActive);
-                            //Console.WriteLine(Spacing + m_tab + ">Instantiating");
-                            var cacheSearchTransform = SearchTransform;
-                            CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
-                            SearchTransform = cacheSearchTransform;
-                            //Console.WriteLine(LogAllComponents(nObj.transform, false, Spacing + m_tab));
-                            rewrite = nObj;
-                        }
-                        else
-                        {
-                            object newObj = Activator.CreateInstance(tProp.PropertyType);
-                            ShallowCopy(tProp.PropertyType, original, newObj);
-                            rewrite = ApplyValues(newObj, tProp.PropertyType, jObject, Spacing + m_tab);
-                        }
-                    }
-                    else
-                    {
-                        rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
-                    }
-                }
-                else
-                {
-                    original = Activator.CreateInstance(tProp.PropertyType);
-                    rewrite = ApplyValues(original, tProp.PropertyType, jObject, Spacing + m_tab);
-                }
+                object rewrite = SetJSONObject_Internal(jObject, Spacing, Wipe, Instantiate, Wipe ? null : tProp.GetValue(instance, null), tProp.PropertyType, tProp.Name);
                 if (tProp.CanWrite)
                     try { tProp.SetValue(instance, rewrite, null); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
             }
+        }
+
+        private static object SetJSONObject_Internal(JObject jObject, string Spacing, bool Wipe, bool Instantiate, object original, Type type, string name)
+        {
+            object rewrite;
+            if (Wipe)
+            {
+                original = Activator.CreateInstance(type);
+                rewrite = ApplyValues(original, type, jObject, Spacing + m_tab);
+            }
+            else
+            {
+                if (!Instantiate)
+                {
+                    rewrite = ApplyValues(original, type, jObject, Spacing + m_tab);
+                }
+                else // Instantiate
+                {
+                    if (type.IsSubclassOf(t_comp)) // UnityEngine.Component (Module)
+                    {
+                        var oObj = (GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null);
+                        //bool isActive = oObj.activeInHierarchy;//oObj.activeSelf;
+                        var nObj = GameObject.Instantiate((original as Component).gameObject);
+                        //if (Input.GetKey(KeyCode.Alpha9)) nObj.SetActive(true);
+                        //else if (Input.GetKey(KeyCode.Alpha9)) nObj.SetActive(false);
+                        //else 
+                        nObj.SetActive(false);// isActive && !Input.GetKey(KeyCode.O));
+                        nObj.transform.parent = oObj.transform.parent;
+                        nObj.transform.position = Vector3.down * 25000f;
+                        var cacheSearchTransform = SearchTransform;
+                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                        SearchTransform = cacheSearchTransform;
+                        if (Input.GetKey(KeyCode.LeftControl))
+                        {
+                            Console.WriteLine("Instantiating " + name + " : " + type.ToString());
+                            Console.WriteLine(LogAllComponents(nObj.transform, false));//BlockLoader.AcceptOverwrite));
+                        }
+                        rewrite = nObj.GetComponent(type);
+                    }
+                    else
+                    {
+                        object newObj = Activator.CreateInstance(type);
+                        ShallowCopy(type, original, newObj, true);
+                        rewrite = ApplyValues(newObj, type, jObject, Spacing + m_tab);
+                    }
+                }
+            }
+
+            return rewrite;
         }
 
         static void SetJSONValue(JValue jValue, JProperty jsonProperty, object _instance, bool UseField, FieldInfo tField = null, PropertyInfo tProp = null)
@@ -1016,14 +1006,19 @@ namespace Nuterra.BlockInjector
                     var p = t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
                     foreach (var field in f)
                     {
-                        result += $"\n{Indenting} (F).{field.Name} ({field.FieldType.ToString()}) = {field.GetValue(comp)}";
+                        result += $"\n{Indenting} (F).{field.Name} ({field.FieldType.ToString()})";
+                        try
+                        {
+                            result += $" = {Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(comp), Formatting.Indented)}";
+                        }
+                        catch { }
                     }
                     foreach (var field in p)
                     {
                         result += $"\n{Indenting} (P).{field.Name} ({field.PropertyType.ToString()})";
                         try
                         {
-                            result += $" = {field.GetValue(comp, null)}";
+                            result += $" = {Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(comp, null), Formatting.Indented)}";
                         }
                         catch { }
                     }

@@ -8,7 +8,7 @@
   "Description": "A very nice block, loaded from the file system\nThis one is magical!", //You can make multiple lines with \n
   "ID": 534968, //A random ID that MUST be unique
 
-  "Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP = 3, Venture = 4, HawkEye = 5, Special = 6, BetterFuture = 7
+  "Faction": 1, //GSO = 1|0, GeoCorp = 2, EXP|RR = 3, Venture = 4, HawkEye = 5, Special = 6, BetterFuture = 7
   "Category": 0, //Control = 1, Standard = 2|0, Wheels = 3, Weapons = 4, Accessories = 5, Power = 6, Base = 7, Flight = 8
   "Grade": 0, //The desired grade minus one
   "Price": 100, //The price is measured by sum of recipe value times 3
@@ -32,6 +32,8 @@
   //"MeshEmissionTextureName": null, //Texture like the first, except is for illumination of parts of the model for things like night. Black is "off", the brighter it is the more it shows. Think LEDs
   /*  OR  */
   "MeshMaterialName": null, //Name of one of the GAME'S materials to use, such as "Corp_Main", "GSO_Main", "GC_Main", "VEN_Main", "BF_Main", and "HE_Main",. This material flashes and everything! (You can use this in combination with the above)
+
+  //"EmissionMode": 2, // No change = 0, Glow = 1, Glow at night = 2, Glow when anchored = 3
 
   "ColliderMeshName": null, //FILE Name of the mesh, such as "collider.obj". Leaving as null will make an upright box collider relative to the mesh's extents
   "SupressBoxColliderFallback": false, //Disable creation of BoxCollider. Useful for if a collider will be already provided
@@ -70,10 +72,10 @@
   // Delete /* and */ if using
 
   //OPTIONAL
-  "GamePrefabReference": null, //Use a block prefab from the GAME'S RESOURCES as a base. For example, "GSOBlock(111)"
+  "GamePrefabReference": null, //Use a block prefab from the GAME'S RESOURCES as a base. For example, "GSOBlock(111)", 3
   "KeepRenderers": true, //If not true, prefab renderers will be removed
   "KeepColliders": true, //If not true, colliders will be removed
-  //"KeepReferenceRenderers": true, //Legacy property, keeps both colliders and renderers. Shouldn't be used with the 2 properties above
+  //"DeathExplosionReference": 52, //Like the GamePrefabReference, but copies the explosion of a specific block. (Copies before Deserializer, so it is possible to manipulate in there)
   "ReferenceOffset": {
     "x": 0,
     "y": 0,
@@ -135,7 +137,7 @@
 
   /*
   "Deserializer: {
-    // Things go here
+    // Complicated things go here, will be explained elsewhere. Check out other blocks or the discord for help
   }
   /**/
 

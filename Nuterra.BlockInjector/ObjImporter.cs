@@ -501,7 +501,8 @@ public sealed class FastObjImporter
     }
 }
  
-public sealed class Vector3Int
+// Wow, it was this the whole time
+internal sealed class Vector3Int
 {
     public int x { get; set; }
     public int y { get; set; }

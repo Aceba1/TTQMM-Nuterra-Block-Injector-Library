@@ -11,6 +11,8 @@ namespace Nuterra.BlockInjector
 {
     internal static class DirectoryBlockLoader
     {
+        //public static Dictionary<string, List<Material>>[] TexMatLookup = new Dictionary<string, List<Material>>[] { new Dictionary<string, List<Material>>(), new Dictionary<string, List<Material>>(), new Dictionary<string, List<Material>>() };
+        static Dictionary<string, Material> HashMAGE = new Dictionary<string, Material>();
         internal struct BlockBuilder
         {
             public string Name;
@@ -18,20 +20,36 @@ namespace Nuterra.BlockInjector
             public bool KeepReferenceRenderers; // Legacy
             public bool KeepRenderers;
             public bool KeepColliders;
+            public JValue PrefabReference { set => GamePrefabReference = value; }
             public JValue GamePrefabReference;
+            public JValue ExplosionReference { set => DeathExplosionReference = value; }
             public JValue DeathExplosionReference;
             public int ID; //public JValue ID;
             public string IconName;
             public string MeshName;
+            public string MeshColliderName { set => ColliderMeshName = value; }
             public string ColliderMeshName;
+
+            public bool NoBoxCollider { set => SupressBoxColliderFallback = value; }
             public bool SupressBoxColliderFallback;
+
             public float? Friction;
             public float? StaticFriction;
             public float? Bounciness;
+            public string TextureName { set => MeshTextureName = value; }
             public string MeshTextureName;
+
+            public string MetallicTextureName { set => MeshGlossTextureName = value; }
+            public string GlossTextureName { set => MeshGlossTextureName = value; }
             public string MeshGlossTextureName;
+
+            public string EmissionTextureName { set => MeshEmissionTextureName = value; }
             public string MeshEmissionTextureName;
+
+            public int EmissionMode;
+            public string MaterialName { set => MeshMaterialName = value; }
             public string MeshMaterialName;
+
             public int Faction;
             public int Category;
             public int Grade;
@@ -39,88 +57,71 @@ namespace Nuterra.BlockInjector
             public int HP;
             public int? DamageableType;
             public int Rarity;
+            public float DetachFragility{ set => Fragility = value; }
             public float? Fragility;
+
             public float Mass;
             public Vector3? CenterOfMass;
             public IntVector3? BlockExtents;
+            public bool MakeAPsAtBottom { set => APsOnlyAtBottom = value; }
             public bool APsOnlyAtBottom;
             public IntVector3[] Cells;
             public Vector3[] APs;
+
+            public Vector3 PrefabOffset { set => ReferenceOffset = value; }
+            public Vector3 PrefabPosition { set => ReferenceOffset = value; }
             public Vector3? ReferenceOffset;
+            
+            public Vector3 PrefabScale { set => ReferenceScale = value; }
             public Vector3? ReferenceScale;
+            
+            public Vector3 PrefabRotation { set => ReferenceRotationOffset = value; }
             public Vector3? ReferenceRotationOffset;
+            
             public JToken Recipe;
             public string RecipeTable;
             public SubObj[] SubObjects;
 
+            public JObject JSONBLOCK { set => Deserializer = value; }
             public JObject Deserializer;
-            public JObject JSONBLOCK;
 
             public struct SubObj
             {
+                public string OverrideName { set => SubOverrideName = value; }
+                public string ObjectName { set => SubOverrideName = value; }
                 public string SubOverrideName;
+
                 public string MeshName;
                 public int? Layer;
+                public bool DestroyColliders { set => DestroyExistingColliders = value; }
                 public bool DestroyExistingColliders;
+                public bool DestroyExistingRenderers { set => DestroyExistingRenderer = value; }
+                public bool DestroyRenderers { set => DestroyExistingRenderer = value; }
+                public bool DestroyExistingRenderer;
+
                 public bool MakeBoxCollider;
                 public bool MakeSphereCollider;
+                public string MeshColliderName { set => ColliderMeshName = value; }
                 public string ColliderMeshName;
+
                 public float? Friction;
                 public float? StaticFriction;
                 public float? Bounciness;
+                public string TextureName { set => MeshTextureName = value; }
                 public string MeshTextureName;
+                public string GlossTextureName { set => MeshGlossTextureName = value; }
                 public string MeshGlossTextureName;
+                public string EmissionTextureName { set => MeshEmissionTextureName = value; }
                 public string MeshEmissionTextureName;
+                public string MaterialName { set => MeshMaterialName = value; }
                 public string MeshMaterialName;
+
+                public Vector3 Position { set => SubPosition = value; }
                 public Vector3? SubPosition;
+                public Vector3 Scale { set => SubScale = value; }
                 public Vector3? SubScale;
+                public Vector3 Rotation { set => SubRotation = value; }
                 public Vector3? SubRotation;
-                public bool DestroyExistingRenderer;
-                //PUT ANIMATION CURVES HERE
-                public AnimInfo[] Animations;
-                public struct AnimInfo
-                {
-                    public string ClipName;
-                    public Curve[] Curves;
-
-                    public AnimationCurve[] GetAnimationCurves()
-                    {
-                        var result = new AnimationCurve[Curves.Length];
-                        for (int i = 0; i < Curves.Length; i++)
-                        {
-                            result[i] = Curves[i].ToAnimationCurve();
-                        }
-                        return result;
-                    }
-
-                    public struct Curve
-                    {
-                        public string ComponentName;
-                        public string PropertyName;
-                        public Key[] Keys;
-                        public AnimationCurve ToAnimationCurve()
-                        {
-                            var Keyframes = new Keyframe[Keys.Length];
-                            for (int i = 0; i < Keys.Length; i++)
-                            {
-                                Keyframes[i] = Keys[i].ToKeyframe();
-                            }
-                            return new AnimationCurve(Keyframes);
-                        }
-
-                        public struct Key
-                        {
-                            public float Time;
-                            public float Value;
-                            public float inTangent;
-                            public float outTangent;
-                            public Keyframe ToKeyframe()
-                            {
-                                return new Keyframe(Time, Value, inTangent, outTangent);
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -176,7 +177,8 @@ namespace Nuterra.BlockInjector
                 yield return null;
                 foreach (FileInfo Png in cbPng)
                 {
-                    if (!FileChanged.TryGetValue(Png.FullName, out DateTime lastEdit) || lastEdit != Png.LastWriteTime)
+                    bool imgReparse = FileChanged.TryGetValue(Png.FullName, out DateTime lastEdit);
+                    if (!imgReparse || lastEdit != Png.LastWriteTime)
                     {
                         try
                         {
@@ -185,6 +187,20 @@ namespace Nuterra.BlockInjector
                             GameObjectJSON.AddObjectToUserResources<Texture>(TextureT, tex, Png.Name);
                             GameObjectJSON.AddObjectToUserResources<Sprite>(SpriteT, GameObjectJSON.SpriteFromImage(tex), Png.Name);
                             FileChanged[Png.FullName] = Png.LastWriteTime;
+                            //if (imgReparse)
+                            //{
+                            //    foreach (var mat in TexMatLookup[0][Png.Name])
+                            //        mat.SetTexture("_MainTex", tex);
+                            //    foreach (var mat in TexMatLookup[1][Png.Name])
+                            //        mat.SetTexture("_MetallicGlossMap", tex);
+                            //    foreach (var mat in TexMatLookup[2][Png.Name])
+                            //        mat.SetTexture("_EmissionMap", tex);
+                            //}
+                            //else
+                            //{
+                            //    for (int i = 0; i < 3; i++)
+                            //        TexMatLookup[i].Add(Png.Name, new List<Material>());
+                            //}
                             Count++;
                         }
                         catch (Exception E)
@@ -291,22 +307,22 @@ namespace Nuterra.BlockInjector
                     else
                         blockbuilder = new BlockPrefabBuilder(gpr, false);
 
-                    if (jBlock.KeepRenderers)
+                    if (jBlock.KeepRenderers) // Keep renderers
                     {
-                        if (!jBlock.KeepColliders)
+                        if (!jBlock.KeepColliders) // Don't keep colliders
                         {
                             blockbuilder.RemoveChildrenWithComponent(true, null, typeof(Collider));
                         }
                     }
-                    else if (!jBlock.KeepReferenceRenderers)
+                    else if (!jBlock.KeepReferenceRenderers) // Don't keep renderers
                     {
-                        if (!jBlock.KeepColliders)
+                        if (!jBlock.KeepColliders) // Don't keep colliders
                         {
-                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(SkinnedMeshRenderer), typeof(MeshFilter), typeof(Collider));
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(TankTrack), typeof(SkinnedMeshRenderer), typeof(MeshFilter), typeof(Collider));
                         }
-                        else
+                        else // Keep colliders
                         {
-                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(SkinnedMeshRenderer), typeof(MeshFilter));
+                            blockbuilder.RemoveChildrenWithComponent(true, null, typeof(MeshRenderer), typeof(TankTrack), typeof(SkinnedMeshRenderer), typeof(MeshFilter));
                         }
                     }
 
@@ -350,16 +366,18 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
+                if (jBlock.EmissionMode != 0)
+                {
+                    L("Set EmissionMode", l);
+                    blockbuilder.SetCustomEmissionMode((BlockPrefabBuilder.EmissionMode)jBlock.EmissionMode);
+                }
+
+
                 //If gameobjectJSON exists, use it
                 if (jBlock.Deserializer != null)
                 {
                     L("Use Deserializer", l);
-                    GameObjectJSON.CreateGameObject(jObject["Deserializer"].ToObject<JObject>(), blockbuilder.Prefab);
-                }
-                else if (jBlock.JSONBLOCK != null)
-                {
-                    L("Use Deserializer", l);
-                    GameObjectJSON.CreateGameObject(jObject["JSONBLOCK"].ToObject<JObject>(), blockbuilder.Prefab);
+                    GameObjectJSON.CreateGameObject(jBlock.Deserializer, blockbuilder.Prefab);
                 }
 
                 L("Set ID", l);
@@ -418,29 +436,13 @@ namespace Nuterra.BlockInjector
                 L("Set Rarity", l);
                 blockbuilder.SetRarity((BlockRarity)jBlock.Rarity);
 
-                if (jBlock.IconName != null && jBlock.IconName != "")
+                if (!string.IsNullOrEmpty(jBlock.IconName))
                 {
                     L("Set Icon", l);
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(SpriteT, jBlock.IconName);
                     if (Spr == null)
                     {
-                        //var Tex = GameObjectJSON.GetObjectFromGameResources<Texture2D>(Texture2DT, jBlock.IconName);
-                        //if (Tex == null)
-                        //{
-                        //    Spr = GameObjectJSON.GetObjectFromGameResources<Sprite>(jBlock.IconName);
-                        //    if (Spr == null)
-                        //    {
-                                blockbuilder.SetIcon((Sprite)null);
-                        //    }
-                        //    else
-                        //    {
-                        //        blockbuilder.SetIcon(Spr);
-                        //    }
-                        //}
-                        //else
-                        //{
-                        //    blockbuilder.SetIcon(Tex);
-                        //}
+                        blockbuilder.SetIcon((Sprite)null);
                     }
                     else
                     {
@@ -448,32 +450,42 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
-                L("Get Material", l);
+
+
                 /*Local*/
                 Material localmat = null;
-                if (jBlock.MeshMaterialName != null && jBlock.MeshMaterialName != "")
-                {
-                    jBlock.MeshMaterialName.Replace("Venture_", "VEN_");
-                    jBlock.MeshMaterialName.Replace("GeoCorp_", "GC_");
-                    try
-                    {
-                        localmat = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, jBlock.MeshMaterialName);
-                    }
-                    catch { Console.WriteLine(jBlock.MeshMaterialName + " is not a valid Game Material!"); }
-                }
-                if (localmat == null)
-                {
-                    localmat = GameObjectJSON.MaterialFromShader();
-                }
 
-                //-Texture Material
+                bool missingflag1 = string.IsNullOrWhiteSpace(jBlock.MeshTextureName),
+                    missingflag2 = string.IsNullOrWhiteSpace(jBlock.MeshGlossTextureName),
+                    missingflag3 = string.IsNullOrWhiteSpace(jBlock.MeshEmissionTextureName),
+                    missingflags = missingflag1 && missingflag2 && missingflag3;
+
+                string DupeCheck = "M:" + jBlock.MeshMaterialName + ";A:" + jBlock.MeshTextureName + ";G:" + jBlock.MeshGlossTextureName + ";E:" + jBlock.MeshEmissionTextureName;
+                if (!missingflags && HashMAGE.TryGetValue(DupeCheck, out Material localcustomMat))
                 {
-                    bool missingflag1 = string.IsNullOrWhiteSpace(jBlock.MeshTextureName),
-                        missingflag2 = string.IsNullOrWhiteSpace(jBlock.MeshGlossTextureName),
-                        missingflag3 = string.IsNullOrWhiteSpace(jBlock.MeshEmissionTextureName);
-                    if (!missingflag1 || !missingflag2 || !missingflag3)
+                    L("Get Cached Material (" + DupeCheck + ")", l);
+                    localmat = localcustomMat;
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(jBlock.MeshMaterialName))
                     {
-                        L("-Texture Material", l);
+                        L("Get Material", l);
+                        string matName = jBlock.MeshMaterialName.Replace("Venture_", "VEN_")
+                                                                .Replace("GeoCorp_", "GC_");
+                        try
+                        {
+                            localmat = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, matName);
+                            if (localmat == null) Console.WriteLine(matName + " is not a valid Game Material!", l);
+                        }
+                        catch { Console.WriteLine(jBlock.MeshMaterialName + " is not a valid Game Material!"); }
+                    }
+                    if (localmat == null)
+                        localmat = GameObjectJSON.MaterialFromShader(Color.white);
+
+                    if (!missingflags)
+                    {
+                        L("Texture Material", l);
                         localmat = GameObjectJSON.SetTexturesToMaterial(true, localmat,
                             missingflag1 ? null :
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshTextureName),
@@ -481,6 +493,7 @@ namespace Nuterra.BlockInjector
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
                             missingflag3 ? null :
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
+                        HashMAGE.Add(DupeCheck, localmat);
                     }
                 }
 
@@ -627,37 +640,50 @@ namespace Nuterra.BlockInjector
 
                         //-Get Material
                         Material mat = localmat;
+
                         if (!New && !sub.DestroyExistingRenderer)
                         {
                             var ren = childG.GetComponent<Renderer>();
-                            if (ren != null)
-                            {
-                                mat = ren.material;
-                            }
+                            if (ren) mat = ren.material;
                         }
-                        if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
+
+                        bool smissingflag1 = string.IsNullOrWhiteSpace(sub.MeshTextureName),
+                            smissingflag2 = string.IsNullOrWhiteSpace(sub.MeshGlossTextureName),
+                            smissingflag3 = string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName),
+                            smissingflags = smissingflag1 && smissingflag2 && smissingflag3;
+
+                        string SubDupeCheck = "M:" + (sub.MeshMaterialName??jBlock.MeshMaterialName) + ";A:" + sub.MeshTextureName + ";G:" + sub.MeshGlossTextureName + ";E:" + sub.MeshEmissionTextureName;
+                        if (!smissingflags && HashMAGE.TryGetValue(SubDupeCheck, out Material customMat))
                         {
-                            L("-Get Material", l);
-                            string matName = sub.MeshMaterialName.Replace("Venture_", "VEN_")
-                                                                 .Replace("GeoCorp_", "GC_");
-                            if (matName == jBlock.MeshMaterialName) mat = localmat;
-                            else try
+                            L("-Get Cached Material (" + SubDupeCheck + ")", l);
+                            mat = customMat;
+                        }
+                        else
+                        {
+                            if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
+                            {
+                                L("-Get Material", l);
+                                string matName = sub.MeshMaterialName.Replace("Venture_", "VEN_")
+                                                                     .Replace("GeoCorp_", "GC_");
+                                try
                                 {
                                     var mat2 = GameObjectJSON.GetObjectFromGameResources<Material>(MaterialT, matName);
                                     if (mat2 == null) Console.WriteLine(matName + " is not a valid Game Material!", l);
                                     else mat = mat2;
                                 }
                                 catch { Console.WriteLine(sub.MeshMaterialName + " is not a valid Game Material!"); }
-                        }
+                            }
 
-                        L("-Texture Material", l);
-                        mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
-                            string.IsNullOrWhiteSpace(sub.MeshTextureName) ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
-                            string.IsNullOrWhiteSpace(sub.MeshGlossTextureName) ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
-                            string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName) ? null :
-                            GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
+                            if (!smissingflags)
+                            {
+                                L("-Texture Material", l);
+                                mat = GameObjectJSON.SetTexturesToMaterial(true, mat,
+                                    smissingflag1 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
+                                    smissingflag2 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
+                                    smissingflag3 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
+                                HashMAGE.Add(SubDupeCheck, mat);
+                            }
+                        }
 
                         PhysicMaterial physmat = localphysmat;
                         if (sub.MakeBoxCollider || sub.MakeSphereCollider || !string.IsNullOrWhiteSpace(sub.ColliderMeshName))
@@ -687,7 +713,7 @@ namespace Nuterra.BlockInjector
                             L("-Set Mesh", l);
                             if (New) childG.AddComponent<MeshFilter>().sharedMesh = submesh;
                             else childG.EnsureComponent<MeshFilter>().sharedMesh = submesh;
-                            childG.EnsureComponent<MeshRenderer>().material = mat;
+                            childG.EnsureComponent<MeshRenderer>().sharedMaterial = mat;
                         }
                         else
                         {
@@ -696,7 +722,11 @@ namespace Nuterra.BlockInjector
                             {
                                 L("-Set Material", l);
                                 foreach (var renderer in renderers)
-                                    renderer.material = mat;
+                                {
+                                    renderer.sharedMaterial = mat;
+                                    if (renderer is ParticleSystemRenderer psrenderer)
+                                        psrenderer.trailMaterial = mat;
+                                }
                             }
                         }
 
@@ -743,21 +773,6 @@ namespace Nuterra.BlockInjector
                         {
                             L("-Set Size", l);
                             childT.localScale = sub.SubScale.Value;
-                        }
-                        //-Animation
-                        if (sub.Animations != null)
-                        {
-                            Console.WriteLine("Animation block detected");
-                            var mA = tr.GetComponentsInChildren<ModuleAnimator>(true);
-                            if (mA.Length != 0)
-                            {
-                                var Animator = mA[0];
-                                GameObjectJSON.DumpAnimation(Animator);
-                                foreach (var anim in sub.Animations)
-                                {
-                                    GameObjectJSON.ModifyAnimation(Animator.Animator, anim.ClipName, childT.GetPath(Animator.transform), GameObjectJSON.AnimationCurveStruct.ConvertToStructArray(anim.Curves));
-                                }
-                            }
                         }
                     }
                 }
