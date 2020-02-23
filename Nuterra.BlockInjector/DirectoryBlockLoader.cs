@@ -11,7 +11,7 @@ namespace Nuterra.BlockInjector
 {
     internal static class DirectoryBlockLoader
     {
-        static Dictionary<string, Material> CustomMatCache = new Dictionary<string, Material>();
+        static Dictionary<string, Material> HashMAGE = new Dictionary<string, Material>();
         internal struct BlockBuilder
         {
             public string Name;
@@ -21,6 +21,7 @@ namespace Nuterra.BlockInjector
             public bool KeepColliders;
             public JValue PrefabReference { set => GamePrefabReference = value; }
             public JValue GamePrefabReference;
+            public JValue ExplosionReference { set => DeathExplosionReference = value; }
             public JValue DeathExplosionReference;
             public int ID; //public JValue ID;
             public string IconName;
@@ -36,8 +37,11 @@ namespace Nuterra.BlockInjector
             public float? Bounciness;
             public string TextureName { set => MeshTextureName = value; }
             public string MeshTextureName;
+
+            public string MetallicTextureName { set => MeshGlossTextureName = value; }
             public string GlossTextureName { set => MeshGlossTextureName = value; }
             public string MeshGlossTextureName;
+
             public string EmissionTextureName { set => MeshEmissionTextureName = value; }
             public string MeshEmissionTextureName;
 
@@ -441,7 +445,7 @@ namespace Nuterra.BlockInjector
                     missingflags = missingflag1 && missingflag2 && missingflag3;
 
                 string DupeCheck = "M:" + jBlock.MeshMaterialName + ";A:" + jBlock.MeshTextureName + ";G:" + jBlock.MeshGlossTextureName + ";E:" + jBlock.MeshEmissionTextureName;
-                if (!missingflags && CustomMatCache.TryGetValue(DupeCheck, out Material localcustomMat))
+                if (!missingflags && HashMAGE.TryGetValue(DupeCheck, out Material localcustomMat))
                 {
                     L("Get Cached Material (" + DupeCheck + ")", l);
                     localmat = localcustomMat;
@@ -473,7 +477,7 @@ namespace Nuterra.BlockInjector
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshGlossTextureName),
                             missingflag3 ? null :
                             GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, jBlock.MeshEmissionTextureName));
-                        CustomMatCache.Add(DupeCheck, localmat);
+                        HashMAGE.Add(DupeCheck, localmat);
                     }
                 }
 
@@ -633,7 +637,7 @@ namespace Nuterra.BlockInjector
                             smissingflags = smissingflag1 && smissingflag2 && smissingflag3;
 
                         string SubDupeCheck = "M:" + (sub.MeshMaterialName??jBlock.MeshMaterialName) + ";A:" + sub.MeshTextureName + ";G:" + sub.MeshGlossTextureName + ";E:" + sub.MeshEmissionTextureName;
-                        if (!smissingflags && CustomMatCache.TryGetValue(SubDupeCheck, out Material customMat))
+                        if (!smissingflags && HashMAGE.TryGetValue(SubDupeCheck, out Material customMat))
                         {
                             L("-Get Cached Material (" + SubDupeCheck + ")", l);
                             mat = customMat;
@@ -661,7 +665,7 @@ namespace Nuterra.BlockInjector
                                     smissingflag1 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshTextureName),
                                     smissingflag2 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshGlossTextureName),
                                     smissingflag3 ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Texture2DT, sub.MeshEmissionTextureName));
-                                CustomMatCache.Add(SubDupeCheck, mat);
+                                HashMAGE.Add(SubDupeCheck, mat);
                             }
                         }
 
