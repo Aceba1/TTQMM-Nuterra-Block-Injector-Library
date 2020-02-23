@@ -310,6 +310,7 @@
     <Compile Include="BlockPrefabBuilder.cs" />
     <Compile Include="CustomBlock.cs" />
     <Compile Include="CustomModules.cs" />
+    <Compile Include="CustomModulesConsumeToShell.cs" />
     <Compile Include="CustomRecipe.cs" />
     <Compile Include="GameObjectExtensions.cs" />
     <Compile Include="DirectoryBlockLoader.cs" />
