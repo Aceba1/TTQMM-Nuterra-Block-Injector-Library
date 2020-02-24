@@ -107,6 +107,7 @@
     <Compile Include="CustomCorporation.cs" />
     <Compile Include="CustomModules.cs" />
     <Compile Include="CustomRecipe.cs" />
+    <Compile Include="DirectoryCorpLoader.cs" />
     <Compile Include="GameObjectExtensions.cs" />
     <Compile Include="DirectoryBlockLoader.cs" />
     <Compile Include="JsonToGameObject.cs" />
@@ -146,6 +147,9 @@
     <None Include="Block Resources\cockpit_ven_icon_png" />
     <None Include="Block Resources\MPCamDrone\barrel.obj" />
     <None Include="Block Resources\MPCamDrone\base.obj" />
+    <None Include="Corp Example.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="mod.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
