@@ -6,5 +6,5 @@
   "Enable": true,
   "AssemblyName": "BlockInjector.dll",
   "EntryMethod": "Nuterra.BlockInjector.BlockLoader.PostModsLoaded",
-  "Priority": "Last"
+  "Priority": "First"
 }

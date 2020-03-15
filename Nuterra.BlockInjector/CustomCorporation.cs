@@ -17,6 +17,7 @@ namespace Nuterra.BlockInjector
         public Sprite SelectedCorpIcon { get; internal set; }
         public Sprite ModernCorpIcon { get; internal set; }
         public Material Material { get; internal set; }
+        public CorporationSkinInfo SkinInfo { get; internal set; }
 
         public CustomCorporation(
             int corpID,
@@ -27,7 +28,8 @@ namespace Nuterra.BlockInjector
             Sprite corpIcon = null,
             Sprite selectedCorpIcon = null,
             Sprite modernCorpIcon = null,
-            Material material = null
+            Material material = null,
+            CorporationSkinInfo skinInfo = null
         ) {
             CorpID = corpID;
             Name = name;
@@ -38,6 +40,7 @@ namespace Nuterra.BlockInjector
             SelectedCorpIcon = selectedCorpIcon;
             ModernCorpIcon = modernCorpIcon;
             Material = material;
+            SkinInfo = skinInfo;
         }
 
         public void Register()
