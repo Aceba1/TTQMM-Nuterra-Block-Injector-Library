@@ -22,6 +22,16 @@ namespace Nuterra.BlockInjector
             public string CorpIconName;
             public string SelectedCorpIconName;
             public string ModernCorpIconName;
+
+            public CorpMaterial Material;
+
+            public struct CorpMaterial
+            {
+                public string TextureName;
+                public string GlossTextureName { set => MetallicTextureName = value; }
+                public string MetallicTextureName;
+                public string EmissionTextureName;
+            }
         }
 
         static DirectoryInfo m_CCDirectory;
@@ -96,15 +106,20 @@ namespace Nuterra.BlockInjector
             yield break;
         }
 
+        static void L(string Log)
+        {
+            Console.WriteLine(Time.realtimeSinceStartup.ToString("000.000") + "  " + Log);
+        }
+
         private static void CreateJSONCorp(FileInfo Json)
         {
             try
             {
-                //L("Get locals for " + Json.Name, l);
+                L("Get locals for " + Json.Name);
                 JObject jObject = JObject.Parse(DirectoryBlockLoader.StripComments(File.ReadAllText(Json.FullName)));
                 CorpBuilder jCorp = jObject.ToObject<CorpBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
 
-                //L("Read JSON", l);
+                L("Read JSON");
                 bool CorpAlreadyExists = BlockLoader.CustomCorps.TryGetValue(jCorp.ID, out var ExistingJSONCorp);
                 if (CorpAlreadyExists)
                 {
@@ -117,19 +132,21 @@ namespace Nuterra.BlockInjector
 
                 if(jCorp.GradesAmount != 0)
                 {
+                    L("Set GradesAmount");
                     corp.GradesAmount = jCorp.GradesAmount;
                 }
 
                 if (jCorp.XPLevels != null)
                 {
+                    L("Set XPLevels");
                     corp.XPLevels = jCorp.XPLevels;
                 }
 
                 corp.HasLicense = false;// jCorp.HasLicense;
                 
-                if (jCorp.CorpIconName != "")
+                if (!jCorp.CorpIconName.NullOrEmpty())
                 {
-                    //L("Set CorpIcon", l);
+                    L("Set CorpIcon");
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(jCorp.CorpIconName);
                     if (Spr != null)
                     {
@@ -137,9 +154,9 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
-                if (jCorp.SelectedCorpIconName != "")
+                if (!jCorp.SelectedCorpIconName.NullOrEmpty())
                 {
-                    //L("Set SelectedCorpIcon", l);
+                    L("Set SelectedCorpIcon");
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(jCorp.SelectedCorpIconName);
                     if (Spr != null)
                     {
@@ -147,15 +164,30 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
-                if (jCorp.ModernCorpIconName != "")
+                if (!jCorp.ModernCorpIconName.NullOrEmpty())
                 {
-                    //L("Set ModernCorpIcon", l);
+                    L("Set ModernCorpIcon");
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(jCorp.ModernCorpIconName);
                     if (Spr != null)
                     {
                         corp.ModernCorpIcon = Spr;
                     }
                 }
+
+                if(!jCorp.Material.Equals(default(CorpBuilder.CorpMaterial)))
+                {
+                    L("Set Material");
+                    Console.WriteLine(jCorp.Material.TextureName + " " + jCorp.Material.MetallicTextureName + " " + jCorp.Material.EmissionTextureName);
+                    Material corpMat = GameObjectJSON.GetObjectFromGameResources<Material>("GSO_Main");
+                    corpMat = GameObjectJSON.SetTexturesToMaterial(true, corpMat,
+                            jCorp.Material.TextureName.NullOrEmpty() ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(jCorp.Material.TextureName),
+                            jCorp.Material.MetallicTextureName.NullOrEmpty() ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(jCorp.Material.MetallicTextureName),
+                            jCorp.Material.EmissionTextureName.NullOrEmpty() ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(jCorp.Material.EmissionTextureName));
+                    corpMat.name = corp.Name + "_Main";
+                    GameObjectJSON.AddToResourceCache(corpMat, corpMat.name);
+                    corp.Material = corpMat;
+                }
+
 
                 corp.Register();
             }

@@ -1289,7 +1289,8 @@ namespace Nuterra.BlockInjector
                         Console.WriteLine(((FactionSubTypes)i).ToString() + " " + emissive[i].ToString());
                     }*/
                     var emissiveList = emissive.ToList();
-                    foreach (var item in CustomCorps)
+                    var max = CustomCorps.Keys.Max() + 1;
+                    while(emissiveList.Count < max)
                     {
                         emissiveList.Add(0f);
                     }
@@ -1303,6 +1304,40 @@ namespace Nuterra.BlockInjector
                 private static bool Prefix(ref TankBlock __instance)
                 {
                     return (m_CorpSkinSelections.GetValue(ManCustomSkins.inst) as Array).Length > (int)Singleton.Manager<ManSpawn>.inst.GetCorporation(__instance.BlockType);
+                }
+            }
+
+            [HarmonyPatch(typeof(TechAudio), "GetCorpParams")]
+            private static class TechAudio_GetCorpParams
+            {
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    var codes = new List<CodeInstruction>(instructions);
+                    var indexI = codes.FindIndex(ci => ci.opcode == OpCodes.Stloc_S) + 1;
+                    var listFloatT = typeof(List<float>);
+                    var corpPercentages = typeof(TechAudio.UpdateAudioCache).GetField("corpPercentages", binding);
+                    codes.RemoveRange(indexI, 12);
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldloc_S, 4));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldarg_1));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldfld, corpPercentages));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Callvirt, listFloatT.GetMethod("get_Count", binding)));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Rem));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Stloc_S, 5));
+
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldarg_1));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldfld, corpPercentages));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldloc_S, 5));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Callvirt, listFloatT.GetMethod("get_Item", binding)));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Stloc_S, 6));
+
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldarg_1));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldfld, corpPercentages));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldloc_S, 5));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldloc_S, 6));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Ldc_R4, 1f));
+                    codes.Insert(indexI++, new CodeInstruction(OpCodes.Add));
+
+                    return codes;
                 }
             }
 

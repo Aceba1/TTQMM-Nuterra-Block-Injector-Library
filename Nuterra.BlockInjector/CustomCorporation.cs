@@ -16,9 +16,19 @@ namespace Nuterra.BlockInjector
         public Sprite CorpIcon { get; internal set; }
         public Sprite SelectedCorpIcon { get; internal set; }
         public Sprite ModernCorpIcon { get; internal set; }
+        public Material Material { get; internal set; }
 
-        public CustomCorporation(int corpID, string name, int gradesAmount = 1, int[] xpLevels = null, bool hasLicense = false, Sprite corpIcon = null, Sprite selectedCorpIcon = null, Sprite modernCorpIcon = null)
-        {
+        public CustomCorporation(
+            int corpID,
+            string name,
+            int gradesAmount = 1,
+            int[] xpLevels = null,
+            bool hasLicense = false,
+            Sprite corpIcon = null,
+            Sprite selectedCorpIcon = null,
+            Sprite modernCorpIcon = null,
+            Material material = null
+        ) {
             CorpID = corpID;
             Name = name;
             GradesAmount = Math.Max(1, gradesAmount);
@@ -27,6 +37,7 @@ namespace Nuterra.BlockInjector
             CorpIcon = corpIcon;
             SelectedCorpIcon = selectedCorpIcon;
             ModernCorpIcon = modernCorpIcon;
+            Material = material;
         }
 
         public void Register()
