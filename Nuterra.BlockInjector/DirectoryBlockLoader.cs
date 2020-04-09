@@ -898,7 +898,7 @@ namespace Nuterra.BlockInjector
                 else
                 {
                     L("Register", l);
-                    blockbuilder.RegisterLater(0f);
+                    blockbuilder.RegisterLater(1f);
                 }
             }
             catch (Exception E)

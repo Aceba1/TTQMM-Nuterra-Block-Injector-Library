@@ -426,6 +426,29 @@ namespace Nuterra.BlockInjector
 
         internal class Patches
         {
+            [HarmonyPatch(typeof(RecipeTable.Recipe.ItemSpec), "GetHashCode")]
+            private static class CraftingPatch_FixHashOptimization
+            {
+                public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    var codes = new List<CodeInstruction>(instructions);
+                    FixHashOptimization(ref codes);
+                    Console.WriteLine("Injected RecipeTable.Recipe.ItemSpec.GetHashCode()");
+                    return codes;
+                }
+
+                private static void FixHashOptimization(ref List<CodeInstruction> codes)
+                {
+                    for (int i = 0; i < codes.Count; i++)
+                        if (codes[i].opcode == OpCodes.Callvirt)
+                        {
+                            codes.Insert(i + 1, new CodeInstruction(OpCodes.Ldc_I4, 65535));
+                            codes.Insert(i + 2, new CodeInstruction(OpCodes.And));
+                            return;
+                        }
+                }
+            }
+
 #if false
             // Rename all block GameObjects to _C_BLOCK:<ID>
             // BlockSpec.block is grabbed from the GameObject name
