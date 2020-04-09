@@ -516,7 +516,7 @@ namespace Nuterra.BlockInjector
             SearchTransform = GameObjectToPopulate.transform;
             return CreateGameObject_Internal(json, GameObjectToPopulate, Spacing);
         }
-        static GameObject CreateGameObject_Internal(JObject json, GameObject GameObjectToPopulate, string Spacing)
+        static GameObject CreateGameObject_Internal(JObject json, GameObject GameObjectToPopulate, string Spacing, Component instantiated = null, Type instantiatedType = null)
         {
             System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
             stopwatch.Start();
@@ -640,32 +640,41 @@ namespace Nuterra.BlockInjector
                     else
                     {
                         Type componentType = GetType(property.Name);
-                        if (componentType == null) continue;
-                        object component = result.GetComponent(componentType);
-                        if (property.Value.Type == JTokenType.Null)
+                        if (componentType == null)
                         {
-                            Component c = component as Component;
-                            if (c != null)
-                            {
-                                Component.DestroyImmediate(c);
-                               //Console.WriteLine(Spacing + "Deleted " + property.Name);
-                            }
-                            else Console.WriteLine(Spacing + "Could not find component " + property.Name + " to delete");
+                            if (instantiated != null)
+                                ApplyValue(instantiated, instantiatedType, property, Spacing);
+                            else
+                                Console.WriteLine(Spacing + "No component available of type " + property.Name);
                         }
                         else
                         {
-                            if (component as Component == null)
+                            object component = result.GetComponent(componentType);
+                            if (property.Value.Type == JTokenType.Null)
                             {
-                                component = result.AddComponent(componentType);
-                                if (component == null)
+                                Component c = component as Component;
+                                if (c != null)
                                 {
-                                    Console.WriteLine(property.Name + " is a null component, but does not throw an exception...");
-                                    continue;
+                                    Component.DestroyImmediate(c);
+                                    //Console.WriteLine(Spacing + "Deleted " + property.Name);
                                 }
-                               //Console.WriteLine(Spacing + "Created " + property.Name);
+                                else Console.WriteLine(Spacing + "Could not find component " + property.Name + " to delete");
                             }
-                            ApplyValues(component, componentType, property.Value as JObject, Spacing);
-                           //Console.WriteLine(Spacing + "Set values of " + property.Name);
+                            else
+                            {
+                                if (component as Component == null)
+                                {
+                                    component = result.AddComponent(componentType);
+                                    if (component == null)
+                                    {
+                                        Console.WriteLine(property.Name + " is a null component, but does not throw an exception...");
+                                        continue;
+                                    }
+                                    //Console.WriteLine(Spacing + "Created " + property.Name);
+                                }
+                                ApplyValues(component, componentType, property.Value as JObject, Spacing);
+                                //Console.WriteLine(Spacing + "Set values of " + property.Name);
+                            }
                         }
                     }
                 }
@@ -684,102 +693,107 @@ namespace Nuterra.BlockInjector
         static object ApplyValues(object instance, Type instanceType, JObject json, string Spacing)
         {
             //Console.WriteLine(Spacing+"Going down");
-            BindingFlags bind = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             foreach (JProperty jsonProperty in json.Properties())
             {
-                try
-                {
-                    string name = jsonProperty.Name;
-                    //Console.WriteLine(Spacing + m_tab + property.Name);
-                    int GetCustomName = jsonProperty.Name.IndexOf('|');
-                    bool Wipe = false, Instantiate = false;
-                    if (GetCustomName != -1)
-                    {
-                        Wipe = name.StartsWith("Wipe");
-                        Instantiate = name.StartsWith("Instantiate");
-                        name = jsonProperty.Name.Substring(GetCustomName + 1);
-                    }
-                    FieldInfo tField = instanceType.GetField(name, bind);
-                    PropertyInfo tProp = instanceType.GetProperty(name, bind);
-                    //MethodInfo tMethod = instanceType.GetMethod(name, bind);
-                    bool UseField = tProp == null;
-                    //bool UseMethod = false;
-                    if (UseField && tField == null)
-                    {
-                        //UseMethod = tMethod != null;
-                        //if (!UseMethod)
-
-                        Console.WriteLine(Spacing + "!!! Property '" + name + "' does not exist in type '" + instanceType.Name + "'");
-                        continue;
-                    }
-                    #region if (UseMethod)
-                    //if (UseMethod)
-                    //{
-                    //    try
-                    //    {
-                    //        //Console.WriteLine(Spacing + m_tab + ">Calling method");
-                    //        var pValues = jsonProperty.Value as JObject;
-                    //        var parameters = tMethod.GetParameters();
-                    //        object[] invokeParams = new object[parameters.Length];
-                    //        for (int p = 0; p < parameters.Length; p++)
-                    //        {
-                    //            var param = parameters[p];
-                    //            if (pValues.TryGetValue(param.Name, out JToken pValue))
-                    //            {
-                    //                invokeParams[p] = pValue.ToObject(param.ParameterType);
-                    //            }
-                    //            else if (param.HasDefaultValue)
-                    //            {
-                    //                invokeParams[p] = param.DefaultValue;
-                    //            }
-                    //            else
-                    //            {
-                    //                invokeParams[p] = null;
-                    //            }
-                    //        }
-                    //        tMethod.Invoke(_instance, invokeParams);
-                    //    }
-                    //    catch(Exception e)
-                    //    {
-                    //        Console.WriteLine(e + "\nMethod use failed! (" + jsonProperty.Name + ")" + (jsonProperty.Value is JObject ? "" : " - Property value is not an object with parameters"));
-                    //    }
-                    //    continue;
-                    //}
-                    #endregion 
-
-                    if (jsonProperty.Value is JObject jObject)
-                    {
-                        SetJSONObject(jObject, ref instance, Spacing, Wipe, Instantiate, tField, tProp, UseField);
-                    }
-                    else if (jsonProperty.Value is JArray jArray)
-                    {
-                        object sourceArray = Wipe ? null : (
-                            UseField ? tField.GetValue(instance) : (
-                                tProp.CanRead ? tProp.GetValue(instance, null) : null));
-                        var newArray = MakeJSONArray(sourceArray, UseField ? tField.FieldType : tProp.PropertyType, jArray, Spacing, Wipe); // add Wipe param, copy custom names to inside new method
-                        if (UseField)
-                        {
-                            tField.SetValue(instance, newArray);
-                        }
-                        else if (tProp.CanWrite)
-                        {
-                            tProp.SetValue(instance, newArray, null);
-                        }
-                        else throw new TargetException("Property is read-only!");
-                    }
-                    else if (jsonProperty.Value is JValue jValue)
-                    {
-                        SetJSONValue(jValue, jsonProperty, instance, UseField, tField, tProp);
-                    }
-                }
-                catch (Exception E)
-                {
-                    Console.WriteLine(Spacing + "!!! Error on modifying property " + jsonProperty.Name);
-                    Console.WriteLine(Spacing + "!!! " + E/*+"\n"+E.StackTrace*/);
-                }
+                ApplyValue(instance, instanceType, jsonProperty, Spacing);
             }
            //Console.WriteLine(Spacing+"Going up");
             return instance;
+        }
+
+        static void ApplyValue(object instance, Type instanceType, JProperty jsonProperty, string Spacing)
+        {
+            BindingFlags bind = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            try
+            {
+                string name = jsonProperty.Name;
+                //Console.WriteLine(Spacing + m_tab + property.Name);
+                int GetCustomName = jsonProperty.Name.IndexOf('|');
+                bool Wipe = false, Instantiate = false;
+                if (GetCustomName != -1)
+                {
+                    Wipe = name.StartsWith("Wipe");
+                    Instantiate = name.StartsWith("Instantiate");
+                    name = jsonProperty.Name.Substring(GetCustomName + 1);
+                }
+                FieldInfo tField = instanceType.GetField(name, bind);
+                PropertyInfo tProp = instanceType.GetProperty(name, bind);
+                //MethodInfo tMethod = instanceType.GetMethod(name, bind);
+                bool UseField = tProp == null;
+                //bool UseMethod = false;
+                if (UseField && tField == null)
+                {
+                    //UseMethod = tMethod != null;
+                    //if (!UseMethod)
+
+                    Console.WriteLine(Spacing + "!!! Property '" + name + "' does not exist in type '" + instanceType.Name + "'");
+                    return;
+                }
+                #region if (UseMethod)
+                //if (UseMethod)
+                //{
+                //    try
+                //    {
+                //        //Console.WriteLine(Spacing + m_tab + ">Calling method");
+                //        var pValues = jsonProperty.Value as JObject;
+                //        var parameters = tMethod.GetParameters();
+                //        object[] invokeParams = new object[parameters.Length];
+                //        for (int p = 0; p < parameters.Length; p++)
+                //        {
+                //            var param = parameters[p];
+                //            if (pValues.TryGetValue(param.Name, out JToken pValue))
+                //            {
+                //                invokeParams[p] = pValue.ToObject(param.ParameterType);
+                //            }
+                //            else if (param.HasDefaultValue)
+                //            {
+                //                invokeParams[p] = param.DefaultValue;
+                //            }
+                //            else
+                //            {
+                //                invokeParams[p] = null;
+                //            }
+                //        }
+                //        tMethod.Invoke(_instance, invokeParams);
+                //    }
+                //    catch(Exception e)
+                //    {
+                //        Console.WriteLine(e + "\nMethod use failed! (" + jsonProperty.Name + ")" + (jsonProperty.Value is JObject ? "" : " - Property value is not an object with parameters"));
+                //    }
+                //    continue;
+                //}
+                #endregion
+
+                if (jsonProperty.Value is JObject jObject)
+                {
+                    SetJSONObject(jObject, ref instance, Spacing, Wipe, Instantiate, tField, tProp, UseField);
+                }
+                else if (jsonProperty.Value is JArray jArray)
+                {
+                    object sourceArray = Wipe ? null : (
+                        UseField ? tField.GetValue(instance) : (
+                            tProp.CanRead ? tProp.GetValue(instance, null) : null));
+                    var newArray = MakeJSONArray(sourceArray, UseField ? tField.FieldType : tProp.PropertyType, jArray, Spacing, Wipe); // add Wipe param, copy custom names to inside new method
+                    if (UseField)
+                    {
+                        tField.SetValue(instance, newArray);
+                    }
+                    else if (tProp.CanWrite)
+                    {
+                        tProp.SetValue(instance, newArray, null);
+                    }
+                    else throw new TargetException("Property is read-only!");
+                }
+                else if (jsonProperty.Value is JValue jValue)
+                {
+                    SetJSONValue(jValue, jsonProperty, instance, UseField, tField, tProp);
+                }
+            }
+            catch (Exception E)
+            {
+                Console.WriteLine(Spacing + "!!! Error on modifying property " + jsonProperty.Name);
+                Console.WriteLine(Spacing + "!!! " + E/*+"\n"+E.StackTrace*/);
+            }
         }
 
         public static void ShallowCopy(Type sharedType, object source, object target, bool DeclaredVarsOnly)
@@ -904,9 +918,9 @@ namespace Nuterra.BlockInjector
                 {
                     if (type.IsSubclassOf(t_comp)) // UnityEngine.Component (Module)
                     {
-                        var oObj = (GameObject)typeof(Component).GetProperty("gameObject").GetValue(original, null);
+                        var oObj = (original as Component).gameObject;
                         //bool isActive = oObj.activeInHierarchy;//oObj.activeSelf;
-                        var nObj = GameObject.Instantiate((original as Component).gameObject);
+                        var nObj = GameObject.Instantiate(oObj);
                         //if (Input.GetKey(KeyCode.Alpha9)) nObj.SetActive(true);
                         //else if (Input.GetKey(KeyCode.Alpha9)) nObj.SetActive(false);
                         //else 

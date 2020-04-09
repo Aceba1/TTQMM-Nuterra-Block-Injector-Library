@@ -379,6 +379,15 @@ namespace Nuterra.BlockInjector
             var jsonblockloader = loader.AddComponent<JsonBlockCoroutine>();
             jsonblockloader.BeginCoroutine(true, false);
             PostStartEvent += delegate { jsonblockloader.BeginCoroutine(false, true); };
+            PostStartEvent += SubscribeGameModeStart;
+        }
+
+        private static void SubscribeGameModeStart() => Singleton.Manager<ManGameMode>.inst.ModeStartEvent.Subscribe(OnGameModeStart);
+
+        private static void OnGameModeStart(Mode mode)
+        {
+            foreach (var pair in CustomBlocks)
+                ManLicenses.inst.DiscoverBlock((BlockTypes)pair.Key);
         }
 
 
@@ -593,7 +602,7 @@ namespace Nuterra.BlockInjector
                 }
             }
 
-            [HarmonyPatch(typeof(ModeCoOpCreative), "CheckBlockAllowed")]
+            [HarmonyPatch(typeof(BlockFilterTable), "CheckBlockAllowed")]
             private static class TableFixCoOp
             {
                 private static void Postfix(ref bool __result, BlockTypes blockType)
