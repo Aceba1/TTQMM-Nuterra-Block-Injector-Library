@@ -1,0 +1,9 @@
+{
+    "Name": "Corp Name",
+    "ID": 7777, //A random ID that MUST be unique
+    "GradesAmount": 5, //Number of grades
+	"XPLevels": [100, 200, 300, 400, 500], //Experience between each level up
+    "CorpIconName": null, //FILE Name of image, such as "icon.png". File can be anywhere and should be uniquely named
+    "SelectedCorpIconName": null,
+    "ModernCorpIconName": null
+}
