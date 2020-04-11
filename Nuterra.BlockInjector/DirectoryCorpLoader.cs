@@ -112,27 +112,27 @@ namespace Nuterra.BlockInjector
                 //yield return null;
                 foreach (FileInfo Json in ccJson)
                 {
-                    CreateJSONCorp(Json);
+                    CreateJSONCorp(Json, Input.GetKey(KeyCode.LeftControl));
                     yield return null;
                 }
             }
             yield break;
         }
 
-        static void L(string Log)
+        static void L(string Log, bool On)
         {
-            Console.WriteLine(Time.realtimeSinceStartup.ToString("000.000") + "  " + Log);
+            if (On) Console.WriteLine(Time.realtimeSinceStartup.ToString("000.000") + "  " + Log);
         }
 
-        private static void CreateJSONCorp(FileInfo Json)
+        private static void CreateJSONCorp(FileInfo Json, bool l = false)
         {
             try
             {
-                L("Get locals for " + Json.Name);
+                L("Get locals for " + Json.Name, l);
                 JObject jObject = JObject.Parse(DirectoryBlockLoader.StripComments(File.ReadAllText(Json.FullName)));
                 CorpBuilder jCorp = jObject.ToObject<CorpBuilder>(new JsonSerializer() { MissingMemberHandling = MissingMemberHandling.Ignore });
 
-                L("Read JSON");
+                L("Read JSON", l);
                 bool CorpAlreadyExists = BlockLoader.CustomCorps.TryGetValue(jCorp.ID, out var ExistingJSONCorp);
                 if (CorpAlreadyExists)
                 {
@@ -145,13 +145,13 @@ namespace Nuterra.BlockInjector
 
                 if (jCorp.GradesAmount != 0)
                 {
-                    L("Set GradesAmount");
+                    L("Set GradesAmount", l);
                     corp.GradesAmount = jCorp.GradesAmount;
                 }
 
                 if (jCorp.XPLevels != null)
                 {
-                    L("Set XPLevels");
+                    L("Set XPLevels", l);
                     corp.XPLevels = jCorp.XPLevels;
                 }
 
@@ -159,7 +159,7 @@ namespace Nuterra.BlockInjector
 
                 if (!jCorp.CorpIconName.NullOrEmpty())
                 {
-                    L("Set CorpIcon");
+                    L("Set CorpIcon", l);
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(jCorp.CorpIconName);
                     if (Spr != null)
                     {
@@ -169,7 +169,7 @@ namespace Nuterra.BlockInjector
 
                 if (!jCorp.SelectedCorpIconName.NullOrEmpty())
                 {
-                    L("Set SelectedCorpIcon");
+                    L("Set SelectedCorpIcon", l);
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(jCorp.SelectedCorpIconName);
                     if (Spr != null)
                     {
@@ -179,7 +179,7 @@ namespace Nuterra.BlockInjector
 
                 if (!jCorp.ModernCorpIconName.NullOrEmpty())
                 {
-                    L("Set ModernCorpIcon");
+                    L("Set ModernCorpIcon", l);
                     var Spr = GameObjectJSON.GetObjectFromUserResources<Sprite>(jCorp.ModernCorpIconName);
                     if (Spr != null)
                     {
@@ -211,14 +211,14 @@ namespace Nuterra.BlockInjector
                         var Emissive = Material.EmissionTextureName.NullOrEmpty() ? null : GameObjectJSON.GetObjectFromUserResources<Texture2D>(Material.EmissionTextureName);
 
 
-                        L("Set Material");
-                        Console.WriteLine(Material.TextureName + " " + Material.MetallicTextureName + " " + Material.EmissionTextureName);
+                        L("Set Material", l);
                         Material corpMat = GameObjectJSON.GetObjectFromGameResources<Material>("GSO_Main");
                         corpMat = GameObjectJSON.SetTexturesToMaterial(true, corpMat, Albedo, Metallic, Emissive);
                         corpMat.name = corp.Name + "_Main";
                         GameObjectJSON.AddToResourceCache(corpMat, corpMat.name);
                         corp.Material = corpMat;
 
+                        L("Set Skin basis", l);
                         corp.SkinInfo = ScriptableObject.CreateInstance<CorporationSkinInfo>();
                         corp.SkinInfo.m_Corporation = (FactionSubTypes)corp.CorpID;
                         corp.SkinInfo.m_SkinUniqueID = 0;

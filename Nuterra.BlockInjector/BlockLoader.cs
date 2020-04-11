@@ -682,11 +682,8 @@ namespace Nuterra.BlockInjector
                         
 
                         var m_CorpCount = typeof(ManSpawn).GetField("m_CorpCount", binding);
-                        /*var corpCount = (int)m_CorpCount.GetValue(ManSpawn.inst);
-                        corpCount += CustomCorps.Count;*/
-                        var count = Enum.GetValues(typeof(FactionSubTypes)).Length + CustomCorps.Count;
+                        var count = Enum.GetValues(typeof(FactionSubTypes)).Length + CustomCorps.Count + 1;
                         m_CorpCount.SetValue(ManSpawn.inst, count);
-                        Console.WriteLine("CorpCount " + count);
                     }
                 }
             }
@@ -727,15 +724,6 @@ namespace Nuterra.BlockInjector
             {
                 private static void Postfix(ref ManLicenses __instance)
                 {
-                    /*__instance.m_ThresholdData.Add(new ManLicenses.ThresholdsTableEntry
-					{
-						faction = (FactionSubTypes)8,
-						thresholds = new FactionLicense.Thresholds
-						{
-							m_MaxSupportedLevel = 1,
-							m_XPLevels = new int[] { 10 }
-						}
-					});*/
                     if (CustomCorps.Count == 0) return;
 
                     foreach (var cc in CustomCorps)
@@ -774,7 +762,6 @@ namespace Nuterra.BlockInjector
             {
                 private static void Prefix(ref ManPurchases __instance)
                 {
-                    //if (!__instance.AvailableCorporations.Contains((FactionSubTypes)8)) __instance.AvailableCorporations.Add((FactionSubTypes)8);
                     if (CustomCorps.Count == 0) return;
                     foreach (var cc in CustomCorps)
                     {
@@ -782,42 +769,6 @@ namespace Nuterra.BlockInjector
                     }
                 }
             }
-
-            /*[HarmonyPatch(typeof(Enum), "GetNames")]
-            private static class Enum_GetNames
-            {
-                private static void Postfix(ref Type enumType, ref string[] __result)
-                {
-                    if (CustomCorps.Count == 0) return;
-                    if (enumType == typeof(FactionSubTypes))
-                    {
-                        var resList = __result.ToList();
-                        foreach (var cc in CustomCorps)
-                        {
-                            resList.Add(cc.Value.Name);
-                        }
-                        __result = resList.ToArray();
-                    }
-                }
-            }
-
-            [HarmonyPatch(typeof(Enum), "GetValues")]
-            private static class Enum_GetValues
-            {
-                private static void Postfix(ref Type enumType, ref Array __result)
-                {
-                    if (CustomCorps.Count == 0) return;
-                    if (enumType == typeof(FactionSubTypes))
-                    {
-                        var resList = ((FactionSubTypes[])__result).ToList();
-                        foreach (var cc in CustomCorps)
-                        {
-                            resList.Add((FactionSubTypes)cc.Value.CorpID);
-                        }
-                        __result = resList.ToArray();
-                    }
-                }
-            }*/
 
             [HarmonyPatch(typeof(UICorpLicense), "Setup")]
             private static class UICorpLicense_Setup
@@ -950,116 +901,101 @@ namespace Nuterra.BlockInjector
                 }
             }*/
 
-            [HarmonyPatch(typeof(UISkinsPaletteHUD), "OnSpawn")]
-            private static class UISkinsPaletteHUD_OnSpawn
+            private static class UISkinsPaletteHUDPatches
             {
-                /*
-                IL_0000: ldtoken FactionSubTypes
-                IL_0005: call class [mscorlib] System.Type[mscorlib] System.Type::GetTypeFromHandle(valuetype[mscorlib] System.RuntimeTypeHandle)
-                IL_000A: call class [mscorlib] System.Array[mscorlib] System.Enum::GetValues(class [mscorlib] System.Type)
-                IL_000F: callvirt instance class [mscorlib] System.Collections.IEnumerator[mscorlib] System.Array::GetEnumerator()
-                IL_0014: stloc.0
-	            */
-
-
-                /*
-                IL_0000: ldsfld    !0 class Singleton/Manager`1<class ManPurchases>::inst
-                IL_0005: callvirt  instance class [mscorlib]System.Collections.Generic.List`1<valuetype FactionSubTypes> ManPurchases::get_AvailableCorporations()
-                IL_000A: callvirt  instance !0[] class [mscorlib]System.Collections.Generic.List`1<valuetype FactionSubTypes>::ToArray()
-                IL_000F: callvirt  instance class [mscorlib]System.Collections.IEnumerator [mscorlib]System.Array::GetEnumerator()
-                IL_0014: stloc.0
-                */
-                static Type T_UISkinsPaletteHUD = typeof(UISkinsPaletteHUD);
-
-                static MethodInfo get_AvailableCorporations = T_ManPurchases.GetMethod("get_AvailableCorporations", BindingFlags.Public | BindingFlags.Instance);
-                static MethodInfo ToArray = typeof(List<FactionSubTypes>).GetMethod("ToArray", BindingFlags.Public | BindingFlags.Instance);
-                static MethodInfo OnCorpButtonClicked = T_UISkinsPaletteHUD.GetMethod("OnCorpButtonClicked", binding);
-
-                static FieldInfo m_CorpButtonTemplate = T_UISkinsPaletteHUD.GetField("m_CorpButtonTemplate", binding);
-                static FieldInfo m_CorpButtonParent = T_UISkinsPaletteHUD.GetField("m_CorpButtonParent", binding);
-                static FieldInfo m_CurrentCorpButtons = T_UISkinsPaletteHUD.GetField("m_CurrentCorpButtons", binding);
-
-                static FieldInfo m_Button = typeof(UICustomSkinCorpButton).GetField("m_Button", binding);
-
-                /*private static List<FactionSubTypes> temp;
-                private static void Prefix(ref UISkinsPaletteHUD __instance)
+                static Dictionary<UISkinsPaletteHUD, List<Transform>> customCorpsButtons = new Dictionary<UISkinsPaletteHUD, List<Transform>>();
+                [HarmonyPatch(typeof(UISkinsPaletteHUD), "OnSpawn")]
+                private static class OnSpawn
                 {
-                    temp = ManPurchases.inst.AvailableCorporations.GetRange(7, ManPurchases.inst.AvailableCorporations.Count - 7);
-                    ManPurchases.inst.AvailableCorporations.RemoveRange(7, ManPurchases.inst.AvailableCorporations.Count - 7);
-                    ManPurchases.inst.AvailableCorporations.Insert(0, FactionSubTypes.NULL);
-                }
+                    static Type T_UISkinsPaletteHUD = typeof(UISkinsPaletteHUD);
 
-                private static void Postfix(ref UISkinsPaletteHUD __instance)
-                {
-                    ManPurchases.inst.AvailableCorporations.AddRange(temp);
-                    ManPurchases.inst.AvailableCorporations.RemoveAt(0);
-                }*/
+                    static MethodInfo get_AvailableCorporations = T_ManPurchases.GetMethod("get_AvailableCorporations", BindingFlags.Public | BindingFlags.Instance);
+                    static MethodInfo ToArray = typeof(List<FactionSubTypes>).GetMethod("ToArray", BindingFlags.Public | BindingFlags.Instance);
+                    static MethodInfo OnCorpButtonClicked = T_UISkinsPaletteHUD.GetMethod("OnCorpButtonClicked", binding);
 
-                /*static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-                {
-                    var codes = new List<CodeInstruction>(instructions);
-                    codes[0] = new CodeInstruction(OpCodes.Ldsfld, inst);
-                    codes[1] = new CodeInstruction(OpCodes.Callvirt, get_AvailableCorporations);
-                    codes[2] = new CodeInstruction(OpCodes.Callvirt, ToArray);
-                    return codes;
-                }*/
+                    static FieldInfo m_CorpButtonTemplate = T_UISkinsPaletteHUD.GetField("m_CorpButtonTemplate", binding);
+                    static FieldInfo m_CorpButtonParent = T_UISkinsPaletteHUD.GetField("m_CorpButtonParent", binding);
+                    static FieldInfo m_CurrentCorpButtons = T_UISkinsPaletteHUD.GetField("m_CurrentCorpButtons", binding);
 
-                private static void Postfix(ref UISkinsPaletteHUD __instance)
-                {
-                    var max = CustomCorps.Keys.Max() + 1;
-                    var currentCorpButtons = (List<Transform>)m_CurrentCorpButtons.GetValue(__instance);
-                    var corpButtonParent = (ToggleGroup)m_CorpButtonParent.GetValue(__instance);
-                    var transform = ((GameObject)m_CorpButtonTemplate.GetValue(__instance)).transform.Spawn(corpButtonParent.transform);
-                    transform.localPosition = Vector3.zero;
-                    transform.localScale = Vector3.one;
-                    transform.gameObject.SetActive(false);
-
-                    currentCorpButtons.Resize(max, GameObject.Instantiate(transform));
-
-                    var inst = __instance;
-                    /*var handler = new Action<FactionSubTypes>((FactionSubTypes corp) =>
+                    private static void Postfix(ref UISkinsPaletteHUD __instance)
                     {
-                        Console.WriteLine("CorpToggle " + corp.ToString());
-                        OnCorpButtonClicked.Invoke(inst, new object[] { corp });
-                    });*/
+                        var max = CustomCorps.Keys.Max() + 1;
+                        var currentCorpButtons = (List<Transform>)m_CurrentCorpButtons.GetValue(__instance);
+                        var corpButtonParent = (ToggleGroup)m_CorpButtonParent.GetValue(__instance);
+                        var transform = ((GameObject)m_CorpButtonTemplate.GetValue(__instance)).transform.Spawn(corpButtonParent.transform);
+                        transform.localPosition = Vector3.zero;
+                        transform.localScale = Vector3.one;
+                        transform.gameObject.SetActive(false);
 
-                    foreach (var cc in CustomCorps)
-                    {
-                        var trans = GameObject.Instantiate(transform, corpButtonParent.transform);
-                        trans.name = cc.Value.Name;
-                        trans.gameObject.SetActive(true);
+                        var customButtons = new List<Transform>();
+                        customButtons.Resize(max, GameObject.Instantiate(transform));
 
+                        //currentCorpButtons.Resize(max, GameObject.Instantiate(transform));
 
-                        var corp = (FactionSubTypes)cc.Key;
+                        var inst = __instance;
 
-                        UICustomSkinCorpButton component = trans.GetComponent<UICustomSkinCorpButton>();
-                        var modernCorpIcon = Singleton.Manager<ManUI>.inst.GetModernCorpIcon(corp);
-                        component.SetupButton(corp, null, modernCorpIcon);
-                        component.CorpButtonClickedEvent.Subscribe(new Action<FactionSubTypes>((FactionSubTypes pcorp) =>
+                        foreach (var cc in CustomCorps)
                         {
-                            Console.WriteLine("CorpToggle " + pcorp.ToString());
-                            OnCorpButtonClicked.Invoke(inst, new object[] { pcorp });
-                        }));
-                        Toggle component2 = trans.GetComponent<Toggle>();
-                        if (component2.IsNotNull())
-                        {
-                            component2.group = corpButtonParent;
-                            component2.onValueChanged.AddListener((bool on) =>
+                            var trans = GameObject.Instantiate(transform, corpButtonParent.transform);
+                            trans.name = cc.Value.Name;
+                            trans.gameObject.SetActive(true);
+
+
+                            var corp = (FactionSubTypes)cc.Key;
+
+                            UICustomSkinCorpButton component = trans.GetComponent<UICustomSkinCorpButton>();
+                            var modernCorpIcon = Singleton.Manager<ManUI>.inst.GetModernCorpIcon(corp);
+                            component.SetupButton(corp, cc.Value.SkinInfo.m_SkinUIInfo.m_SkinButtonImage, modernCorpIcon);
+                            component.CorpButtonClickedEvent.Subscribe(new Action<FactionSubTypes>((FactionSubTypes pcorp) =>
                             {
-                                if (on) component.CorpButtonClickedEvent.Send(corp);
-                            });
+                                OnCorpButtonClicked.Invoke(inst, new object[] { pcorp });
+                            }));
+                            Toggle component2 = trans.GetComponent<Toggle>();
+                            if (component2.IsNotNull())
+                            {
+                                component2.group = corpButtonParent;
+                                component2.onValueChanged.AddListener((bool on) =>
+                                {
+                                    if (on) component.CorpButtonClickedEvent.Send(corp);
+                                });
+                            }
+
+                            customButtons[cc.Key] = trans;
                         }
 
-                        currentCorpButtons[cc.Key] = trans;
-                    }
+                        customCorpsButtons.Add(__instance, customButtons);
 
-                    Console.WriteLine("CurrentCorpButtons");
-                    for (int i = 0; i < currentCorpButtons.Count; i++)
+                        if(currentCorpButtons.Count < max) currentCorpButtons.AddRange(customButtons.GetRange(currentCorpButtons.Count, max - currentCorpButtons.Count));
+
+                        Console.WriteLine("CurrentCorpButtons");
+                        for (int i = 0; i < currentCorpButtons.Count; i++)
+                        {
+                            Console.WriteLine(((FactionSubTypes)i).ToString());
+                        }
+
+                        m_CurrentCorpButtons.SetValue(__instance, currentCorpButtons);
+                    }
+                }
+                [HarmonyPatch(typeof(UISkinsPaletteHUD), "OnRecycle")]
+                private static class OnRecycle
+                { 
+                    private static void Postfix(ref UISkinsPaletteHUD __instance)
                     {
-                        Console.WriteLine(((FactionSubTypes)i).ToString());
-                    }
+                        if(customCorpsButtons.ContainsKey(__instance))
+                        {
+                            foreach (var button in customCorpsButtons[__instance])
+                            {
+                                try
+                                {
+                                    button.SetParent(null);
+                                    GameObject.Destroy(button);
+                                }
+                                catch { }
+                            }
 
-                    m_CurrentCorpButtons.SetValue(__instance, currentCorpButtons);
+                            customCorpsButtons.Remove(__instance);
+                        }
+                    }
                 }
             }
 
@@ -1213,24 +1149,11 @@ namespace Nuterra.BlockInjector
 		        IL_0077: br        IL_0129
                 */
 
-                /*static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
                 {
-                    var GetTypeFromHandle = typeof(Type).GetMethod("GetTypeFromHandle", BindingFlags.Public | BindingFlags.Static);
-                    var GetValues = typeof(Enum).GetMethod("GetValues", BindingFlags.Public | BindingFlags.Static);
                     var codes = new List<CodeInstruction>(instructions);
-                    var corpSkinSelectionsLengthI = codes.FindIndex(ci => ci.opcode == OpCodes.Ldsfld);
-                    var cssli = corpSkinSelectionsLengthI;
-                    codes[cssli] = new CodeInstruction(OpCodes.Ldtoken, typeof(FactionSubTypes));
-                    codes[cssli + 1] = new CodeInstruction(OpCodes.Call, GetTypeFromHandle);
-                    codes[cssli + 2] = new CodeInstruction(OpCodes.Call, GetValues);
-                    codes.Insert(cssli + 3, new CodeInstruction(OpCodes.Callvirt, typeof(Array).GetMethod("get_Length", binding)));
-
-                    var factionsListI = codes.FindIndex(ci => ci.opcode == OpCodes.Br) - 4;
-                    var fli = factionsListI;
-                    codes[fli] = new CodeInstruction(OpCodes.Ldtoken, typeof(FactionSubTypes));
-                    codes.Insert(fli + 1, new CodeInstruction(OpCodes.Castclass, typeof(FactionSubTypes[])));
-                    codes.Insert(fli + 1, new CodeInstruction(OpCodes.Call, GetValues));
-                    codes.Insert(fli + 1, new CodeInstruction(OpCodes.Call, GetTypeFromHandle));
+                    var dci = codes.FindIndex(ci => ci.opcode == OpCodes.Call);
+                    codes.RemoveRange(dci - 8, 9);
 
                     foreach (var ci in codes)
                     {
@@ -1242,7 +1165,7 @@ namespace Nuterra.BlockInjector
                         }
                     }
                     return codes;
-                }*/
+                }
             }
 
             /*[HarmonyPatch(typeof(ManCustomSkins), "DoPaintBlock")]
