@@ -71,7 +71,9 @@ namespace Nuterra.BlockInjector
             var InputItems = new RecipeTable.Recipe.ItemSpec[customRecipe.Inputs.Length];
             for (int i = 0; i < customRecipe.Inputs.Length; i++)
             {
-                InputItems[i] = customRecipe.Inputs[i].ItemSpec();
+                var input = customRecipe.Inputs[i];
+                if (input.IsValid)
+                    InputItems[i] = input.ItemSpec();
             }
 
             var OutputItems = new RecipeTable.Recipe.ItemSpec[customRecipe.Outputs.Length];
@@ -167,6 +169,7 @@ namespace Nuterra.BlockInjector
             int ID;
             ObjectTypes Type;
             int Count;
+            public bool IsValid => Count != 0 && Type != ObjectTypes.Null;
         }
 
         public struct RecipeOutput
