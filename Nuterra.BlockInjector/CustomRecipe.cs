@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 namespace Nuterra.BlockInjector
 {
@@ -71,9 +72,7 @@ namespace Nuterra.BlockInjector
             var InputItems = new RecipeTable.Recipe.ItemSpec[customRecipe.Inputs.Length];
             for (int i = 0; i < customRecipe.Inputs.Length; i++)
             {
-                var input = customRecipe.Inputs[i];
-                if (input.IsValid)
-                    InputItems[i] = input.ItemSpec();
+                InputItems[i] = customRecipe.Inputs[i].ItemSpec();
             }
 
             var OutputItems = new RecipeTable.Recipe.ItemSpec[customRecipe.Outputs.Length];
@@ -95,7 +94,7 @@ namespace Nuterra.BlockInjector
         {
             public CustomRecipeStruct(RecipeInput[] Inputs, RecipeOutput[] Outputs, RecipeTable.Recipe.OutputType OutputType, string NameOfFabricator, float BuildTime)
             {
-                this.Inputs = Inputs;
+                this.Inputs = Inputs.Where(v => v.IsValid).ToArray();
                 this.Outputs = Outputs;
                 this.OutputType = OutputType;
                 this.NameOfFabricator = NameOfFabricator;
