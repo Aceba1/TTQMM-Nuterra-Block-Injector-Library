@@ -900,6 +900,12 @@ namespace Nuterra.BlockInjector
             }
         }
 
+        static Type[] ForceInstantiateObjectTypes = new Type[]
+        {
+            typeof(TireProperties),
+            typeof(ManWheels.TireProperties)
+        };
+
         private static object SetJSONObject_Internal(JObject jObject, string Spacing, bool Wipe, bool Instantiate, object original, Type type, string name)
         {
             object rewrite;
@@ -910,7 +916,7 @@ namespace Nuterra.BlockInjector
             }
             else
             {
-                if (!Instantiate)
+                if (!Instantiate && !ForceInstantiateObjectTypes.Contains(type))
                 {
                     rewrite = ApplyValues(original, type, jObject, Spacing + m_tab);
                 }
