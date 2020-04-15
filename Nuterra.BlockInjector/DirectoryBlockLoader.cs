@@ -859,20 +859,14 @@ namespace Nuterra.BlockInjector
 
                     string fab = "gsofab";
                     if (!string.IsNullOrEmpty(jBlock.RecipeTable))
-                    {
                         fab = jBlock.RecipeTable;
-                    }
-                    else switch ((FactionSubTypes)jBlock.Faction)
-                    {
-                        case FactionSubTypes.GC: fab = "gcfab"; break;
-                        case FactionSubTypes.VEN: fab = "venfab"; break;
-                        case FactionSubTypes.HE: fab = "hefab"; break;
-                        case FactionSubTypes.BF: fab = "bffab"; break;
-                    }
-
-                    CustomRecipe.RegisterRecipe(Input, new CustomRecipe.RecipeOutput[1] {
-                                new CustomRecipe.RecipeOutput(blockbuilder.RuntimeID)
-                            }, RecipeTable.Recipe.OutputType.Items, fab);
+                    else
+                        fab = CustomRecipe.FabricatorFromFactionType((FactionSubTypes)jBlock.Faction);
+                    blockbuilder.SetCustomRecipeTable(fab);
+                    blockbuilder.SetRecipe(Input);
+                    //CustomRecipe.RegisterRecipe(Input, new CustomRecipe.RecipeOutput[1] {
+                    //            new CustomRecipe.RecipeOutput(blockbuilder.RuntimeID)
+                    //        }, RecipeTable.Recipe.OutputType.Items, fab);
                 }
 
                 L("Set Price", l);

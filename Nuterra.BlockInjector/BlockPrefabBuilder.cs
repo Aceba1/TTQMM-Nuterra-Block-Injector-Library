@@ -856,6 +856,13 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        public BlockPrefabBuilder SetRecipe(params CustomRecipe.RecipeInput[] input)
+        {
+            ThrowIfFinished();
+            _recipeQueue = input;
+            return this;
+        }
+
         public BlockPrefabBuilder SetCustomRecipeTable(string customRecipeTable)
         {
             ThrowIfFinished();
