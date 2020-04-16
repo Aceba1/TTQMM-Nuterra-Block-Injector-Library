@@ -26,7 +26,7 @@ namespace Nuterra.BlockInjector
         {
             if (FabNameDict.TryGetValue(faction, out string result))
                 return result;
-            return FabNameDict[FactionSubTypes.GSO];
+            return "gsofab";
         }
 
         public static void RegisterRecipe(ChunkTypes[] Inputs, int OutputID, string NameOfFabricator = "gsofab")
