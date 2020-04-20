@@ -91,14 +91,18 @@ namespace Nuterra.BlockInjector
                 public string ObjectName { set => SubOverrideName = value; }
                 public string SubOverrideName;
 
+                public string ModelName { set => MeshName = value; }
                 public string MeshName;
+                public int PhysicsLayer { set => Layer = value; }
                 public int? Layer;
                 public bool DestroyColliders { set => DestroyExistingColliders = value; }
                 public bool DestroyExistingColliders;
                 public bool DestroyExistingRenderers { set => DestroyExistingRenderer = value; }
                 public bool DestroyRenderers { set => DestroyExistingRenderer = value; }
                 public bool DestroyExistingRenderer;
+                public bool ForceEmission;
 
+                public bool GenerateBoxCollider { set => MakeBoxCollider = value; }
                 public bool MakeBoxCollider;
                 public bool MakeSphereCollider;
                 public string MeshColliderName { set => ColliderMeshName = value; }
@@ -726,6 +730,14 @@ namespace Nuterra.BlockInjector
                                     renderer.sharedMaterial = mat;
                                     if (renderer is ParticleSystemRenderer psrenderer)
                                         psrenderer.trailMaterial = mat;
+                                }
+                                if (sub.ForceEmission)
+                                {
+                                    L("-Set Emission packet", l);
+                                    foreach (var renderer in renderers)
+                                    {
+                                        MaterialSwapper.SetMaterialPropertiesOnRenderer(renderer, ManTechMaterialSwap.MaterialColour.Normal, 1f, 0);
+                                    }
                                 }
                             }
                         }
