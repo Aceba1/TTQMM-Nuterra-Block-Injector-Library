@@ -57,6 +57,7 @@ namespace Nuterra.BlockInjector
                 m.SetTexture("_EmissionMap", Emission);
                 string value = "_EMISSION";
                 if (!shaderKeywords.Contains(value)) shaderKeywords.Add(value);
+                m.SetColor("_EmissionColor", Color.white);
             }
             m.shaderKeywords = shaderKeywords.ToArray();
             return m;
