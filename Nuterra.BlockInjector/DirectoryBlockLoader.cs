@@ -61,6 +61,7 @@ namespace Nuterra.BlockInjector
             public float? Fragility;
 
             public float Mass;
+            public Vector3 CentreOfMass { set => CenterOfMass = value; }
             public Vector3? CenterOfMass;
             public IntVector3? BlockExtents;
             public bool MakeAPsAtBottom { set => APsOnlyAtBottom = value; }
