@@ -106,6 +106,7 @@
     <Compile Include="CustomBlock.cs" />
     <Compile Include="CustomCorporation.cs" />
     <Compile Include="CustomModules.cs" />
+    <Compile Include="CustomModulesConsumeToShell.cs" />
     <Compile Include="CustomRecipe.cs" />
     <Compile Include="DirectoryCorpLoader.cs" />
     <Compile Include="GameObjectExtensions.cs" />
