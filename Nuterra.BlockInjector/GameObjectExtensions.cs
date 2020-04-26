@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 
 namespace Nuterra.BlockInjector
 {
@@ -32,6 +33,40 @@ namespace Nuterra.BlockInjector
                 }
             }
             return null;
+        }
+
+        public static T GetComponent<T>(this GameObject obj, int index) where T : Component
+        {
+            T[] components = obj.GetComponents<T>();
+            if (components.Length > index)
+                return components[index];
+            return null;
+        }
+
+        public static Component GetComponent(this GameObject obj, Type type, int index)
+        {
+            Component[] components = obj.GetComponents(type);
+            if (components.Length > index)
+                return components[index];
+            return null;
+        }
+
+        public static Component GetComponent(this GameObject obj, string type, int index)
+        {
+            Component[] components = obj.GetComponents(GameObjectJSON.GetType(type));
+            if (components.Length > index)
+                return components[index];
+            return null;
+        }
+
+        public static Component GetComponentWithIndex(this GameObject obj, string type)
+        {
+            int split = type.IndexOf(' ');
+            if (split != -1 && int.TryParse(type.Substring(split + 1), out int index))
+            {
+                return obj.GetComponent(type.Substring(0, split), index);
+            }
+            return obj.GetComponent(type);
         }
     }
 }

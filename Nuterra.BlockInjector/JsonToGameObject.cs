@@ -380,7 +380,7 @@ namespace Nuterra.BlockInjector
                     string propClass = NameOfProperty.Substring(lastIndex + 1, Math.Max(propIndex - lastIndex - 1, 0));
 
                     Console.Write($"<Class:{propClass}>");
-                    Component component = result.GetComponent(propClass);
+                    Component component = result.gameObject.GetComponentWithIndex(propClass);
                     Console.Write($"<Property:{propPath}>");
                     object value = component.GetValueFromPath(propPath);
 
@@ -640,17 +640,24 @@ namespace Nuterra.BlockInjector
                     }
                     else
                     {
-                        Type componentType = GetType(property.Name);
+                        string typeName = property.Name;
+                        int split = typeName.IndexOf(' '), index;
+                        if (split != -1 && int.TryParse(typeName.Substring(split + 1), out index))
+                        {
+                            typeName = typeName.Substring(0, split);
+                        }
+                        else index = 0;
+                        Type componentType = GetType(typeName);
                         if (componentType == null)
                         {
                             if (instantiated != null)
                                 ApplyValue(instantiated, instantiatedType, property, Spacing);
                             else
-                                Console.WriteLine(Spacing + "No component available of type " + property.Name);
+                                Console.WriteLine(Spacing + "No component available of type " + typeName);
                         }
                         else
                         {
-                            object component = result.GetComponent(componentType);
+                            object component = result.gameObject.GetComponent(componentType, index);
                             if (property.Value.Type == JTokenType.Null)
                             {
                                 Component c = component as Component;
@@ -767,7 +774,7 @@ namespace Nuterra.BlockInjector
 
                 if (jsonProperty.Value is JObject jObject)
                 {
-                    SetJSONObject(jObject, ref instance, Spacing, Wipe, Instantiate, tField, tProp, UseField);
+                    SetJSONObject(jObject, instance, Spacing, Wipe, Instantiate, tField, tProp, UseField);
                 }
                 else if (jsonProperty.Value is JArray jArray)
                 {
@@ -802,7 +809,6 @@ namespace Nuterra.BlockInjector
             var bf = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
             if (DeclaredVarsOnly) bf |= BindingFlags.DeclaredOnly;
             var fields = sharedType.GetFields(bf);
-            var props = sharedType.GetProperties(bf);
             foreach (var field in fields)
             {
                 try
@@ -811,6 +817,7 @@ namespace Nuterra.BlockInjector
                 }
                 catch { }
             }
+            var props = sharedType.GetProperties(bf);
             foreach (var prop in props)
             {
                 try
@@ -915,7 +922,7 @@ namespace Nuterra.BlockInjector
             //else throw new Exception($"Trying to modify array to non-array type (Does not implement IList interface)");
         }
 
-        private static void SetJSONObject(JObject jObject, ref object instance, string Spacing, bool Wipe, bool Instantiate, FieldInfo tField, PropertyInfo tProp, bool UseField)
+        private static void SetJSONObject(JObject jObject, object instance, string Spacing, bool Wipe, bool Instantiate, FieldInfo tField, PropertyInfo tProp, bool UseField)
         {
             if (UseField)
             {
