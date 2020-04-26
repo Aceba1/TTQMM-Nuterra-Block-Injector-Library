@@ -178,6 +178,8 @@ mkdir !modpath!
 )
 echo Copying to game
 set e=$(TargetDir)..\&gt;nul
-xcopy /S /Y /R "!e:~0,-1!" !modpath!</PostBuildEvent>
+xcopy /S /Y /R "!e:~0,-1!" !modpath!
+
+echo %25TIME%25</PostBuildEvent>
   </PropertyGroup>
 </Project>
