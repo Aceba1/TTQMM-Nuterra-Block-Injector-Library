@@ -821,6 +821,35 @@ namespace Nuterra.BlockInjector
                 catch { }
             }
         }
+        public static void ShallowCopy(Type sharedType, object source, object target, string[] Filter)
+        {
+            var bf = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
+            foreach (string search in Filter)
+            {
+                var field = sharedType.GetField(search, bf);
+                if (field != null)
+                {
+                    try
+                    {
+                        field.SetValue(target, field.GetValue(source));
+                    }
+                    catch { }
+                }
+                else
+                {
+                    var prop = sharedType.GetProperty(search, bf);
+                    if (prop != null)
+                    {
+                        try
+                        {
+                            if (prop.CanRead && prop.CanWrite)
+                                prop.SetValue(target, prop.GetValue(source), null);
+                        }
+                        catch { }
+                    }
+                }
+            }
+        }
 
         static Type t_ilist = typeof(IList);
         private static IList MakeJSONArray(object originalArray, Type ArrayType, JArray Deserialize, string Spacing, bool Wipe)
@@ -895,7 +924,7 @@ namespace Nuterra.BlockInjector
             }
             else
             {
-                object rewrite = SetJSONObject_Internal(jObject, Spacing, Wipe, Instantiate, Wipe ? null : tProp.GetValue(instance, null), tProp.PropertyType, tProp.Name);
+                object rewrite = SetJSONObject_Internal(jObject, Spacing, Wipe, Instantiate, Wipe || !tProp.CanRead ? null : tProp.GetValue(instance, null), tProp.PropertyType, tProp.Name);
                 if (tProp.CanWrite)
                     try { tProp.SetValue(instance, rewrite, null); } catch (Exception E) { Console.WriteLine(Spacing + m_tab + "!!!" + E.ToString()); }
             }

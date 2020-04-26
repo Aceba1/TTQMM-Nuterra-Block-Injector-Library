@@ -4,8 +4,6 @@ using UnityEngine;
 using System.Reflection;
 using Nuterra.BlockInjector;
 
-#if true
-
 #region Modules
 
 [RequireComponent(typeof(ModuleEnergyStore))]
@@ -237,18 +235,52 @@ public class ModuleConsumeResource : Module
     //public float ConsumeCooldown = 0f;
     public int HolderCapacity = 3;
 
-    public Vector3 HolderPosition = Vector3.zero;
-    public int[] HolderAPIndices;
+    public static int[] GetAPIndices(TankBlock block, Vector3 Position)
+    {
+        List<int> list = new List<int>();
+        for (int k = 0; k < block.attachPoints.Length; k++)
+        {
+            Vector3 input = block.attachPoints[k] - Position;
+            if (input.sqrMagnitude < 1f && input.SetY(0f).sqrMagnitude > 0.1f)
+                list.Add(k);
+        }
+        return list.ToArray();
+    }
+
+    public struct ChunkInputStack
+    {
+        public Vector3 Position;
+        public Vector3 ConsumePosition;
+        public int[] APIndices;
+    }
+
+    public ChunkInputStack[] InputStacks // Write-only!
+    {
+        set
+        {
+            // 'Serialize' the stuff
+            _overridePositions = new Vector3[value.Length + 1];
+            _endPositions = new Vector3[value.Length];
+            _overrideConnections = new ModuleItemHolder.APOverrideCollection[value.Length + 1];
+            for (int i = 0; i < value.Length; i++)
+            {
+                _overridePositions[i] = value[i].Position;
+                _endPositions[i] = value[i].ConsumePosition;
+                _overrideConnections[i] = new ModuleItemHolder.APOverrideCollection { indices = value[i].APIndices };
+            }
+            _overridePositions[value.Length] = Vector3.one * 100;
+            _overrideConnections[value.Length] = new ModuleItemHolder.APOverrideCollection { indices = new int[0] };
+        }
+    }
+
+    public ChunkInputStack InputStack { set => InputStacks = new ChunkInputStack[] { value }; } // Write-only!
 
     public ChunkTypes[] AcceptedChunks = new ChunkTypes[] { ChunkTypes.Wood, ChunkTypes.RubberJelly };
     public float[] ValuePerChunk = new float[] { 1f, 0.5f };
 
     public TechAudio.SFXType ConsumeSFXType = TechAudio.SFXType.ItemResourceProduced;
-    public Vector3 ConsumePosition = Vector3.down;
 
     public float CurrentValue { get; set; } = 0f;
-
-    System.Collections.Stack stack = new System.Collections.Stack();
 
     /// <summary>
     /// <see cref="float"/> : AddedValue
@@ -257,22 +289,25 @@ public class ModuleConsumeResource : Module
 
     ModuleItemHolder _Holder;
     ModuleItemHolderBeam _Beam;
-    ModuleItemHolder.StackHandle _Stack, _EndStack;
+    ModuleItemHolder.StackHandle[] _Stacks;
+    ModuleItemHolder.StackHandle _EndStack;
 
     const BindingFlags BF = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
     /// <summary>
     /// <see cref="Vector3"/>[]
     /// </summary>
-    static FieldInfo OBP = typeof(ModuleItemHolder).GetField("m_OverrideBasePositons", BF);
+    static FieldInfo OBP = typeof(ModuleItemHolder).GetField("m_OverrideBasePositons", BF); // why is this spelt Positon
     /// <summary>
     /// <see cref="ModuleItemHolder.APOverrideCollection"/>[]
     /// </summary>
-    static FieldInfo OAP = typeof(ModuleItemHolder).GetField("m_OverrideAPConnections", BF);
+    static FieldInfo OAP = typeof(ModuleItemHolder).GetField("m_OverrideAPConnections", BF); // why does the name not match the type
 
-    ModuleItemHolder.APOverrideCollection[] overrideCollections;
-    Vector3[] overridePositions;
-
-    Vector3 _consueStartPos;
+    [SerializeField]
+    ModuleItemHolder.APOverrideCollection[] _overrideConnections;
+    [SerializeField]
+    Vector3[] _overridePositions;
+    [SerializeField]
+    Vector3[] _endPositions;
 
     static AnimationCurve easeouthalf = new AnimationCurve(
         new Keyframe(0f, 0f, 0f, 0f),
@@ -280,17 +315,25 @@ public class ModuleConsumeResource : Module
         new Keyframe(1f, 1f, 0f, 0f)
         );
 
+    struct ConsumeAnim
+    {
+        public Transform Body;
+        public Vector3 StartPos;
+        public Vector3 EndPos;
+    }
+    Queue<ConsumeAnim> anims = new Queue<ConsumeAnim>();
+
     void Update()
     {
-        if (!_EndStack.stack.IsEmpty)
+        foreach(var anim in anims)
         {
             var holders = block.tank.Holders;
             float temp = holders.CurrentHeartbeatInterval, Ratio;
             if (temp == 0f) Ratio = 1f;
             else Ratio = easeouthalf.Evaluate((holders.NextHeartBeatTime - Time.time) / temp);
 
-            var tr = _EndStack.stack.FirstItem.trans;
-            tr.position = transform.TransformPoint(Vector3.Lerp(ConsumePosition, _consueStartPos, Ratio));
+            var tr = anim.Body;
+            tr.position = transform.TransformPoint(Vector3.Lerp(anim.EndPos, anim.StartPos, Ratio));
             tr.localScale = Vector3.Lerp(Vector3.zero, Vector3.one, Ratio);
         }
     }
@@ -322,22 +365,24 @@ public class ModuleConsumeResource : Module
 
         // Get the beam from a block with it set right
         _Beam = gameObject.AddComponent<ModuleItemHolderBeam>();
-        GameObjectJSON.ShallowCopy(typeof(ModuleItemHolderBeam), ManSpawn.inst.GetBlockPrefab(BlockTypes.GSOSilo_111).GetComponent<ModuleItemHolderBeam>(), _Beam, true);
+        GameObjectJSON.ShallowCopy(typeof(ModuleItemHolderBeam), ManSpawn.inst.GetBlockPrefab(BlockTypes.GSOSilo_111).GetComponent<ModuleItemHolderBeam>(), _Beam, new string[]{
+            "m_BeamStrength",
+            "m_BeamBaseHeight",
+            "m_BeamQuadPrefab",
+            "m_BeamColumnRadius",
+            "m_HeightIncrementScale",
+            "m_HoldingParticlesPrefab"
+        });
 
         _Holder.OverrideStackCapacity(HolderCapacity);
-        // 'Serialize' the stuff
-        overridePositions = new Vector3[2] { HolderPosition, Vector3.one * 100 };
-        OBP.SetValue(_Holder, overridePositions);
-        if (HolderAPIndices != null)
+        for (int i = 0; i < _overrideConnections.Length; i++)
         {
-            overrideCollections = new ModuleItemHolder.APOverrideCollection[2]
-            {
-                new ModuleItemHolder.APOverrideCollection() { indices = HolderAPIndices },
-                new ModuleItemHolder.APOverrideCollection() { indices = new int[0] }
-            };
-            OAP.SetValue(_Holder, overrideCollections);
+            if (_overrideConnections[i].indices == null)
+                _overrideConnections[i] = new ModuleItemHolder.APOverrideCollection { indices = GetAPIndices(block, _overridePositions[i]) };
         }
-        else OAP.SetValue(_Holder, new ModuleItemHolder.APOverrideCollection[0]);
+
+        OBP.SetValue(_Holder, _overridePositions);
+        OAP.SetValue(_Holder, _overrideConnections);
     }
 
     void OnPool()
@@ -346,10 +391,13 @@ public class ModuleConsumeResource : Module
         _Holder = gameObject.GetComponent<ModuleItemHolder>();
         _Holder.SetAcceptFilterCallback(new Func<Visible, ModuleItemHolder.Stack, ModuleItemHolder.Stack, ModuleItemHolder.PassType, bool>(this.CanAcceptItem), false);
         _Holder.PreDetachEvent.Subscribe(new Action<int>(OnPreDetach));
-
-        _Stack = new ModuleItemHolder.StackHandle() { localPos = HolderPosition };
+        _Stacks = new ModuleItemHolder.StackHandle[_overridePositions.Length];
+        for (int i = 0; i < _overridePositions.Length; i++)
+        {
+            _Stacks[i] = new ModuleItemHolder.StackHandle() { localPos = _overridePositions[i] };
+            _Stacks[i].InitReference(_Holder);
+        }
         _EndStack = new ModuleItemHolder.StackHandle() { localPos = Vector3.one * 100 };
-        _Stack.InitReference(_Holder);
         _EndStack.InitReference(_Holder);
 
         block.AttachEvent.Subscribe(OnAttach);
@@ -358,43 +406,52 @@ public class ModuleConsumeResource : Module
 
     void OnPreDetach(int _)
     {
-        DropAllStackItems(_Stack.stack);
+        foreach (var stack in _Stacks)
+            DropAllStackItems(stack.stack);
         ClearOutStack(_EndStack.stack);
     }
 
     float GetExpectedValueFromStacks()
     {
         float result = 0f;
-        foreach (var item in _Stack.stack.IterateItems())
-        {
-            TryGetIndexOfChunk((ChunkTypes)item.ItemType, out int index);
-            result += ValuePerChunk[index];
-        }
         foreach (var item in _EndStack.stack.IterateItems())
         {
             TryGetIndexOfChunk((ChunkTypes)item.ItemType, out int index);
             result += ValuePerChunk[index];
         }
+        foreach (var stack in _Stacks)
+            foreach (var item in stack.stack.IterateItems())
+            {
+                TryGetIndexOfChunk((ChunkTypes)item.ItemType, out int index);
+                result += ValuePerChunk[index];
+            }
         return result;
     }
 
     private bool CanAcceptItem(Visible item, ModuleItemHolder.Stack fromStack, ModuleItemHolder.Stack toStack, ModuleItemHolder.PassType passType)
     {
         //Console.WriteLine("Attempting to receive item " + item.ItemType);
-        var inputStack = _Stack.stack;
         var consumeStack = _EndStack.stack;
         if (toStack == consumeStack)
+        {
             //Console.WriteLine("ToStack was consumeStack, false");
             return false;
+        }
         if (passType == (ModuleItemHolder.PassType.Pass | ModuleItemHolder.PassType.Test) && item == null)
+        {
             //Console.WriteLine("Just passing, true");
             return true;
+        }
         if (toStack.IsFull || CurrentValue + GetExpectedValueFromStacks() > MaxValue)
+        {
             //Console.WriteLine("inputStack is full, false");
             return false;
+        }
         if (TryGetIndexOfChunk((ChunkTypes)item.ItemType, out _))
+        {
             //Console.WriteLine("Is accepted type, true");
             return true;
+        }
         //Console.WriteLine("Is not accepted type, false");
         return false;
     }
@@ -440,7 +497,15 @@ public class ModuleConsumeResource : Module
     TechHolders.OperationResult OnPullInput()
     {
         var result = TechHolders.OperationResult.None;
-        var inputStack = _Stack.stack;
+
+        foreach (var stack in _Stacks)
+            result |= StackPullInput(stack.stack);
+        
+        return result;
+    }
+    TechHolders.OperationResult StackPullInput(ModuleItemHolder.Stack inputStack)
+    {
+        var result = TechHolders.OperationResult.None;
         foreach (ModuleItemHolder.Stack connectedStack in inputStack.ConnectedStacks)
         {
             foreach (Visible item in connectedStack.IterateItemsIncludingLinkedStacks(0))
@@ -459,20 +524,27 @@ public class ModuleConsumeResource : Module
         if (!consumeStack.IsEmpty && !consumeStack.ReceivedThisHeartbeat)
             return TechHolders.OperationResult.Retry;
 
-        var inputStack = _Stack.stack;
+        var result = TechHolders.OperationResult.None;
 
+        for (int i = 0; i < _Stacks.Length; i++)
+            result |= StackConsumeInput(_Stacks[i].stack, i);
+
+        return result;
+    }
+    TechHolders.OperationResult StackConsumeInput(ModuleItemHolder.Stack inputStack, int index)
+    {
         if (inputStack.ReceivedThisHeartbeat)
             return TechHolders.OperationResult.None;
         if (inputStack.IsEmpty)
             return TechHolders.OperationResult.Retry;
 
         var item = inputStack.FirstItem;
-        _Beam.ConfigureStack(consumeStack.GetStackIndex(), false, ModuleItemHolderBeam.ItemMovementType.Static);
-        consumeStack.Take(item, true, true);
+        _Beam.ConfigureStack(_EndStack.stack.GetStackIndex(), false, ModuleItemHolderBeam.ItemMovementType.Static);
+        _EndStack.stack.Take(item, true, true);
         TechAudio.AudioTickData data = TechAudio.AudioTickData.ConfigureOneshot(this, ConsumeSFXType);
         block.tank.TechAudio.PlayOneshot(data, null);
         item.EnablePhysics(false, false);
-        _consueStartPos = transform.InverseTransformPoint(item.trans.position);
+        anims.Enqueue(new ConsumeAnim { Body = item.trans, StartPos = transform.InverseTransformPoint(item.trans.position), EndPos = _endPositions[index] });
         return TechHolders.OperationResult.Effect;
     }
 
@@ -481,15 +553,16 @@ public class ModuleConsumeResource : Module
         var consumeStack = _EndStack.stack;
         if (!consumeStack.ReceivedThisHeartbeat && !consumeStack.IsEmpty) // Change to if permitted to  c o n s u m e
         {
-            var item = consumeStack.FirstItem;
-            TryGetIndexOfChunk((ChunkTypes)item.ItemType, out int i);
+            while (!consumeStack.IsEmpty)
+            {
+                var item = consumeStack.FirstItem;
+                TryGetIndexOfChunk((ChunkTypes)item.ItemType, out int i);
 
-            CurrentValue += ValuePerChunk[i];
-            ConsumeEvent?.Invoke(ValuePerChunk[i]);
-
-            //consumeStack.Release(item, null);
-            item.trans.Recycle();
-            //Console.WriteLine("Recycled item");
+                CurrentValue += ValuePerChunk[i];
+                ConsumeEvent?.Invoke(ValuePerChunk[i]);
+                anims.Dequeue();
+                item.trans.Recycle();
+            }
             return TechHolders.OperationResult.Effect;
         }
         return TechHolders.OperationResult.None;
@@ -511,5 +584,3 @@ public class ModuleConsumeResource : Module
 }
 
 #endregion
-
-#endif
