@@ -19,7 +19,20 @@ public class ModuleConsumeEnergyToShell : Module
     public float LowestPermittedEnergy = 50f;
     public float TimeBeforeRetry = 1f;
 
+    public CustomGauge _gauge;
+    public float GaugeMinEnergy = 0f;
+    public float GaugeMaxEnergy;
+    public CustomGaugeSerializer CustomGauge
+    {
+        set
+        {
+            _gauge = value.GaugeObject.gameObject.AddComponent<CustomGauge>();
+            _gauge.ApplyData(value);
+        }
+    }
+
     float _TimeFault;
+
     public bool IsContinuous => WeaponWrapper.WrapType == ModuleWeaponWrapper.WeaponType.Continuous;
 
     public float ActualCurrentEnergy
@@ -31,6 +44,20 @@ public class ModuleConsumeEnergyToShell : Module
         }
     }
 
+    void OnSpawn()
+    {
+        if (_gauge != null) _gauge.HardSet(0f);
+    }
+
+    void Update()
+    {
+        if (block.tank != null && _gauge != null)
+        {
+            float ratio = (ActualCurrentEnergy - GaugeMinEnergy) / (GaugeMaxEnergy - GaugeMinEnergy);
+            _gauge.Set(Mathf.Clamp01(ratio));
+        }
+    }
+
     public void PrePool()
     {
         WeaponWrapper = GetComponent<ModuleWeaponWrapper>();
@@ -38,6 +65,18 @@ public class ModuleConsumeEnergyToShell : Module
         EnergyStore = GetComponent<ModuleEnergyStore>();
         Energy = GetComponent<ModuleEnergy>();
         EnergyStore.m_Capacity = EnergyCapacity;
+
+        // Backup fallback
+        if (GaugeMinEnergy == GaugeMaxEnergy && GaugeMinEnergy == 0f)
+        {
+            GaugeMinEnergy = LowestPermittedEnergy;
+            GaugeMaxEnergy = EnergyCost;
+        }
+        else
+        {
+            if (GaugeMaxEnergy == 0f) GaugeMaxEnergy = EnergyCost;
+            if (GaugeMinEnergy == GaugeMaxEnergy) GaugeMaxEnergy++;
+        }
     }
 
     public void OnPool()
@@ -78,6 +117,17 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
 {
     public ModuleWeaponWrapper WeaponWrapper;
 
+    public CustomGauge _gauge;
+
+    public CustomGaugeSerializer CustomGauge
+    { 
+        set
+        {
+            _gauge = value.GaugeObject.gameObject.AddComponent<CustomGauge>();
+            _gauge.ApplyData(value);
+        } 
+    }
+
     public bool IsContinuous => WeaponWrapper.WrapType == ModuleWeaponWrapper.WeaponType.Continuous;
 
     public void PrePool()
@@ -95,6 +145,12 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
         WeaponWrapper.LockFiring(this, true);
     }
 
+    public void OnSpawn()
+    {
+        CurrentValue = 0f;
+        if (_gauge != null) _gauge.HardSet(0f);
+    }
+
     void OnFire(int amount)
     {
         float cost = -amount;
@@ -107,6 +163,7 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
 
     void CheckIfCanFire(float _)
     {
+        if (_gauge != null) _gauge.Set(CurrentValue / MaxValue);
         WeaponWrapper.LockFiring(this, IsContinuous ? (CurrentValue <= 0f) : (CurrentValue < 1f));
     }
 }
@@ -114,6 +171,109 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
 #endregion
 
 #region Utility
+
+public struct CustomGaugeSerializer
+{
+    public Transform GaugeObject;
+    public Vector3 PositionMin;
+    public Vector3 PositionMax;
+    public Vector3 ScaleMin;
+    public Vector3 ScaleMax;
+    public Vector3 RotationMin;
+    public Vector3 RotationMax;
+    public Color ColorMin;
+    public Color ColorMax;
+    public float Dampen;
+}
+
+public class CustomGauge : MonoBehaviour
+{
+    public Vector3 PositionMin, PositionMax;
+    public Vector3 ScaleMin, ScaleMax;
+    public Vector3 RotationMin, RotationMax;
+    public Color ColorMin, ColorMax;
+
+    public float Dampen;
+
+    float _target, _value;
+    Renderer _renderer;
+
+    public void ApplyData(CustomGaugeSerializer data)
+    {
+        PositionMin = data.PositionMin; PositionMax = data.PositionMax;
+        ScaleMin = data.ScaleMin; ScaleMax = data.ScaleMax;
+        RotationMin = data.RotationMin; RotationMax = data.RotationMax;
+        ColorMin = data.ColorMin; ColorMax = data.ColorMax;
+        GaugeType = (data.PositionMax != data.PositionMin ? AnimType.Translate : 0) |
+                    (data.ScaleMax != data.ScaleMin       ? AnimType.Scale     : 0) |
+                    (data.RotationMax != data.RotationMin ? AnimType.Rotate    : 0) |
+                    (data.ColorMax != data.ColorMin       ? AnimType.Color     : 0);
+        Dampen = data.Dampen;
+    }
+
+    public AnimType GaugeType;
+
+    [Flags]
+    public enum AnimType
+    {
+        Translate = 1,
+        Scale = 2,
+        Rotate = 4,
+        Color = 8
+    }
+
+    public void HardSet(float ratio)
+    {
+        enabled = false;
+        SetRatio(ratio);
+        _target = ratio;
+        _value = ratio;
+    }
+
+    public void Set(float ratio)
+    {
+        _target = ratio;
+
+        if (Dampen != 0f)
+            enabled = !_value.Approximately(_target);
+        else if (!_value.Approximately(_target))
+        {
+            SetRatio(ratio);
+            _value = ratio;
+        }
+    }
+
+    void Update()
+    {
+        if (_value.Approximately(_target)) enabled = false;
+        else
+        {
+            float dampen = (1f - (Dampen * Dampen)) * Time.deltaTime;
+            _value = (_target * dampen) + (_value * (1f - dampen));
+            SetRatio(_value);
+        }
+    }
+
+    void SetRatio(float ratio)
+    {
+        if ((GaugeType & AnimType.Translate) != 0)
+            transform.localPosition = Vector3.Lerp(PositionMin, PositionMax, ratio);
+        if ((GaugeType & AnimType.Scale) != 0)
+            transform.localScale = Vector3.Lerp(ScaleMin, ScaleMax, ratio);
+        if ((GaugeType & AnimType.Rotate) != 0)
+            transform.localEulerAngles = Vector3.Lerp(RotationMin, RotationMax, ratio);
+        if ((GaugeType & AnimType.Color) != 0)
+        {
+            if (_renderer == null)
+            {
+                _renderer = GetComponent<Renderer>();
+                if (_renderer == null) GaugeType ^= AnimType.Color;
+            }
+            else
+                _renderer.material.color = Color.Lerp(ColorMin, ColorMax, ratio);
+        }
+    }
+}
 
 public class ModuleWeaponWrapper : Module, IModuleWeapon
 {
@@ -231,7 +391,7 @@ public class ModuleWeaponWrapper : Module, IModuleWeapon
 
 public class ModuleConsumeResource : Module
 {
-    public int MaxValue = 3;
+    public float MaxValue = 3f;
     //public float ConsumeCooldown = 0f;
     public int HolderCapacity = 3;
 
