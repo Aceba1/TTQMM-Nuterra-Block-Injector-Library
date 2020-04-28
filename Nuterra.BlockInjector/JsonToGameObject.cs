@@ -714,6 +714,7 @@ namespace Nuterra.BlockInjector
             BindingFlags bind = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
             try
             {
+
                 string name = jsonProperty.Name;
                 //Console.WriteLine(Spacing + m_tab + property.Name);
                 int GetCustomName = jsonProperty.Name.IndexOf('|');
@@ -946,7 +947,7 @@ namespace Nuterra.BlockInjector
         private static object SetJSONObject_Internal(JObject jObject, string Spacing, bool Wipe, bool Instantiate, object original, Type type, string name)
         {
             object rewrite;
-            if (Wipe)
+            if (Wipe || original == null)
             {
                 original = Activator.CreateInstance(type);
                 rewrite = ApplyValues(original, type, jObject, Spacing + m_tab);
