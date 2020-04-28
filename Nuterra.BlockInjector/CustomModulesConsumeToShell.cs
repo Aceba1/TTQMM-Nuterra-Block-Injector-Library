@@ -19,15 +19,29 @@ public class ModuleConsumeEnergyToShell : Module
     public float LowestPermittedEnergy = 50f;
     public float TimeBeforeRetry = 1f;
 
-    public CustomGauge _gauge;
+    public CustomGauge[] _gauges = new CustomGauge[0];
+
     public float GaugeMinEnergy = 0f;
     public float GaugeMaxEnergy;
     public CustomGaugeSerializer CustomGauge
     {
         set
         {
-            _gauge = value.GaugeObject.gameObject.AddComponent<CustomGauge>();
-            _gauge.ApplyData(value);
+            _gauges = new CustomGauge[1] { value.GaugeObject.gameObject.AddComponent<CustomGauge>() };
+            _gauges[0].ApplyData(value);
+        }
+    }
+
+    public CustomGaugeSerializer[] CustomGauges
+    {
+        set
+        {
+            _gauges = new CustomGauge[value.Length];
+            for (int i = 0; i < value.Length; i++)
+            {
+                _gauges[i] = value[i].GaugeObject.gameObject.AddComponent<CustomGauge>();
+                _gauges[i].ApplyData(value[i]);
+            }
         }
     }
 
@@ -46,15 +60,19 @@ public class ModuleConsumeEnergyToShell : Module
 
     void OnSpawn()
     {
-        if (_gauge != null) _gauge.HardSet(0f);
+        if (_gauges.Length != 0)
+            foreach(var gauge in _gauges) 
+                gauge.HardSet(0f);
     }
 
     void Update()
     {
-        if (block.tank != null && _gauge != null)
+        if (block.tank != null && _gauges.Length != 0)
         {
-            float ratio = (ActualCurrentEnergy - GaugeMinEnergy) / (GaugeMaxEnergy - GaugeMinEnergy);
-            _gauge.Set(Mathf.Clamp01(ratio));
+            float ratio = Mathf.Clamp01((ActualCurrentEnergy - GaugeMinEnergy) / (GaugeMaxEnergy - GaugeMinEnergy));
+
+            foreach (var gauge in _gauges)
+                gauge.Set(ratio);
         }
     }
 
@@ -117,15 +135,28 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
 {
     public ModuleWeaponWrapper WeaponWrapper;
 
-    public CustomGauge _gauge;
+    public CustomGauge[] _gauges = new CustomGauge[0];
 
     public CustomGaugeSerializer CustomGauge
     { 
         set
         {
-            _gauge = value.GaugeObject.gameObject.AddComponent<CustomGauge>();
-            _gauge.ApplyData(value);
+            _gauges = new CustomGauge[1] { value.GaugeObject.gameObject.AddComponent<CustomGauge>() };
+            _gauges[0].ApplyData(value);
         } 
+    }
+
+    public CustomGaugeSerializer[] CustomGauges
+    {
+        set
+        {
+            _gauges = new CustomGauge[value.Length];
+            for (int i = 0; i < value.Length; i++)
+            {
+                _gauges[i] = value[i].GaugeObject.gameObject.AddComponent<CustomGauge>();
+                _gauges[i].ApplyData(value[i]);
+            }
+        }
     }
 
     public bool IsContinuous => WeaponWrapper.WrapType == ModuleWeaponWrapper.WeaponType.Continuous;
@@ -148,7 +179,9 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
     public void OnSpawn()
     {
         CurrentValue = 0f;
-        if (_gauge != null) _gauge.HardSet(0f);
+        if (_gauges.Length != 0)
+            foreach (var gauge in _gauges)
+                gauge.HardSet(0f);
     }
 
     void OnFire(int amount)
@@ -163,7 +196,9 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
 
     void CheckIfCanFire(float _)
     {
-        if (_gauge != null) _gauge.Set(CurrentValue / MaxValue);
+        if (_gauges.Length != 0)
+            foreach (var gauge in _gauges)
+                gauge.Set(CurrentValue / MaxValue);
         WeaponWrapper.LockFiring(this, IsContinuous ? (CurrentValue <= 0f) : (CurrentValue < 1f));
     }
 }
@@ -175,14 +210,12 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
 public struct CustomGaugeSerializer
 {
     public Transform GaugeObject;
-    public Vector3 PositionMin;
-    public Vector3 PositionMax;
-    public Vector3 ScaleMin;
-    public Vector3 ScaleMax;
-    public Vector3 RotationMin;
-    public Vector3 RotationMax;
-    public Color ColorMin;
-    public Color ColorMax;
+    public Vector3 PositionMin, PositionMax;
+    public Vector3 ScaleMin, ScaleMax;
+    public Vector3 RotationMin, RotationMax;
+    public Color ColorMin, ColorMax;
+    public float EnableAbove;
+    public float ParticlesAbove;
     public float Dampen;
 }
 
@@ -192,11 +225,41 @@ public class CustomGauge : MonoBehaviour
     public Vector3 ScaleMin, ScaleMax;
     public Vector3 RotationMin, RotationMax;
     public Color ColorMin, ColorMax;
+    public float EnableAbove;
+    public float ParticlesAbove;
 
     public float Dampen;
 
     float _target, _value;
-    Renderer _renderer;
+    Renderer[] _renderers;
+    Renderer[] Renderers
+    {
+        get
+        {
+            if (_renderers == null)
+            {
+                _renderers = GetComponents<Renderer>();
+                if (_renderers.Length == 0)
+                    GaugeType ^= AnimType.Color;
+            }
+            return _renderers;
+        }
+    }
+
+    ParticleSystem[] _particles;
+    ParticleSystem[] Particles
+    {
+        get
+        {
+            if (_particles == null)
+            {
+                _particles = GetComponents<ParticleSystem>();
+                if (_particles.Length == 0)
+                    GaugeType ^= AnimType.Particles;
+            }
+            return _particles;
+        }
+    }
 
     public void ApplyData(CustomGaugeSerializer data)
     {
@@ -204,22 +267,35 @@ public class CustomGauge : MonoBehaviour
         ScaleMin = data.ScaleMin; ScaleMax = data.ScaleMax;
         RotationMin = data.RotationMin; RotationMax = data.RotationMax;
         ColorMin = data.ColorMin; ColorMax = data.ColorMax;
-        GaugeType = (data.PositionMax != data.PositionMin ? AnimType.Translate : 0) |
-                    (data.ScaleMax != data.ScaleMin       ? AnimType.Scale     : 0) |
-                    (data.RotationMax != data.RotationMin ? AnimType.Rotate    : 0) |
-                    (data.ColorMax != data.ColorMin       ? AnimType.Color     : 0);
+        EnableAbove = data.EnableAbove;
+        ParticlesAbove = data.ParticlesAbove;
+        SetType();
         Dampen = data.Dampen;
     }
 
-    public AnimType GaugeType;
+    public AnimType GaugeType = AnimType.Invalid;
+
+    void SetType()
+    {
+        GaugeType = (PositionMax != PositionMin ? AnimType.Translate : 0) |
+            (ScaleMax != ScaleMin ? AnimType.Scale : 0) |
+            (RotationMax != RotationMin ? AnimType.Rotate : 0) |
+            (ColorMax != ColorMin ? AnimType.Color : 0) |
+            (EnableAbove > 0f ? AnimType.Enable : 0) |
+            (ParticlesAbove > 0f ? AnimType.Particles : 0);
+    }
 
     [Flags]
     public enum AnimType
     {
+        Invalid = -1,
+        None = 0,
         Translate = 1,
         Scale = 2,
         Rotate = 4,
-        Color = 8
+        Color = 8,
+        Enable = 16,
+        Particles = 32
     }
 
     public void HardSet(float ratio)
@@ -234,7 +310,7 @@ public class CustomGauge : MonoBehaviour
     {
         _target = ratio;
 
-        if (Dampen != 0f)
+        if (Dampen != 0f && gameObject.activeSelf)
             enabled = !_value.Approximately(_target);
         else if (!_value.Approximately(_target))
         {
@@ -256,22 +332,31 @@ public class CustomGauge : MonoBehaviour
 
     void SetRatio(float ratio)
     {
+        if (GaugeType == AnimType.Invalid) SetType();
+        
         if ((GaugeType & AnimType.Translate) != 0)
             transform.localPosition = Vector3.Lerp(PositionMin, PositionMax, ratio);
+        
         if ((GaugeType & AnimType.Scale) != 0)
             transform.localScale = Vector3.Lerp(ScaleMin, ScaleMax, ratio);
+        
         if ((GaugeType & AnimType.Rotate) != 0)
             transform.localEulerAngles = Vector3.Lerp(RotationMin, RotationMax, ratio);
+        
         if ((GaugeType & AnimType.Color) != 0)
-        {
-            if (_renderer == null)
-            {
-                _renderer = GetComponent<Renderer>();
-                if (_renderer == null) GaugeType ^= AnimType.Color;
-            }
+            foreach (var renderer in Renderers)
+                renderer.material.color = Color.Lerp(ColorMin, ColorMax, ratio);
+        
+        if ((GaugeType & AnimType.Enable) != 0)
+            gameObject.SetActive(ratio >= EnableAbove);
+
+        if ((GaugeType & AnimType.Particles) != 0)
+            if (ratio >= ParticlesAbove)
+                foreach (var particle in Particles)
+                    particle.Play();
             else
-                _renderer.material.color = Color.Lerp(ColorMin, ColorMax, ratio);
-        }
+                foreach (var particle in Particles)
+                    particle.Stop();
     }
 }
 
@@ -569,6 +654,7 @@ public class ModuleConsumeResource : Module
         foreach (var stack in _Stacks)
             DropAllStackItems(stack.stack);
         ClearOutStack(_EndStack.stack);
+        anims.Clear();
     }
 
     float GetExpectedValueFromStacks()
@@ -588,33 +674,23 @@ public class ModuleConsumeResource : Module
         return result;
     }
 
-    private bool CanAcceptItem(Visible item, ModuleItemHolder.Stack fromStack, ModuleItemHolder.Stack toStack, ModuleItemHolder.PassType passType)
-    {
-        //Console.WriteLine("Attempting to receive item " + item.ItemType);
-        var consumeStack = _EndStack.stack;
-        if (toStack == consumeStack)
-        {
-            //Console.WriteLine("ToStack was consumeStack, false");
-            return false;
-        }
-        if (passType == (ModuleItemHolder.PassType.Pass | ModuleItemHolder.PassType.Test) && item == null)
-        {
-            //Console.WriteLine("Just passing, true");
-            return true;
-        }
-        if (toStack.IsFull || CurrentValue + GetExpectedValueFromStacks() > MaxValue)
-        {
-            //Console.WriteLine("inputStack is full, false");
-            return false;
-        }
-        if (TryGetIndexOfChunk((ChunkTypes)item.ItemType, out _))
-        {
-            //Console.WriteLine("Is accepted type, true");
-            return true;
-        }
-        //Console.WriteLine("Is not accepted type, false");
-        return false;
-    }
+    private bool CanAcceptItem(Visible item, ModuleItemHolder.Stack fromStack, ModuleItemHolder.Stack toStack, ModuleItemHolder.PassType passType) =>
+        (
+            (passType & ModuleItemHolder.PassType.Pass) == 0                                // |   If not pass
+            ||                                                                              // OR
+            _EndStack.stack != toStack                                                      // |   Not to EndStack
+
+        )
+        &&                                                                              // AND
+        ( 
+            passType == (ModuleItemHolder.PassType.Pass | ModuleItemHolder.PassType.Test)   // |   Is pass and test
+            ||                                                                              // OR
+            (
+                !(toStack.IsFull || CurrentValue + GetExpectedValueFromStacks() > MaxValue) // |   |   Not full
+                &&                                                                          // |   AND
+                TryGetIndexOfChunk((ChunkTypes)item.ItemType, out _)                        // |   |   Accepts type
+            )
+        );
 
     private void ClearOutStack(ModuleItemHolder.Stack stack)
     {
@@ -642,16 +718,15 @@ public class ModuleConsumeResource : Module
 
     void OnDetach()
     {
-        var Holders = block.tank.Holders;
-        Holders.UnregisterOperations(_Holder);
+        block.tank?.Holders.UnregisterOperations(_Holder);
     }
 
     void OnAttach()
     {
         var Holders = block.tank.Holders;
-        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnPullInput), 6);
-        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnConsumeInput), 7);
-        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnProcessInput), 8);
+        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnConsumeInput), 12);   //7
+        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnPullInput), 13);      //6
+        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnProcessInput), 14);   //8
     }
 
     TechHolders.OperationResult OnPullInput()
@@ -711,20 +786,21 @@ public class ModuleConsumeResource : Module
     TechHolders.OperationResult OnProcessInput()
     {
         var consumeStack = _EndStack.stack;
-        if (!consumeStack.ReceivedThisHeartbeat && !consumeStack.IsEmpty) // Change to if permitted to  c o n s u m e
+        if (/*!consumeStack.ReceivedThisHeartbeat && */!consumeStack.IsEmpty)
         {
             while (!consumeStack.IsEmpty)
             {
                 var item = consumeStack.FirstItem;
                 TryGetIndexOfChunk((ChunkTypes)item.ItemType, out int i);
 
+                //anims.Dequeue();
                 CurrentValue += ValuePerChunk[i];
                 ConsumeEvent?.Invoke(ValuePerChunk[i]);
-                anims.Dequeue();
                 item.trans.Recycle();
             }
             return TechHolders.OperationResult.Effect;
         }
+        anims.Clear();
         return TechHolders.OperationResult.None;
     }
 
