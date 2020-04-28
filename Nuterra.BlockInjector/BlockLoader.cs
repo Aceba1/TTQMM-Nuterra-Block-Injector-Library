@@ -117,7 +117,7 @@ namespace Nuterra.BlockInjector
             {
                 if (!RunningCoroutine)
                 {
-                    if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.B))
+                    if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.AltGr)) && Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.B))
                     {
                         BeginCoroutine(true, true);
                     }
