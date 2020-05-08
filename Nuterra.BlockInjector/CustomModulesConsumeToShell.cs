@@ -80,8 +80,6 @@ public class ModuleConsumeEnergyToShell : Module
 
     public CustomGauge[] _gauges = new CustomGauge[0];
 
-    public float GaugeMinEnergy = 0f;
-    public float GaugeMaxEnergy;
     public CustomGaugeSerializer CustomGauge
     {
         set
@@ -128,10 +126,9 @@ public class ModuleConsumeEnergyToShell : Module
     {
         if (block.tank != null && _gauges.Length != 0)
         {
-            float ratio = Mathf.Clamp01((ActualCurrentEnergy - GaugeMinEnergy) / (GaugeMaxEnergy - GaugeMinEnergy));
-
+            float energy = ActualCurrentEnergy;
             foreach (var gauge in _gauges)
-                gauge.Set(ratio);
+                gauge.Set(energy);
         }
     }
 
@@ -144,15 +141,18 @@ public class ModuleConsumeEnergyToShell : Module
         EnergyStore.m_Capacity = EnergyCapacity;
 
         // Backup fallback
-        if (GaugeMinEnergy == GaugeMaxEnergy && GaugeMinEnergy == 0f)
+        foreach (CustomGauge gauge in _gauges)
         {
-            GaugeMinEnergy = LowestPermittedEnergy;
-            GaugeMaxEnergy = EnergyCost;
-        }
-        else
-        {
-            if (GaugeMaxEnergy == 0f) GaugeMaxEnergy = EnergyCost;
-            if (GaugeMinEnergy == GaugeMaxEnergy) GaugeMaxEnergy++;
+            if (gauge.MinValue == gauge.MaxValue && gauge.MinValue == 0f)
+            {
+                gauge.MinValue = LowestPermittedEnergy;
+                gauge.MaxValue = EnergyCost;
+            }
+            else
+            {
+                if (gauge.MaxValue == 0f) gauge.MaxValue = EnergyCost;
+                if (gauge.MinValue == gauge.MaxValue) gauge.MaxValue++;
+            }
         }
     }
 
@@ -163,6 +163,14 @@ public class ModuleConsumeEnergyToShell : Module
         WeaponWrapper.CanFireEvent += CheckIfCanFire;
         WeaponWrapper.FireEvent += OnFire;
         WeaponWrapper.LockFiring(this, true);
+        block.DetachEvent.Subscribe(OnDetach);
+    }
+
+    void OnDetach()
+    {
+        if (_gauges.Length != 0)
+            foreach (var gauge in _gauges)
+                gauge.HardSet(0f);
     }
 
     void OnFire(int amount)
@@ -224,6 +232,21 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
     {
         WeaponWrapper = GetComponent<ModuleWeaponWrapper>();
         if (WeaponWrapper == null) WeaponWrapper = gameObject.AddComponent<ModuleWeaponWrapper>();
+
+        // Backup fallback
+        foreach (CustomGauge gauge in _gauges)
+        {
+            if (gauge.MinValue == gauge.MaxValue && gauge.MinValue == 0f)
+            {
+                gauge.MinValue = 0f;
+                gauge.MaxValue = MaxValue;
+            }
+            else
+            {
+                //if (gauge.MaxValue == 0f) gauge.MaxValue = MaxValue;
+                if (gauge.MinValue == gauge.MaxValue) gauge.MinValue -= 0.01f;
+            }
+        }
     }
 
     public void OnPool()
@@ -257,7 +280,7 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
     {
         if (_gauges.Length != 0)
             foreach (var gauge in _gauges)
-                gauge.Set(CurrentValue / MaxValue);
+                gauge.Set(CurrentValue);
         WeaponWrapper.LockFiring(this, IsContinuous ? (CurrentValue <= 0f) : (CurrentValue < 1f));
     }
 }
@@ -273,9 +296,12 @@ public struct CustomGaugeSerializer
     public Vector3 ScaleMin, ScaleMax;
     public Vector3 RotationMin, RotationMax;
     public Color ColorMin, ColorMax;
-    public float EnableAbove;
-    public float ParticlesAbove;
+    public float EnableAt;
+    public float ParticlesAt;
     public float Dampen;
+    public float MinValue, MaxValue;
+    public float MinEnergy { set => MinValue = value; }
+    public float MaxEnergy { set => MaxValue = value; }
 }
 
 public class CustomGauge : MonoBehaviour
@@ -284,8 +310,9 @@ public class CustomGauge : MonoBehaviour
     public Vector3 ScaleMin, ScaleMax;
     public Vector3 RotationMin, RotationMax;
     public Color ColorMin, ColorMax;
-    public float EnableAbove;
-    public float ParticlesAbove;
+    public float EnableAt;
+    public float ParticlesAt;
+    public float MinValue, MaxValue = 1f;
 
     public float Dampen;
 
@@ -312,7 +339,7 @@ public class CustomGauge : MonoBehaviour
         {
             if (_particles == null)
             {
-                _particles = GetComponents<ParticleSystem>();
+                _particles = GetComponentsInChildren<ParticleSystem>();
                 if (_particles.Length == 0)
                     GaugeType ^= AnimType.Particles;
             }
@@ -326,8 +353,10 @@ public class CustomGauge : MonoBehaviour
         ScaleMin = data.ScaleMin; ScaleMax = data.ScaleMax;
         RotationMin = data.RotationMin; RotationMax = data.RotationMax;
         ColorMin = data.ColorMin; ColorMax = data.ColorMax;
-        EnableAbove = data.EnableAbove;
-        ParticlesAbove = data.ParticlesAbove;
+        EnableAt = data.EnableAt;
+        ParticlesAt = data.ParticlesAt;
+        MinValue = data.MinValue;
+        MaxValue = data.MaxValue;
         SetType();
         Dampen = data.Dampen;
     }
@@ -340,8 +369,8 @@ public class CustomGauge : MonoBehaviour
             (ScaleMax != ScaleMin ? AnimType.Scale : 0) |
             (RotationMax != RotationMin ? AnimType.Rotate : 0) |
             (ColorMax != ColorMin ? AnimType.Color : 0) |
-            (EnableAbove > 0f ? AnimType.Enable : 0) |
-            (ParticlesAbove > 0f ? AnimType.Particles : 0);
+            (EnableAt > 0f ? AnimType.Enable : 0) |
+            (ParticlesAt > 0f ? AnimType.Particles : 0);
     }
 
     [Flags]
@@ -357,6 +386,11 @@ public class CustomGauge : MonoBehaviour
         Particles = 32
     }
 
+    public float Remap(float value)
+    {
+        return Mathf.Clamp01((value - MinValue) / (MaxValue - MinValue));
+    }
+
     public void HardSet(float ratio)
     {
         enabled = false;
@@ -365,8 +399,9 @@ public class CustomGauge : MonoBehaviour
         _value = ratio;
     }
 
-    public void Set(float ratio)
+    public void Set(float value)
     {
+        float ratio = Remap(value);
         _target = ratio;
 
         if (Dampen != 0f && gameObject.activeSelf)
@@ -383,8 +418,8 @@ public class CustomGauge : MonoBehaviour
         if (_value.Approximately(_target)) enabled = false;
         else
         {
-            float dampen = (1f - (Dampen * Dampen)) * Time.deltaTime;
-            _value = (_target * dampen) + (_value * (1f - dampen));
+            float dampen = Dampen * Time.deltaTime;
+            _value = (_target * (1f - dampen)) + (_value * dampen);
             SetRatio(_value);
         }
     }
@@ -394,23 +429,23 @@ public class CustomGauge : MonoBehaviour
         if (GaugeType == AnimType.Invalid) SetType();
         
         if ((GaugeType & AnimType.Translate) != 0)
-            transform.localPosition = Vector3.Lerp(PositionMin, PositionMax, ratio);
+            transform.localPosition = Vector3.LerpUnclamped(PositionMin, PositionMax, ratio);
         
         if ((GaugeType & AnimType.Scale) != 0)
-            transform.localScale = Vector3.Lerp(ScaleMin, ScaleMax, ratio);
+            transform.localScale = Vector3.LerpUnclamped(ScaleMin, ScaleMax, ratio);
         
         if ((GaugeType & AnimType.Rotate) != 0)
-            transform.localEulerAngles = Vector3.Lerp(RotationMin, RotationMax, ratio);
+            transform.localEulerAngles = Vector3.LerpUnclamped(RotationMin, RotationMax, ratio);
         
         if ((GaugeType & AnimType.Color) != 0)
             foreach (var renderer in Renderers)
-                renderer.material.color = Color.Lerp(ColorMin, ColorMax, ratio);
+                renderer.material.color = Color.LerpUnclamped(ColorMin, ColorMax, ratio);
         
         if ((GaugeType & AnimType.Enable) != 0)
-            gameObject.SetActive(ratio >= EnableAbove);
+            gameObject.SetActive(EnableAt == 1f ? ratio.Approximately(1f, 0.003f) : ratio >= EnableAt);
 
         if ((GaugeType & AnimType.Particles) != 0)
-            if (ratio >= ParticlesAbove)
+            if (ParticlesAt == 1f ? ratio.Approximately(1f, 0.003f) : ratio >= ParticlesAt)
                 foreach (var particle in Particles)
                     particle.Play();
             else
