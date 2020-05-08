@@ -4,6 +4,65 @@ using UnityEngine;
 using System.Reflection;
 using Nuterra.BlockInjector;
 
+#region Projectiles
+
+public class ProjectileMoneyOnVanish : MonoBehaviour
+{
+    /// <summary>
+    /// <see cref="float"/>
+    /// </summary>
+    static FieldInfo Projectile_LifeTime = typeof(Projectile).GetField("m_LifeTime", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+
+    Projectile _projectile;
+    float _projectile_lifetime;
+    float _waittime;
+    public int Money;
+
+
+
+    void OnSpawn()
+    {
+        _waittime = Time.time + _projectile_lifetime;
+    }
+
+    void OnPool()
+    {
+        _projectile = GetComponent<Projectile>(); // Just in case
+        if (_projectile == null) Console.WriteLine("ProjectileMoneyOnVanish was added on an object without a Projectile component!");
+        else
+        {
+            _projectile_lifetime = (float)Projectile_LifeTime.GetValue(_projectile) - 0.1f;
+            if (_projectile_lifetime <= 0f)
+            {
+                Console.WriteLine("ProjectileMoneyOnVanish : Projectile m_LifeTime is undefined!");
+            }
+        }
+    }
+    void OnRecycle()
+    {
+        if (_projectile != null && (Time.time >= _waittime && (_projectile.Shooter == null || _projectile.Shooter.IsFriendly())))
+        {
+            Singleton.Manager<ManPlayer>.inst.AddMoney(Money);
+            WorldPosition position = Singleton.Manager<ManOverlay>.inst.WorldPositionForFloatingText(_projectile.Shooter.visible);
+            Singleton.Manager<ManOverlay>.inst.AddFloatingTextOverlay(Singleton.Manager<Localisation>.inst.GetMoneyStringWithSymbol(Money), position);
+            if (Singleton.Manager<ManNetwork>.inst.IsServer)
+            {
+                PopupNumberMessage message = new PopupNumberMessage
+                {
+                    m_Type = PopupNumberMessage.Type.Money,
+                    m_Number = Money,
+                    m_Position = position
+                };
+                Singleton.Manager<ManNetwork>.inst.SendToAllExceptHost(TTMsgType.AddFloatingNumberPopupMessage, message);
+                return;
+            }
+            _waittime = float.PositiveInfinity;
+        }
+    }
+}
+
+#endregion
+
 #region Modules
 
 [RequireComponent(typeof(ModuleEnergyStore))]
