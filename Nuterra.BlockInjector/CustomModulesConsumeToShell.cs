@@ -784,9 +784,10 @@ public class ModuleConsumeResource : Module
             passType == (ModuleItemHolder.PassType.Pass | ModuleItemHolder.PassType.Test)   // |   Is pass and test
             ||                                                                              // OR
             (
-                !(toStack.IsFull || CurrentValue + GetExpectedValueFromStacks() > MaxValue) // |   |   Not full
+                TryGetIndexOfChunk((ChunkTypes)item.ItemType, out int i)                    // |   |   Accepts type
                 &&                                                                          // |   AND
-                TryGetIndexOfChunk((ChunkTypes)item.ItemType, out _)                        // |   |   Accepts type
+                !(toStack.IsFull || CurrentValue + GetExpectedValueFromStacks()             // |   |   Not full
+                    + ValuePerChunk[i] > MaxValue)                                          // |   |   or will pass limit
             )
         );
 
@@ -822,8 +823,8 @@ public class ModuleConsumeResource : Module
     void OnAttach()
     {
         var Holders = block.tank.Holders;
-        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnConsumeInput), 12);   //7
-        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnPullInput), 13);      //6
+        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnConsumeInput), 13);   //7
+        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnPullInput), 12);      //6
         Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnProcessInput), 14);   //8
     }
 
