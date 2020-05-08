@@ -404,7 +404,7 @@ public class CustomGauge : MonoBehaviour
         float ratio = Remap(value);
         _target = ratio;
 
-        if (Dampen != 0f && gameObject.activeSelf)
+        if (Dampen != 0f)
             enabled = !_value.Approximately(_target);
         else if (!_value.Approximately(_target))
         {
@@ -415,13 +415,17 @@ public class CustomGauge : MonoBehaviour
 
     void Update()
     {
-        if (_value.Approximately(_target)) enabled = false;
+        if (_value.Approximately(_target))
+        {
+            enabled = false;
+            _value = _target;
+        }
         else
         {
             float dampen = Dampen * Time.deltaTime;
             _value = (_target * (1f - dampen)) + (_value * dampen);
-            SetRatio(_value);
         }
+        SetRatio(_value);
     }
 
     void SetRatio(float ratio)
