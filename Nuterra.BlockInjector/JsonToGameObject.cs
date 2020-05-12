@@ -111,7 +111,7 @@ namespace Nuterra.BlockInjector
 
         static Dictionary<Type, Dictionary<string, UnityEngine.Object>> GameResourceCache = new Dictionary<Type, Dictionary<string, UnityEngine.Object>>();
 
-        public static T GetObjectFromGameResources<T>(Type t, string targetName, bool Log = false) where T : UnityEngine.Object
+        public static T GetObjectFromGameResources<T>(Type t, string targetName, bool LogError = false) where T : UnityEngine.Object
         {
             if (GameResourceCache.TryGetValue(t, out var CacheLookup))
             {
@@ -124,7 +124,6 @@ namespace Nuterra.BlockInjector
             }
             T searchresult = null;
             T[] search = Resources.FindObjectsOfTypeAll(t) as T[];
-            string failedsearch = "";
             for (int i = 0; i < search.Length; i++)
             {
                 if (search[i].name == targetName)
@@ -132,7 +131,6 @@ namespace Nuterra.BlockInjector
                     searchresult = search[i];
                     break;
                 }
-                failedsearch += search[i].name + "; ";
             }
             if (searchresult == null)
             {
@@ -143,11 +141,10 @@ namespace Nuterra.BlockInjector
                         searchresult = search[i];
                         break;
                     }
-                    failedsearch += search[i].name + "; ";
                 }
-                if (searchresult == null && Log)
+                if (searchresult == null && LogError)
                 {
-                    Console.WriteLine("Could not find resource: " + targetName + "\n\nThis is what exists for that type:\n" + (failedsearch == "" ? "Nothing. Nothing exists for that type." : failedsearch));
+                    Console.WriteLine("Could not find resource: " + targetName);
                 }
             }
             GameResourceCache[t].Add(targetName, searchresult);
@@ -197,17 +194,16 @@ namespace Nuterra.BlockInjector
         }
 
         [Obsolete("Please use MeshFromData")]
-        public static Mesh MeshFromFile(string FILEDATA, string name)
+        public static Mesh MeshFromFile(string FILEDATA, string name) => MeshFromData(FILEDATA);
+
+        public static Mesh MeshFromData(string FILEDATA) => MeshFromData(FILEDATA, new Mesh());
+        public static Mesh MeshFromData(string FILEDATA, Mesh modelToEdit)
         {
-            return MeshFromData(FILEDATA);
+            return FastObjImporter.Instance.ImportFileFromData(FILEDATA, modelToEdit);
         }
 
-        public static Mesh MeshFromData(string FILEDATA)
-        {
-            return FastObjImporter.Instance.ImportFileFromData(FILEDATA);
-        }
-
-        public static Mesh MeshFromFile(string localPath)
+        public static Mesh MeshFromFile(string localPath) => MeshFromFile(localPath, new Mesh());
+        public static Mesh MeshFromFile(string localPath, Mesh modelToEdit)
         {
             string _localPath = System.IO.Path.Combine(Assembly.GetCallingAssembly().Location, "../" + localPath);
             if (!System.IO.File.Exists(_localPath))
@@ -218,7 +214,7 @@ namespace Nuterra.BlockInjector
                 }
                 else throw new NullReferenceException("The file specified could not be found in " + localPath + " or " + _localPath);
             }
-            return FastObjImporter.Instance.ImportFileFromPath(_localPath);
+            return FastObjImporter.Instance.ImportFileFromPath(_localPath, modelToEdit);
         }
 
         public static void AddObjectToUserResources<T>(Type type, T Object, string Name) where T : UnityEngine.Object

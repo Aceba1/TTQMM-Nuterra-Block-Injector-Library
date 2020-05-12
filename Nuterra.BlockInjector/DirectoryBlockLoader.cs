@@ -6,13 +6,14 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using Harmony;
 
 namespace Nuterra.BlockInjector
 {
     internal static class DirectoryBlockLoader
     {
-        //public static Dictionary<string, List<Material>>[] TexMatLookup = new Dictionary<string, List<Material>>[] { new Dictionary<string, List<Material>>(), new Dictionary<string, List<Material>>(), new Dictionary<string, List<Material>>() };
         static Dictionary<string, Material> HashMAGE = new Dictionary<string, Material>();
+        static Dictionary<string, Mesh> ModelCache = new Dictionary<string, Mesh>();
         internal struct BlockBuilder
         {
             public string Name;
@@ -50,6 +51,8 @@ namespace Nuterra.BlockInjector
             public string MaterialName { set => MeshMaterialName = value; }
             public string MeshMaterialName;
 
+            public int Corp { set => Faction = value; }
+            public int Corporation { set => Faction = value; }
             public int Faction;
             public int Category;
             public int Grade;
@@ -192,20 +195,28 @@ namespace Nuterra.BlockInjector
                             GameObjectJSON.AddObjectToUserResources<Texture>(TextureT, tex, Png.Name);
                             GameObjectJSON.AddObjectToUserResources<Sprite>(SpriteT, GameObjectJSON.SpriteFromImage(tex), Png.Name);
                             FileChanged[Png.FullName] = Png.LastWriteTime;
-                            //if (imgReparse)
-                            //{
-                            //    foreach (var mat in TexMatLookup[0][Png.Name])
-                            //        mat.SetTexture("_MainTex", tex);
-                            //    foreach (var mat in TexMatLookup[1][Png.Name])
-                            //        mat.SetTexture("_MetallicGlossMap", tex);
-                            //    foreach (var mat in TexMatLookup[2][Png.Name])
-                            //        mat.SetTexture("_EmissionMap", tex);
-                            //}
-                            //else
-                            //{
-                            //    for (int i = 0; i < 3; i++)
-                            //        TexMatLookup[i].Add(Png.Name, new List<Material>());
-                            //}
+                            if (imgReparse)
+                            {
+                                foreach(var pair in HashMAGE)
+                                {
+                                    int index = pair.Key.IndexOf(Png.Name);
+                                    if (index != -1)
+                                    {
+                                        int a = pair.Key.IndexOf(";A:"), g = pair.Key.IndexOf(";G:", a), e = pair.Key.IndexOf(";E:", g);
+                                        while (index != -1)
+                                        {
+                                            if (index > e)
+                                                pair.Value.SetTexture("_EmissionMap", tex);
+                                            if (index > g && index < e)
+                                                pair.Value.SetTexture("_MetallicGlossMap", tex);
+                                            if (index > a && index < g)
+                                                pair.Value.SetTexture("_MainTex", tex);
+
+                                            index = pair.Key.IndexOf(Png.Name, index + 1);
+                                        }
+                                    }
+                                }                                    
+                            }
                             Count++;
                         }
                         catch (Exception E)
@@ -227,17 +238,30 @@ namespace Nuterra.BlockInjector
                 TimeBreak = WatchDogTimeBreaker;
                 var cbObj = CustomBlocks.GetFiles("*.obj", SearchOption.AllDirectories);
                 Count = 0;
+                int OverlapCount = 0;
                 BlockLoader.Timer.Log("Loading json models...");
                 yield return null;
                 foreach (FileInfo Obj in cbObj)
                 {
-                    if (!FileChanged.TryGetValue(Obj.FullName, out DateTime lastEdit) || lastEdit != Obj.LastWriteTime)
+                    bool Exists = FileChanged.TryGetValue(Obj.FullName, out DateTime lastEdit);
+                    if (!Exists || lastEdit != Obj.LastWriteTime)
                     {
                         try
                         {
-                            GameObjectJSON.AddObjectToUserResources(GameObjectJSON.MeshFromFile(Obj.FullName), Obj.Name);
+                            if (!Exists)
+                            {
+                                Mesh model = new Mesh { name = Obj.Name };
+                                GameObjectJSON.MeshFromFile(Obj.FullName, model);
+                                GameObjectJSON.AddObjectToUserResources(model, Obj.Name);
+                                ModelCache.Add(Obj.Name, model);
+                                Count++;
+                            }
+                            else
+                            {
+                                GameObjectJSON.MeshFromFile(Obj.FullName, ModelCache[Obj.Name]);
+                                OverlapCount++;
+                            }
                             FileChanged[Obj.FullName] = Obj.LastWriteTime;
-                            Count++;
                         }
                         catch (Exception E)
                         {
@@ -252,6 +276,11 @@ namespace Nuterra.BlockInjector
                     }
                 }
                 BlockLoader.Timer.ReplaceLast("Loaded " + Count.ToString() + " json models");
+                if (OverlapCount != 0)
+                {
+                    if (OverlapCount == 1) BlockLoader.Timer.Log("There was 1 overlapping model name!");
+                    else BlockLoader.Timer.Log("There were " + OverlapCount.ToString() + " overlapping model names!");
+                }
                 Console.WriteLine($"Took {sw.ElapsedMilliseconds} MS to get json models");
                 sw.Stop();
             }
@@ -657,7 +686,12 @@ namespace Nuterra.BlockInjector
                             smissingflag3 = string.IsNullOrWhiteSpace(sub.MeshEmissionTextureName),
                             smissingflags = smissingflag1 && smissingflag2 && smissingflag3;
 
-                        string SubDupeCheck = "M:" + (sub.MeshMaterialName??jBlock.MeshMaterialName) + ";A:" + sub.MeshTextureName + ";G:" + sub.MeshGlossTextureName + ";E:" + sub.MeshEmissionTextureName;
+                        string SubDupeCheck = 
+                            "M:" + (sub.MeshMaterialName??jBlock.MeshMaterialName) + 
+                            ";A:" + sub.MeshTextureName + 
+                            ";G:" + sub.MeshGlossTextureName + 
+                            ";E:" + sub.MeshEmissionTextureName;
+
                         if (!smissingflags && HashMAGE.TryGetValue(SubDupeCheck, out Material customMat))
                         {
                             L("-Get Cached Material (" + SubDupeCheck + ")", l);
@@ -905,7 +939,7 @@ namespace Nuterra.BlockInjector
                 else
                 {
                     L("Register", l);
-                    blockbuilder.RegisterLater(1f);
+                    blockbuilder.RegisterLater(0f);
                 }
             }
             catch (Exception E)

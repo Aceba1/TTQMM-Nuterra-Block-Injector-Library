@@ -294,15 +294,19 @@ public sealed class FastObjImporter
     private const int MAX_POW_10 = 16;
     private const int NUM_POWS_10 = MAX_POW_10 - MIN_POW_10 + 1;
     private static readonly float[] pow10 = GenerateLookupTable();
- 
+
     // Use this for initialization
-    public Mesh ImportFileFromPath(string filePath)
+    public Mesh ImportFileFromPath(string filePath) => ImportFileFromPath(filePath, new Mesh());
+
+    public Mesh ImportFileFromPath(string filePath, Mesh model)
     {
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
-        return ImportFileFromData(File.ReadAllText(filePath));
+        return ImportFileFromData(File.ReadAllText(filePath), model);
     }
 
-    public Mesh ImportFileFromData(string entireText)
+    public Mesh ImportFileFromData(string entireText) => ImportFileFromData(entireText, new Mesh());
+
+    public Mesh ImportFileFromData(string entireText, Mesh model)
     {
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
         triangles = new List<int>();
@@ -331,19 +335,17 @@ public sealed class FastObjImporter
                 newNormals[i] = normals[faceData[i].z - 1];
         }
 
-        Mesh mesh = new Mesh();
+        model.Clear();
 
-        mesh.vertices = newVerts;
-        mesh.uv = newUVs;
-        mesh.normals = newNormals;
-        mesh.triangles = triangles.ToArray();
+        model.vertices = newVerts;
+        model.uv = newUVs;
+        model.normals = newNormals;
+        model.triangles = triangles.ToArray();
 
-        mesh.RecalculateBounds();
+        model.RecalculateBounds();
 
-        return mesh;
+        return model;
     }
-
-
 
     private void LoadMeshData(string text)
     { 
