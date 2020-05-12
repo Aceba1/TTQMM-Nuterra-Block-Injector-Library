@@ -17,19 +17,22 @@ namespace Nuterra.BlockInjector
         {
             public static void Log(string NewLine)
             {
-                blocks.Add(NewLine);
+                if (!HasExited)
+                    blocks.Add(NewLine);
             }
 
             public static void AddToLast(string Append)
             {
-                blocks[blocks.Count - 1] += Append;
+                if (!HasExited)
+                    blocks[blocks.Count - 1] += Append;
             }
 
             public static void ReplaceLast(string NewLine)
             {
-                blocks[blocks.Count - 1] = NewLine;
+                if (!HasExited)
+                    blocks[blocks.Count - 1] = NewLine;
             }
-            bool HasExited = false;
+            static bool HasExited = false;
             internal static List<string> blocks = new List<string> { "Loaded Blocks:" };
             internal float scroll = 0f, scrollVel = 0f;
             void OnGUI()
@@ -44,6 +47,7 @@ namespace Nuterra.BlockInjector
                     }
                     else
                     {
+                        blocks.Clear();
                         UnityEngine.GameObject.Destroy(this.gameObject);
                     }
                 }
