@@ -888,7 +888,7 @@ namespace Nuterra.BlockInjector
                     if (item == null)
                     {
                         item = Activator.CreateInstance(itemType); // Create instance, because is needed
-                        if (sourceList.Count != 0) // Copy current or last element
+                        if (sourceList != null && sourceList.Count != 0) // Copy current or last element
                         {
                             ShallowCopy(itemType, sourceList[Math.Min(i, sourceList.Count - 1)], item, true); // Helpful, trust me
                         }
