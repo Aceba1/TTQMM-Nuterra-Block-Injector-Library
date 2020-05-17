@@ -19,6 +19,14 @@ public class ModuleDampener : Module
     }
 }
 
+public class SetfuseTimer : MonoBehaviour
+{
+    void Spawn()
+    {
+
+    }
+}
+
 public class ModuleFloater : MotionBlocks.ModuleFloater { }
 
 // ... 
