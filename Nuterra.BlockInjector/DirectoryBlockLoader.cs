@@ -70,6 +70,9 @@ namespace Nuterra.BlockInjector
             public bool MakeAPsAtBottom { set => APsOnlyAtBottom = value; }
             public bool APsOnlyAtBottom;
             public IntVector3[] Cells;
+
+            public string[][] CellsMap { set => CellMap = value; }
+            public string[][] CellMap;
             public Vector3[] APs;
 
             public Vector3 PrefabOffset { set => ReferenceOffset = value; }
@@ -831,6 +834,11 @@ namespace Nuterra.BlockInjector
                 blockbuilder.SetDescription(jBlock.Description);
 
                 //Set Cells
+                if (jBlock.CellMap != null && jBlock.CellMap.Length != 0)
+                {
+                    L("Set Cell Map", l);
+                    blockbuilder.SetSizeFromStringMap(jBlock.CellMap);
+                }
                 if (jBlock.Cells != null && jBlock.Cells.Length != 0)
                 {
                     L("Set Cells Manual", l);

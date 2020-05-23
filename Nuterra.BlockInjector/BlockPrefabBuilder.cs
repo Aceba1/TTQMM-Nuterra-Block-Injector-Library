@@ -550,6 +550,36 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        public BlockPrefabBuilder SetSizeFromStringMap(string[][] ZYXCells)
+        {
+            List<IntVector3> cells = new List<IntVector3>();
+            for (int z = 0; z < ZYXCells.Length; z++)
+            {
+                string[] YXslice = ZYXCells[z];
+                if (YXslice == null) continue;
+
+                for (int y = 0, ry = YXslice.Length - 1; ry >= 0; y++, ry--)
+                {
+                    string Xline = YXslice[ry];
+                    if (Xline == null) continue;
+
+                    for (int x = 0; x < Xline.Length; x++)
+                    {
+                        char cell = Xline[x];
+                        if (cell != ' ') cells.Add(new IntVector3(x, y, z));
+                    }
+                }
+            }
+            var gravityScale = new float[cells.Count];
+            for (int i = 0; i < cells.Count; i++)
+            {
+                gravityScale[i] = 1f;
+            }
+            TankBlock_FilledCellsGravityScaleFactors.SetValue(TankBlock, gravityScale);
+            TankBlock.filledCells = cells.ToArray();
+            return this;
+        }
+
         /// <summary>
         /// Make a 3D rect of grid cells set to the defined size
         /// </summary>
