@@ -526,14 +526,14 @@ namespace Nuterra.BlockInjector
             return true;
         }
 
-        public static GameObject CreateGameObject(JObject json, GameObject GameObjectToPopulate = null, string Spacing = "")
+        public static GameObject CreateGameObject(JObject json, GameObject GameObjectToPopulate = null, string Spacing = "", Transform searchParent = null)
         {
             if (GameObjectToPopulate == null)
             {
                 GameObjectToPopulate = new GameObject("New Deserialized Object");
             }
             SearchTransform = GameObjectToPopulate.transform;
-            firstSearchTransform = GameObjectToPopulate.transform;
+            firstSearchTransform = searchParent ?? GameObjectToPopulate.transform;
             return CreateGameObject_Internal(json, GameObjectToPopulate, Spacing);
         }
         static GameObject CreateGameObject_Internal(JObject json, GameObject GameObjectToPopulate, string Spacing, Component instantiated = null, Type instantiatedType = null)
@@ -997,7 +997,7 @@ namespace Nuterra.BlockInjector
                     nObj.transform.parent = oObj.transform.parent;
                     nObj.transform.position = Vector3.down * 25000f;
                     var cacheSearchTransform = SearchTransform;
-                    CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                    CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab, firstSearchTransform);
                     SearchTransform = cacheSearchTransform;
                     if (Input.GetKey(KeyCode.LeftControl))
                     {
@@ -1044,7 +1044,7 @@ namespace Nuterra.BlockInjector
                         nObj.transform.parent = oObj.transform.parent;
                         nObj.transform.position = Vector3.down * 25000f;
                         var cacheSearchTransform = SearchTransform;
-                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                        CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab, firstSearchTransform);
                         SearchTransform = cacheSearchTransform;
                         if (Input.GetKey(KeyCode.LeftControl))
                         {
