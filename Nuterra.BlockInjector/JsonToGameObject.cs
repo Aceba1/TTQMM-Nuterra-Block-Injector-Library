@@ -672,7 +672,12 @@ namespace Nuterra.BlockInjector
                                     if (component == null)
                                     {
                                         Console.WriteLine(property.Name + " is a null component, but does not throw an exception...");
-                                        continue;
+                                        component = result.GetComponent(componentType);
+                                        if (component == null)
+                                        {
+                                            Console.WriteLine("Could not relocate component " + property.Name + " in gameObject " + result.name + "!");
+                                            continue;
+                                        }
                                     }
                                     //Console.WriteLine(Spacing + "Created " + property.Name);
                                 }
