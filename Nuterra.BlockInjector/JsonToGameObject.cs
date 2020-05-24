@@ -597,10 +597,13 @@ namespace Nuterra.BlockInjector
                             if (Duplicate && (name.Contains('/') || name.Contains('.')))
                             {
                                 var nGO = SearchTransform.RecursiveFindWithProperties(name);
-                                if (nGO is Component nGOc)
-                                    newGameObject = nGOc.gameObject;
-                                else if (nGO is GameObject nGOg)
-                                    newGameObject = nGOg;
+                                if (nGO != null)
+                                {
+                                    if (nGO is Component nGOc)
+                                        newGameObject = nGOc.gameObject;
+                                    else if (nGO is GameObject nGOg)
+                                        newGameObject = nGOg;
+                                }
                             }
                             if (newGameObject == null)
                                 newGameObject = result.transform.Find(name)?.gameObject;
