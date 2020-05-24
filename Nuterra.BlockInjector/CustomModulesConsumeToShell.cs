@@ -823,9 +823,9 @@ public class ModuleConsumeResource : Module
     void OnAttach()
     {
         var Holders = block.tank.Holders;
-        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnConsumeInput), 13);   //7
-        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnPullInput), 12);      //6
-        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnProcessInput), 14);   //8
+        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnConsumeInput), 7);   //7
+        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnPullInput), 6);      //6
+        Holders.RegisterOperation(_Holder, new Func<TechHolders.OperationResult>(OnProcessInput), 8);   //8
     }
 
     TechHolders.OperationResult OnPullInput()
