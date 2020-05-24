@@ -409,6 +409,8 @@ namespace Nuterra.BlockInjector
                     blockbuilder.SetCustomEmissionMode((BlockPrefabBuilder.EmissionMode)jBlock.EmissionMode);
                 }
 
+                // Give the component this file's path
+                blockbuilder._mcb.FilePath = Json.FullName;
 
                 //If gameobjectJSON exists, use it
                 if (jBlock.Deserializer != null)

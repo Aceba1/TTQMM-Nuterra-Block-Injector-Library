@@ -42,8 +42,9 @@ namespace Nuterra.BlockInjector
         }
     }
 
-    internal class ModuleCustomBlock : Module
+    public class ModuleCustomBlock : Module
     {
+        public string FilePath;
         public bool HasInjectedCenterOfMass;
         public Vector3 InjectedCenterOfMass;
         public BlockPrefabBuilder.EmissionMode EmissionMode;

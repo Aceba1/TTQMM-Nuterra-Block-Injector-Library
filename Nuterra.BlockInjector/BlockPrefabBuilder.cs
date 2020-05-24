@@ -42,7 +42,7 @@ namespace Nuterra.BlockInjector
 
         private bool _finished = false;
         private Visible _visible;
-        private ModuleCustomBlock _mcb;
+        internal ModuleCustomBlock _mcb;
         public TankBlock TankBlock { get; private set; }
         private Damageable _damageable;
         private ModuleDamage _moduleDamage;
@@ -395,6 +395,10 @@ namespace Nuterra.BlockInjector
             ThrowIfFinished();
             _customBlock.Name = blockName;
             _customBlock.Prefab.name = blockName;
+
+            if (_mcb.FilePath == null)
+                _mcb.FilePath = Assembly.GetCallingAssembly().Location;
+
             return this;
         }
 
