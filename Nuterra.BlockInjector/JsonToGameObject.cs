@@ -347,7 +347,7 @@ namespace Nuterra.BlockInjector
                 if (propIndex == -1)
                 {
                     //Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
-                    return transform.RecursiveFind(NameOfProperty);
+                    return transform.RecursiveFind(NameOfProperty) ?? fallback.RecursiveFind(NameOfProperty);
                 }
                 Transform result = transform;
                 Console.Write(transform.name);
@@ -359,6 +359,8 @@ namespace Nuterra.BlockInjector
                     {
                         var t = result.RecursiveFind(NameOfProperty);
                         Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
+                        if (t == null && fallback != null && fallback != transform)
+                            return fallback.RecursiveFindWithProperties(NameOfProperty);
                         return t;
                     }
                     int reIndex = NameOfProperty.IndexOf('/', propIndex);
@@ -371,6 +373,8 @@ namespace Nuterra.BlockInjector
                         if (result == null)
                         {
                             Console.WriteLine("EMPTY");
+                            if (fallback != null && fallback != transform)
+                                return fallback.RecursiveFindWithProperties(NameOfProperty);
                             return null;
                         }
                     }
@@ -384,7 +388,11 @@ namespace Nuterra.BlockInjector
                     Component component = result.gameObject.GetComponentWithIndex(propClass);
                     if (component == null)
                     {
-                        Console.Write("EMPTY : Cannot find Component " + propClass + "!");
+                        Console.WriteLine("EMPTY : Cannot find Component " + propClass + "!");
+                        if (fallback != null && fallback != transform)
+                            return fallback.RecursiveFindWithProperties(NameOfProperty);
+                        Console.WriteLine("RecursiveFindWithProperties failed!");
+                        return null;
                     }
                     Console.Write($"<Property:{propPath}>");
                     object value = component.GetValueFromPath(propPath);
@@ -403,9 +411,8 @@ namespace Nuterra.BlockInjector
             catch (Exception E)
             {
                 if (fallback != null && fallback != transform)
-                {
                     return fallback.RecursiveFindWithProperties(NameOfProperty);
-                }
+                Console.WriteLine(fallback == null ? "FALLBACK SEARCH TRANSFORM IS NULL" : "FALLBACK SEARCH TRANSFORM IS " + fallback.name);
                 Console.WriteLine("RecursiveFindWithProperties failed! " + E);
                 return null;
             }
