@@ -72,7 +72,7 @@ namespace Nuterra.BlockInjector
             {
                 return obj.GetComponent(type.Substring(0, split), index);
             }
-            return obj.GetComponent(type);
+            return obj.GetComponent(GameObjectJSON.GetType(type));
         }
     }
 }
