@@ -339,7 +339,7 @@ namespace Nuterra.BlockInjector
             return currentObject;
         }
 
-        public static object RecursiveFindWithProperties(this Transform transform, string NameOfProperty)
+        public static object RecursiveFindWithProperties(this Transform transform, string NameOfProperty, Transform fallback = null)
         {
             try
             {
@@ -350,6 +350,7 @@ namespace Nuterra.BlockInjector
                     return transform.RecursiveFind(NameOfProperty);
                 }
                 Transform result = transform;
+                Console.Write(transform.name);
 
                 while (true)
                 {
@@ -401,6 +402,10 @@ namespace Nuterra.BlockInjector
             }
             catch (Exception E)
             {
+                if (fallback != null && fallback != transform)
+                {
+                    return fallback.RecursiveFindWithProperties(NameOfProperty);
+                }
                 Console.WriteLine("RecursiveFindWithProperties failed! " + E);
                 return null;
             }
@@ -519,6 +524,7 @@ namespace Nuterra.BlockInjector
                 GameObjectToPopulate = new GameObject("New Deserialized Object");
             }
             SearchTransform = GameObjectToPopulate.transform;
+            firstSearchTransform = GameObjectToPopulate.transform;
             return CreateGameObject_Internal(json, GameObjectToPopulate, Spacing);
         }
         static GameObject CreateGameObject_Internal(JObject json, GameObject GameObjectToPopulate, string Spacing, Component instantiated = null, Type instantiatedType = null)
@@ -604,7 +610,7 @@ namespace Nuterra.BlockInjector
                         {
                             if (Duplicate && (name.Contains('/') || name.Contains('.')))
                             {
-                                var nGO = SearchTransform.RecursiveFindWithProperties(name);
+                                var nGO = SearchTransform.RecursiveFindWithProperties(name, firstSearchTransform);
                                 if (nGO != null)
                                 {
                                     if (nGO is Component nGOc)
@@ -716,6 +722,7 @@ namespace Nuterra.BlockInjector
         }
 
         static Transform SearchTransform;
+        static Transform firstSearchTransform;
         static object ApplyValues(object instance, Type instanceType, JObject json, string Spacing)
         {
             //Console.WriteLine(Spacing+"Going down");
@@ -1097,7 +1104,7 @@ namespace Nuterra.BlockInjector
             {
                 try
                 {
-                    var recursive = SearchTransform.RecursiveFindWithProperties(searchFull);
+                    var recursive = SearchTransform.RecursiveFindWithProperties(searchFull, firstSearchTransform);
                     if (recursive != null) return recursive; // Get value from this block
                 }
                 catch { }
