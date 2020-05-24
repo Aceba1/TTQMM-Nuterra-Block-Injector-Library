@@ -339,50 +339,51 @@ namespace Nuterra.BlockInjector
             return currentObject;
         }
 
-        public static object RecursiveFindWithProperties(this Transform transform, string NameOfProperty, Transform fallback = null)
+        public static object RecursiveFindWithProperties(this Transform transform, string nameOfProperty, Transform fallback = null)
         {
             try
             {
-                int propIndex = NameOfProperty.IndexOf('.');
+                int propIndex = nameOfProperty.IndexOf('.');
                 if (propIndex == -1)
                 {
                     //Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
-                    return transform.RecursiveFind(NameOfProperty) ?? fallback.RecursiveFind(NameOfProperty);
+                    return transform.RecursiveFind(nameOfProperty) ?? fallback.RecursiveFind(nameOfProperty);
                 }
                 Transform result = transform;
                 Console.Write(transform.name);
 
+                string propertyPath = nameOfProperty;
                 while (true)
                 {
-                    propIndex = NameOfProperty.IndexOf('.');
+                    propIndex = propertyPath.IndexOf('.');
                     if (propIndex == -1)
                     {
-                        var t = result.RecursiveFind(NameOfProperty);
-                        Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
+                        var t = result.RecursiveFind(propertyPath);
+                        Console.WriteLine($"<FindTrans:{propertyPath}>{(t == null ? "EMPTY" : "RETURN")}");
                         if (t == null && fallback != null && fallback != transform)
-                            return fallback.RecursiveFindWithProperties(NameOfProperty);
+                            return fallback.RecursiveFindWithProperties(nameOfProperty);
                         return t;
                     }
-                    int reIndex = NameOfProperty.IndexOf('/', propIndex);
-                    int lastIndex = NameOfProperty.LastIndexOf('/', propIndex);
+                    int reIndex = propertyPath.IndexOf('/', propIndex);
+                    int lastIndex = propertyPath.LastIndexOf('/', propIndex);
                     if (lastIndex > 0)
                     {
-                        string transPath = NameOfProperty.Substring(0, lastIndex);
+                        string transPath = propertyPath.Substring(0, lastIndex);
                         Console.Write($"<Find:{transPath}>");
                         result = result.RecursiveFind(transPath);
                         if (result == null)
                         {
                             Console.WriteLine("EMPTY");
                             if (fallback != null && fallback != transform)
-                                return fallback.RecursiveFindWithProperties(NameOfProperty);
+                                return fallback.RecursiveFindWithProperties(nameOfProperty);
                             return null;
                         }
                     }
 
                     string propPath;
-                    if (reIndex == -1) propPath = NameOfProperty.Substring(propIndex);
-                    else propPath = NameOfProperty.Substring(propIndex, Math.Max(reIndex - propIndex, 0));
-                    string propClass = NameOfProperty.Substring(lastIndex + 1, Math.Max(propIndex - lastIndex - 1, 0));
+                    if (reIndex == -1) propPath = propertyPath.Substring(propIndex);
+                    else propPath = propertyPath.Substring(propIndex, Math.Max(reIndex - propIndex, 0));
+                    string propClass = propertyPath.Substring(lastIndex + 1, Math.Max(propIndex - lastIndex - 1, 0));
 
                     Console.Write($"<Class:{propClass}>");
                     Component component = result.gameObject.GetComponentWithIndex(propClass);
@@ -390,7 +391,8 @@ namespace Nuterra.BlockInjector
                     {
                         Console.WriteLine("EMPTY : Cannot find Component " + propClass + "!");
                         if (fallback != null && fallback != transform)
-                            return fallback.RecursiveFindWithProperties(NameOfProperty);
+                            return fallback.RecursiveFindWithProperties(nameOfProperty);
+                        //Console.WriteLine(fallback == null ? "FALLBACK SEARCH TRANSFORM IS NULL" : "FALLBACK SEARCH TRANSFORM IS " + fallback.name);
                         Console.WriteLine("RecursiveFindWithProperties failed!");
                         return null;
                     }
@@ -405,14 +407,14 @@ namespace Nuterra.BlockInjector
 
                     Console.Write("<GetTrans>");
                     result = (value as Component).transform;
-                    NameOfProperty = NameOfProperty.Substring(reIndex);
+                    propertyPath = propertyPath.Substring(reIndex);
                 }
             }
             catch (Exception E)
             {
                 if (fallback != null && fallback != transform)
-                    return fallback.RecursiveFindWithProperties(NameOfProperty);
-                Console.WriteLine(fallback == null ? "FALLBACK SEARCH TRANSFORM IS NULL" : "FALLBACK SEARCH TRANSFORM IS " + fallback.name);
+                    return fallback.RecursiveFindWithProperties(nameOfProperty);
+                //Console.WriteLine(fallback == null ? "FALLBACK SEARCH TRANSFORM IS NULL" : "FALLBACK SEARCH TRANSFORM IS " + fallback.name);
                 Console.WriteLine("RecursiveFindWithProperties failed! " + E);
                 return null;
             }
