@@ -20,6 +20,8 @@ namespace Nuterra.BlockInjector
         static Type t_shader = typeof(Shader);
         static Type t_uobj = typeof(UnityEngine.Object);
         static Type t_comp = typeof(UnityEngine.Component);
+        static Type t_go = typeof(UnityEngine.GameObject);
+        static Type t_tr = typeof(UnityEngine.Transform);
         public static Material MaterialFromShader(string ShaderName = "StandardTankBlock")
         {
             var shader = GetObjectFromGameResources<Shader>(t_shader, ShaderName, true);
@@ -315,6 +317,7 @@ namespace Nuterra.BlockInjector
                 if (tfield != null)
                 {
                     currentObject = tfield.GetValue(currentObject);
+                    if (currentObject == null) Console.WriteLine("WARNING: " + tfield.Name + " is null!");
                     if (arr != -1)
                     {
                         //currentObject = tfield.FieldType.
@@ -327,6 +330,7 @@ namespace Nuterra.BlockInjector
                     if (tproperty != null)
                     {
                         currentObject = tproperty.GetValue(currentObject, null);
+                        if (currentObject == null) Console.WriteLine("WARNING: " + tproperty.Name + " is null!");
                         currentType = tproperty.PropertyType;
                     }
                     else return null;
@@ -377,6 +381,10 @@ namespace Nuterra.BlockInjector
 
                     Console.Write($"<Class:{propClass}>");
                     Component component = result.gameObject.GetComponentWithIndex(propClass);
+                    if (component == null)
+                    {
+                        Console.Write("EMPTY : Cannot find Component " + propClass + "!");
+                    }
                     Console.Write($"<Property:{propPath}>");
                     object value = component.GetValueFromPath(propPath);
 
@@ -959,8 +967,45 @@ namespace Nuterra.BlockInjector
             object rewrite;
             if (Wipe || original == null)
             {
-                original = Activator.CreateInstance(type);
-                rewrite = ApplyValues(original, type, jObject, Spacing + m_tab);
+                bool isGO = type.IsAssignableFrom(t_go);
+                if (isGO || type.IsAssignableFrom(t_tr)) // UnityEngine.Component (Module)
+                {
+
+                    var oObj = (original as Component).gameObject;
+                    //bool isActive = oObj.activeInHierarchy;//oObj.activeSelf;
+                    var nObj = GameObject.Instantiate(oObj);
+                    //if (Input.GetKey(KeyCode.Alpha9)) nObj.SetActive(true);
+                    //else if (Input.GetKey(KeyCode.Alpha9)) nObj.SetActive(false);
+                    //else 
+                    nObj.SetActive(false);// isActive && !Input.GetKey(KeyCode.O));
+                    nObj.transform.parent = oObj.transform.parent;
+                    nObj.transform.position = Vector3.down * 25000f;
+                    var cacheSearchTransform = SearchTransform;
+                    CreateGameObject(jObject, nObj.gameObject, Spacing + m_tab + m_tab);
+                    SearchTransform = cacheSearchTransform;
+                    if (Input.GetKey(KeyCode.LeftControl))
+                    {
+                        Console.WriteLine("Instantiating " + name + " : " + type.ToString());
+                        Console.WriteLine(LogAllComponents(nObj.transform, false));//BlockLoader.AcceptOverwrite));
+                    }
+                    if (isGO)
+                    {
+                        if (Wipe && original != null)
+                            GameObject.DestroyImmediate(original as GameObject);
+                        rewrite = nObj;
+                    }
+                    else
+                    {
+                        if (Wipe && original != null)
+                            GameObject.DestroyImmediate(original as Transform);
+                        rewrite = nObj.GetComponent(type);
+                    }
+                }
+                else
+                {
+                    original = Activator.CreateInstance(type);
+                    rewrite = ApplyValues(original, type, jObject, Spacing + m_tab);
+                }
             }
             else
             {
@@ -970,7 +1015,8 @@ namespace Nuterra.BlockInjector
                 }
                 else // Instantiate
                 {
-                    if (type.IsSubclassOf(t_comp)) // UnityEngine.Component (Module)
+                    bool isGO = type.IsAssignableFrom(t_go);
+                    if (isGO || type.IsSubclassOf(t_comp)) // UnityEngine.Component (Module)
                     {
                         var oObj = (original as Component).gameObject;
                         //bool isActive = oObj.activeInHierarchy;//oObj.activeSelf;
@@ -989,7 +1035,10 @@ namespace Nuterra.BlockInjector
                             Console.WriteLine("Instantiating " + name + " : " + type.ToString());
                             Console.WriteLine(LogAllComponents(nObj.transform, false));//BlockLoader.AcceptOverwrite));
                         }
-                        rewrite = nObj.GetComponent(type);
+                        if (isGO)
+                            rewrite = nObj;
+                        else
+                            rewrite = nObj.GetComponent(type);
                     }
                     else
                     {

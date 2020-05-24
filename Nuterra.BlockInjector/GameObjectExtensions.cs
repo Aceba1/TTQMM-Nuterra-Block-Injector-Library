@@ -40,6 +40,8 @@ namespace Nuterra.BlockInjector
             T[] components = obj.GetComponents<T>();
             if (components.Length > index)
                 return components[index];
+            if (components.Length != 0)
+                return components[0];
             return null;
         }
 
@@ -48,6 +50,8 @@ namespace Nuterra.BlockInjector
             Component[] components = obj.GetComponents(type);
             if (components.Length > index)
                 return components[index];
+            if (components.Length != 0)
+                return components[0];
             return null;
         }
 
@@ -56,6 +60,8 @@ namespace Nuterra.BlockInjector
             Component[] components = obj.GetComponents(GameObjectJSON.GetType(type));
             if (components.Length > index)
                 return components[index];
+            if (components.Length != 0) 
+                return components[0];
             return null;
         }
 
