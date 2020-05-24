@@ -392,7 +392,7 @@ namespace Nuterra.BlockInjector
                         Console.WriteLine("EMPTY : Cannot find Component " + propClass + "!");
                         if (fallback != null && fallback != transform)
                             return fallback.RecursiveFindWithProperties(nameOfProperty);
-                        //Console.WriteLine(fallback == null ? "FALLBACK SEARCH TRANSFORM IS NULL" : "FALLBACK SEARCH TRANSFORM IS " + fallback.name);
+                        Console.WriteLine(fallback == null ? "FALLBACK SEARCH TRANSFORM IS NULL" : "FALLBACK SEARCH TRANSFORM IS " + fallback.name);
                         Console.WriteLine("RecursiveFindWithProperties failed!");
                         return null;
                     }
@@ -414,7 +414,7 @@ namespace Nuterra.BlockInjector
             {
                 if (fallback != null && fallback != transform)
                     return fallback.RecursiveFindWithProperties(nameOfProperty);
-                //Console.WriteLine(fallback == null ? "FALLBACK SEARCH TRANSFORM IS NULL" : "FALLBACK SEARCH TRANSFORM IS " + fallback.name);
+                Console.WriteLine(fallback == null ? "FALLBACK SEARCH TRANSFORM IS NULL" : "FALLBACK SEARCH TRANSFORM IS " + fallback.name);
                 Console.WriteLine("RecursiveFindWithProperties failed! " + E);
                 return null;
             }
