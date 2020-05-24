@@ -676,7 +676,7 @@ namespace Nuterra.BlockInjector
                     ModuleCustomBlock cb = __instance.GetComponent<ModuleCustomBlock>();
                     if (cb != null && cb.EmissionMode != BlockPrefabBuilder.EmissionMode.None)
                     {
-                        cb.UpdateEmission();
+                        cb.Invoke("UpdateEmission", 1.5f);
                     }
                 }
             }

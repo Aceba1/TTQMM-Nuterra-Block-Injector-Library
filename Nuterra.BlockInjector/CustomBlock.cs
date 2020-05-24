@@ -62,7 +62,7 @@ namespace Nuterra.BlockInjector
             if (BlockPrefabBuilder.ReparseVersion[(int)block.BlockType] != reparse_version_cache)
             {
                 m_ReturnToPoolIndex.SetValue(ComponentPool.inst, (int)m_ReturnToPoolIndex.GetValue(ComponentPool.inst) - 1);
-                GameObject.Destroy(gameObject);
+                GameObject.Destroy(gameObject, 1f);
             }
         }
 
@@ -79,7 +79,7 @@ namespace Nuterra.BlockInjector
 
                 case BlockPrefabBuilder.EmissionMode.ActiveWhenAnchored:
                     if (block.tank != null && block.tank.IsAnchored) SetEmissionOn();
-                    else SetEmissionOn(); return;
+                    else SetEmissionOff(); return;
             }
         }
 

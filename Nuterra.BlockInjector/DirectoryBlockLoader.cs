@@ -841,7 +841,7 @@ namespace Nuterra.BlockInjector
                     L("Set Cell Map", l);
                     blockbuilder.SetSizeFromStringMap(jBlock.CellMap);
                 }
-                if (jBlock.Cells != null && jBlock.Cells.Length != 0)
+                else if (jBlock.Cells != null && jBlock.Cells.Length != 0)
                 {
                     L("Set Cells Manual", l);
                     blockbuilder.SetSizeManual(jBlock.Cells, true);
