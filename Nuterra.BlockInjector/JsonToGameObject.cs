@@ -347,7 +347,9 @@ namespace Nuterra.BlockInjector
                 if (propIndex == -1)
                 {
                     //Console.WriteLine($"<FindTrans:{NameOfProperty}>{(t == null ? "EMPTY" : "RETURN")}");
-                    return transform.RecursiveFind(nameOfProperty) ?? fallback.RecursiveFind(nameOfProperty);
+                    var tresult = transform.RecursiveFind(nameOfProperty);
+                    if (tresult == null && fallback != null) tresult = fallback.RecursiveFind(nameOfProperty);
+                    return tresult;
                 }
                 Transform result = transform;
                 Console.Write(transform.name);
