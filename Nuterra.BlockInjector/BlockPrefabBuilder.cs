@@ -536,14 +536,14 @@ namespace Nuterra.BlockInjector
             {
                 for (int i = 0; i < aps.Length; i++)
                 {
-                    if ((aps[i].x % 0.5f != 0f) || (aps[i].y % 0.5 != 0) || (aps[i].z % 0.5 != 0))
-                    {
-                        throw new Exception("AP #" + i.ToString() + " is not in the center of a face! (" + aps[i].x.ToString() + ", " + aps[i].y.ToString() + ", " + aps[i].z.ToString() + ")");
-                    }
+                    //if ((aps[i].x % 0.5f != 0f) || (aps[i].y % 0.5 != 0f) || (aps[i].z % 0.5 != 0f))
+                    //{
+                    //    throw new Exception("AP #" + i.ToString() + " is not in the center of a face! (" + aps[i].x.ToString() + ", " + aps[i].y.ToString() + ", " + aps[i].z.ToString() + ")");
+                    //}
                     int facecheck = 0;
-                    if (Mathf.RoundToInt(aps[i].x * 10f + 50f) % 10 == 5) facecheck++;
-                    if (Mathf.RoundToInt(aps[i].y * 10f + 50f) % 10 == 5) facecheck++;
-                    if (Mathf.RoundToInt(aps[i].z * 10f + 50f) % 10 == 5) facecheck++;
+                    if (Mathf.RoundToInt(aps[i].x * 4f) % 4 == 2) facecheck++;
+                    if (Mathf.RoundToInt(aps[i].y * 4f) % 4 == 2) facecheck++;
+                    if (Mathf.RoundToInt(aps[i].z * 4f) % 4 == 2) facecheck++;
                     if (facecheck != 1)
                     {
                         throw new Exception("AP #" + i.ToString() + " is not in the center of a face! (" + aps[i].x.ToString() + ", " + aps[i].y.ToString() + ", " + aps[i].z.ToString() + ")");
