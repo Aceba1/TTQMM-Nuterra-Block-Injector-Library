@@ -27,6 +27,75 @@ public class SetfuseTimer : MonoBehaviour
     }
 }
 
+[RequireComponent(typeof(ModuleEnergyStore))]
+[RequireComponent(typeof(ModuleEnergy))]
+public class ModuleHealOverTime : Module
+{
+    public ModuleEnergyStore _EnergyStore;
+    public ModuleEnergy _Energy;
+    public float _timeout;
+
+    public float EnergyDrain = 10f;
+    public float HealAmount = 10;
+    public float HealDelay = 1.0f;
+    public float Capacity = 100f;
+    public float EnergyMinLimit = 50f;
+
+    public float ActualCurrentEnergy
+    {
+        get
+        {
+            var e = block.tank.EnergyRegulator.Energy(EnergyRegulator.EnergyType.Electric);
+            return e.storageTotal - e.spareCapacity;
+        }
+    }
+
+    void Update()
+    {
+        if (_timeout > 0)
+        {
+            _timeout -= Time.deltaTime;
+        }
+        else if (block.tank != null)
+        {
+            var damageable = block.visible.damageable;
+            if (damageable.Health < damageable.MaxHealth - HealAmount)
+                OnFire(damageable);
+        }
+    }
+
+    public void PrePool()
+    {
+        _EnergyStore = GetComponent<ModuleEnergyStore>();
+        _Energy = GetComponent<ModuleEnergy>();
+        _EnergyStore.m_Capacity = Capacity;
+    }
+
+    public void OnPool()
+    {
+        block.AttachEvent.Subscribe(OnAttach);
+    }
+
+    void OnSpawn()
+    {
+        _timeout = HealDelay;
+    }
+
+    void OnAttach()
+    {
+        _timeout = HealDelay;
+    }
+
+    void OnFire(Damageable damageable)
+    {
+        _timeout = HealDelay;
+        if (ActualCurrentEnergy < EnergyDrain + EnergyMinLimit) return;
+        _EnergyStore.AddEnergy(-EnergyDrain);
+        damageable.Repair(HealAmount);
+        block.visible.KeepAwake();
+    }
+}
+
 public class ProjectileDamageOverTime : MonoBehaviour
 {
     public float DamageOverTime = 50f;
