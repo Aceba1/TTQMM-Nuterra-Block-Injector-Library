@@ -27,6 +27,84 @@ public class SetfuseTimer : MonoBehaviour
     }
 }
 
+public class ProjectileDamageOverTime : MonoBehaviour
+{
+    public float DamageOverTime = 50f;
+    public int MaxHits = 1;
+    public ManDamage.DamageType DamageType = ManDamage.DamageType.Standard;
+    public bool FriendlyFire = false;
+    public bool DamageTouch = true;
+    public bool DamageStuck = true;
+    int _CurrentHits;
+    Projectile _Projectile;
+    bool _stuck;
+    Damageable _stuckOn;
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if (!DamageTouch || _CurrentHits > MaxHits) return;
+
+        ContactPoint[] contacts = collision.contacts;
+        if (contacts.Length == 0)
+            return;
+
+        ContactPoint contactPoint = contacts[0];
+        Damageable v = contactPoint.otherCollider.GetComponentInParent<Damageable>();
+        if (v == null) v = contactPoint.thisCollider.GetComponentInParent<Damageable>();
+        if (v == null) return;
+
+        if (!FriendlyFire)
+        {
+            TankBlock block = v.Block;
+            if (block != null && block.LastTechTeam == _Projectile.Shooter.Team)
+                return;
+        }
+        ManDamage.inst.DealDamage(v, DamageOverTime * Time.fixedDeltaTime, DamageType, this);
+        _CurrentHits++;
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (!DamageTouch || _CurrentHits > MaxHits) return;
+
+        Damageable v = other.GetComponentInParent<Damageable>();
+        if (v == null) return;
+
+        if (!FriendlyFire)
+        {
+            TankBlock block = v.Block;
+            if (block != null && block.LastTechTeam == _Projectile.Shooter.Team)
+                return;
+        }
+        ManDamage.inst.DealDamage(v, DamageOverTime * Time.fixedDeltaTime, DamageType, this);
+        _CurrentHits++;
+    }
+
+    private void FixedUpdate()
+    {
+        if (DamageStuck && _Projectile.Stuck)
+        {
+            if (!_stuck)
+            {
+                _stuckOn = transform.parent.GetComponentInParent<Damageable>();
+                _stuck = true;
+            }
+            _CurrentHits = 1;
+            ManDamage.inst.DealDamage(_stuckOn, DamageOverTime * Time.fixedDeltaTime, DamageType, this);
+        }
+        else
+        {
+            _CurrentHits = 0;
+            _stuck = false;
+        }
+    }
+
+    void OnPool()
+    {
+        _Projectile = GetComponent<Projectile>();
+    }
+}
+
 public class ModuleFloater : MotionBlocks.ModuleFloater { }
 
 // ... 
