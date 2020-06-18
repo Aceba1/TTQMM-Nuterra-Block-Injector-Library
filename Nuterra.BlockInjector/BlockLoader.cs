@@ -1000,7 +1000,7 @@ namespace Nuterra.BlockInjector
                 }
             }
 
-            [HarmonyPatch(typeof(UICorpLicense), "Setup")]
+            //[HarmonyPatch(typeof(UICorpLicense), "Setup")]
             private static class UICorpLicense_Setup
             {
                 private static void Postfix(ref UICorpLicense __instance)
