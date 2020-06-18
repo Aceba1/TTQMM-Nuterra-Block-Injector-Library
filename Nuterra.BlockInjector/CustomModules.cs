@@ -111,7 +111,7 @@ public class ProjectileDamageOverTime : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
-        if (!DamageTouch || _CurrentHits > MaxHits) return;
+        if (!enabled || !DamageTouch || _CurrentHits > MaxHits) return;
 
         ContactPoint[] contacts = collision.contacts;
         if (contacts.Length == 0)
@@ -134,7 +134,7 @@ public class ProjectileDamageOverTime : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (!DamageTouch || _CurrentHits > MaxHits) return;
+        if (!enabled || !DamageTouch || _CurrentHits > MaxHits) return;
 
         Damageable v = other.GetComponentInParent<Damageable>();
         if (v == null) return;
@@ -151,13 +151,16 @@ public class ProjectileDamageOverTime : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (DamageStuck && _Projectile.Stuck)
+        if (!enabled) return;
+        if (DamageStuck && _Projectile.Stuck && transform.parent != null)
         {
             if (!_stuck)
             {
                 _stuckOn = transform.parent.GetComponentInParent<Damageable>();
+                if (_stuckOn.Block != null && _stuckOn.Block.LastTechTeam == _Projectile.Shooter.Team)
                 _stuck = true;
             }
+            if (_stuckOn == null) return;
             _CurrentHits = 1;
             ManDamage.inst.DealDamage(_stuckOn, DamageOverTime * Time.fixedDeltaTime, DamageType, this);
         }
