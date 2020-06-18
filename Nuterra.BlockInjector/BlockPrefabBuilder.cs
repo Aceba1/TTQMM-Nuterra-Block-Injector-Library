@@ -474,6 +474,11 @@ namespace Nuterra.BlockInjector
         public BlockPrefabBuilder SetRarity(BlockRarity rarity)
         {
             ThrowIfFinished();
+            if (rarity < BlockRarity.Common || rarity > BlockRarity.Rare)
+            {
+                Console.WriteLine(_customBlock.Name + " " + _customBlock.BlockID + " : Tried setting an invalid BlockRarity of " + (int)rarity + "!");
+                rarity = BlockRarity.Common;
+            }
             _customBlock.Rarity = rarity;
             m_BlockRarity.SetValue(TankBlock, rarity);
             return this;
