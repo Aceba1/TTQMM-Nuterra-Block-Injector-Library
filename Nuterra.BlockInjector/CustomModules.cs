@@ -43,7 +43,10 @@ public class ModuleStopSpinnersOnDamage : Module
     {
         foreach(Spinner target in targetSpinners)
         {
+            Vector3 axis = target.m_RotationAxis, perp = new Vector3(0f, 1f - axis.y, axis.y);
+            float angle = Vector3.SignedAngle(perp, target.trans.localRotation * perp, axis);
             target.Reset();
+            target.SetAngle(angle);
         }
     }
 }
