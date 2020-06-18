@@ -27,6 +27,27 @@ public class SetfuseTimer : MonoBehaviour
     }
 }
 
+public class ModuleStopSpinnersOnDamage : Module
+{
+    Spinner[] targetSpinners;
+    void OnPool()
+    {
+        block.visible.damageable.damageEvent.Subscribe(OnDamage);
+        if (targetSpinners == null || targetSpinners.Length == 0)
+        {
+            targetSpinners = GetComponentsInChildren<Spinner>(true);
+        }
+    }
+
+    void OnDamage(ManDamage.DamageInfo info)
+    {
+        foreach(Spinner target in targetSpinners)
+        {
+            target.Reset();
+        }
+    }
+}
+
 [RequireComponent(typeof(ModuleEnergyStore))]
 [RequireComponent(typeof(ModuleEnergy))]
 public class ModuleHealOverTime : Module
