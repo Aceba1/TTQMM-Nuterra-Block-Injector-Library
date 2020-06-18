@@ -29,7 +29,8 @@ public class SetfuseTimer : MonoBehaviour
 
 public class ModuleStopSpinnersOnDamage : Module
 {
-    Spinner[] targetSpinners;
+    public Spinner[] targetSpinners = null;
+    public bool SetFullSpeedInstead = false;
     void OnPool()
     {
         block.visible.damageable.damageEvent.Subscribe(OnDamage);
@@ -45,6 +46,7 @@ public class ModuleStopSpinnersOnDamage : Module
         {
             Vector3 axis = target.m_RotationAxis, perp = new Vector3(0f, 1f - axis.y, axis.y);
             float angle = Vector3.SignedAngle(perp, target.trans.localRotation * perp, axis);
+            target.SetAutoSpin(SetFullSpeedInstead);
             target.Reset();
             target.SetAngle(angle);
         }
