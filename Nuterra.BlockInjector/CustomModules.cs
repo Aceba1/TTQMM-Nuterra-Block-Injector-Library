@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class ModuleDampener : Module
 {
@@ -50,6 +51,36 @@ public class ModuleStopSpinnersOnDamage : Module
             target.Reset();
             target.SetAngle(angle);
         }
+    }
+}
+
+public class ModuleSpinWhenAnchored : Module
+{
+    public Spinner[] targetSpinners = null;
+    public bool Invert = false;
+
+    void OnPool()
+    {
+        block.AttachEvent.Subscribe(OnAttach);
+        block.DetachEvent.Subscribe(OnDetach);
+        if (targetSpinners == null || targetSpinners.Length == 0)
+            targetSpinners = GetComponentsInChildren<Spinner>(true);
+    }
+
+    private void OnAttach()
+    {
+        block.tank.AnchorEvent.Subscribe(OnAnchor);
+    }
+
+    private void OnDetach() 
+    { 
+        if (block.tank != null) block.tank.AnchorEvent.Unsubscribe(OnAnchor); 
+    }      
+
+    private void OnAnchor(ModuleAnchor arg1, bool arg2, bool arg3)
+    {
+        foreach (Spinner target in targetSpinners)
+            target.SetAutoSpin(arg2 != Invert);
     }
 }
 
