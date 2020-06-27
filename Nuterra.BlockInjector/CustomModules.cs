@@ -58,6 +58,7 @@ public class ModuleSpinWhenAnchored : Module
 {
     public Spinner[] targetSpinners = null;
     public bool Invert = false;
+    public bool OnWhileDetached = false;
 
     void OnPool()
     {
@@ -67,20 +68,32 @@ public class ModuleSpinWhenAnchored : Module
             targetSpinners = GetComponentsInChildren<Spinner>(true);
     }
 
+    private void OnSpawn()
+    {
+        SetSpinners(OnWhileDetached);
+    }
+
     private void OnAttach()
     {
         block.tank.AnchorEvent.Subscribe(OnAnchor);
+        SetSpinners(block.tank.IsAnchored != Invert);
     }
 
     private void OnDetach() 
     { 
-        if (block.tank != null) block.tank.AnchorEvent.Unsubscribe(OnAnchor); 
+        if (block.tank != null) block.tank.AnchorEvent.Unsubscribe(OnAnchor);
+        SetSpinners(OnWhileDetached);
     }      
 
     private void OnAnchor(ModuleAnchor arg1, bool arg2, bool arg3)
     {
+        SetSpinners(arg1 != Invert);
+    }
+
+    private void SetSpinners(bool State)
+    {
         foreach (Spinner target in targetSpinners)
-            target.SetAutoSpin(arg2 != Invert);
+            target.SetAutoSpin(State);
     }
 }
 
