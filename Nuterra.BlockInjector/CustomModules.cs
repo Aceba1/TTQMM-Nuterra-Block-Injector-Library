@@ -85,9 +85,9 @@ public class ModuleSpinWhenAnchored : Module
         SetSpinners(OnWhileDetached);
     }      
 
-    private void OnAnchor(ModuleAnchor arg1, bool arg2, bool arg3)
+    private void OnAnchor(ModuleAnchor _, bool IsAnchored, bool __)
     {
-        SetSpinners(arg1 != Invert);
+        SetSpinners(IsAnchored != Invert);
     }
 
     private void SetSpinners(bool State)
