@@ -651,6 +651,14 @@ namespace Nuterra.BlockInjector
                     }
                     return true;
                 }
+
+                private static void Postfix(ref string __result, int itemType, LocalisationEnums.StringBanks stringBank, string defaultString)
+                {
+                    if (__result == defaultString)
+                    {
+                        __result = $"MissingNo.{itemType} <{stringBank.ToString()}>";
+                    }
+                }
             }
 
             [HarmonyPatch(typeof(SpriteFetcher), "GetSprite", new Type[] { typeof(ObjectTypes), typeof(int) })]
