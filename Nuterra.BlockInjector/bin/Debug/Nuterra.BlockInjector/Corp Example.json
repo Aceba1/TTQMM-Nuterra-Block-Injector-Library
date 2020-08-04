@@ -5,5 +5,12 @@
 	"XPLevels": [100, 200, 300, 400, 500], //Experience between each level up
     "CorpIconName": null, //FILE Name of image, such as "icon.png". File can be anywhere and should be uniquely named
     "SelectedCorpIconName": null,
-    "ModernCorpIconName": null
+    "ModernCorpIconName": null,
+
+    // To reference in a Custom Block : "MeshMaterialName": "Corp Name_Main"
+    "Material": {
+        "TextureName": "Main.png",
+        "MetallicTextureName": "Metallic.png",
+        "EmissionTextureName": "Emmision.png"
+	}
 }

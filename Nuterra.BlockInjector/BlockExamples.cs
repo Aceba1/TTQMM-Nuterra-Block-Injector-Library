@@ -10,16 +10,6 @@ namespace Nuterra.BlockInjector
     {
         public static void Load()
         {
-            #region Corp
-            /*var corpIcon = GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("TAC.png"));
-            var selectedCorpIcon = GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("TAC_Selected.png"));
-            var modernCorpIcon = GameObjectJSON.SpriteFromImage(GameObjectJSON.ImageFromFile("TAC_Modern.png"));
-            new CustomCorporation(8, "TAC", 5, corpIcon:corpIcon, selectedCorpIcon:selectedCorpIcon, modernCorpIcon:modernCorpIcon).Register();
-            new CustomCorporation(8, "TestCorpBad").Register();
-            new CustomCorporation(1230, "TestCorp2: Electric Boogaloo").Register();
-            new CustomCorporation(10000, "TestCorp3: Electric Boogaloo 2").Register();
-            new CustomCorporation(110000, "TestCorp4: Electric Boogaloo Overflow").Register();*/
-            #endregion
             #region Blocks
             {
                 Material mat = GameObjectJSON.MaterialFromShader()

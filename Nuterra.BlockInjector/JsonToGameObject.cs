@@ -113,6 +113,25 @@ namespace Nuterra.BlockInjector
 
         static Dictionary<Type, Dictionary<string, UnityEngine.Object>> GameResourceCache = new Dictionary<Type, Dictionary<string, UnityEngine.Object>>();
 
+        public static bool AddToResourceCache(UnityEngine.Object obj, string targetName, bool Log = false)
+        {
+            var t = obj.GetType();
+            if (!GameResourceCache.TryGetValue(t, out var CacheLookup))
+            {
+                CacheLookup = new Dictionary<string, UnityEngine.Object>();
+                GameResourceCache.Add(t, CacheLookup);
+            }
+
+            if (!CacheLookup.ContainsKey(targetName))
+            {
+                CacheLookup.Add(targetName, obj);
+                if (Log) Console.WriteLine("Resource \"" + targetName + "\" added");
+                return true;
+            }
+            if (Log) Console.WriteLine("Resource \"" + targetName + "\" already exists");
+            return false;
+        }
+
         public static T GetObjectFromGameResources<T>(Type t, string targetName, bool LogError = false) where T : UnityEngine.Object
         {
             if (GameResourceCache.TryGetValue(t, out var CacheLookup))
