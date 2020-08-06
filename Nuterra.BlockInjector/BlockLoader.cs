@@ -359,8 +359,14 @@ namespace Nuterra.BlockInjector
         public static void PostModsLoaded()
         {
             if (Input.GetKey(KeyCode.T)) CapInjectedID++; // Debug test, offset everything by 1
-            var harmony = HarmonyInstance.Create("nuterra.block.injector");
+            var harmony = HarmonyInstance.Create("nuterra.block.injector");  
             harmony.PatchAll(Assembly.GetExecutingAssembly());
+
+            var GetBlockType = typeof(TankPreset.BlockSpec).GetMethod("GetBlockType");
+            if(GetBlockType != null)
+            {
+                harmony.Patch(GetBlockType, transpiler: new HarmonyMethod(typeof(Patches.BlockSpec_GetBlockType).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+            }
 
             T_ManCustomSkins.GetMethod("Awake", binding).Invoke(ManCustomSkins.inst, new object[0]);
 
@@ -705,6 +711,17 @@ namespace Nuterra.BlockInjector
                         }
                     }
                     return false;
+                }
+            }
+
+            
+            internal static class BlockSpec_GetBlockType
+            {
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    var codes = instructions.ToList();
+                    codes.First(ci => ci.opcode == OpCodes.Ldc_I4).operand = 1000000000;
+                    return codes;
                 }
             }
         }
