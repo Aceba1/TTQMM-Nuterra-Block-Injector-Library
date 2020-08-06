@@ -365,7 +365,13 @@ namespace Nuterra.BlockInjector
             var GetBlockType = typeof(TankPreset.BlockSpec).GetMethod("GetBlockType");
             if(GetBlockType != null)
             {
-                harmony.Patch(GetBlockType, transpiler: new HarmonyMethod(typeof(Patches.BlockSpec_GetBlockType).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                try
+                {
+                    harmony.Patch(GetBlockType, transpiler: new HarmonyMethod(typeof(Patches.BlockSpec_GetBlockType).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                } catch
+                {
+                    Console.WriteLine("Stuff keeps breaking for no reason. Modded snapshots won't load");
+                }
             }
 
             T_ManCustomSkins.GetMethod("Awake", binding).Invoke(ManCustomSkins.inst, new object[0]);
