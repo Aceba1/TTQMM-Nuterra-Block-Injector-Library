@@ -368,9 +368,10 @@ namespace Nuterra.BlockInjector
                 try
                 {
                     harmony.Patch(GetBlockType, transpiler: new HarmonyMethod(typeof(Patches.BlockSpec_GetBlockType).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
-                } catch
+                } catch (Exception e)
                 {
                     Console.WriteLine("Stuff keeps breaking for no reason. Modded snapshots won't load");
+                    Console.WriteLine(e);
                 }
             }
 
