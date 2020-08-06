@@ -362,11 +362,10 @@ namespace Nuterra.BlockInjector
             var harmony = HarmonyInstance.Create("nuterra.block.injector");  
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
-            var GetBlockType = typeof(TankPreset.BlockSpec).GetMethod("GetBlockType");
-            if(GetBlockType != null)
-            {
-                harmony.Patch(GetBlockType, null, null, transpiler: new HarmonyMethod(typeof(Patches.BlockSpec_GetBlockType).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
-            }
+
+            #region 1.4.0.1+ Patches
+            Patches.OfficialBlocks.Patch(harmony);
+            #endregion
 
             T_ManCustomSkins.GetMethod("Awake", binding).Invoke(ManCustomSkins.inst, new object[0]);
 
@@ -692,38 +691,70 @@ namespace Nuterra.BlockInjector
                 }
             }
 
-            [HarmonyPatch(typeof(BlockUnlockTable), "RemoveModdedBlocks")]
-            private static class BlockUnlockTable_RemoveModdedBlocks
+ 
+            internal static class OfficialBlocks
             {
-                static bool Prefix(ref BlockUnlockTable __instance)
+                public static void Patch(HarmonyInstance harmony)
                 {
-                    Console.WriteLine("PREFIX RemoveModdedBlocks");
-                    var corpBlockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
-
-                    foreach(var a in corpBlockList)
+                    var GetBlockType = typeof(TankPreset.BlockSpec).GetMethod("GetBlockType");
+                    if (GetBlockType != null)
                     {
-                        var gradeList = m_GradeList.GetValue(a) as Array;
-                        foreach(var b in gradeList)
-                        {
-                            var blockList = (m_BlockList.GetValue(b) as BlockUnlockTable.UnlockData[])
-                                .Where(ud => (int)ud.m_BlockType < 1000000000).ToArray();
-                            m_BlockList.SetValue(b, blockList);
-                        }
+                        harmony.Patch(GetBlockType, null, null, transpiler: new HarmonyMethod(typeof(BlockSpec_GetBlockType).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                        Console.WriteLine("Patched GetBlockType");
                     }
-                    return false;
-                }
-            }
 
-            
-            internal static class BlockSpec_GetBlockType
-            {
-                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-                {
-                    var codes = instructions.ToList();
-                    codes.First(ci => ci.opcode == OpCodes.Ldc_I4).operand = 1000000000;
-                    return codes;
+                    var RemoveCustomBlockRecipes = typeof(RecipeManager).GetMethod("RemoveCustomBlockRecipes");
+                    if (RemoveCustomBlockRecipes != null)
+                    {
+                        harmony.Patch(RemoveCustomBlockRecipes, null, null, transpiler: new HarmonyMethod(typeof(RecipeManager_RemoveCustomBlockRecipes).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                        Console.WriteLine("Patched RemoveCustomBlockRecipes");
+                    }
                 }
-            }
+
+                [HarmonyPatch(typeof(BlockUnlockTable), "RemoveModdedBlocks")]
+                private static class BlockUnlockTable_RemoveModdedBlocks
+                {
+                    static bool Prefix(ref BlockUnlockTable __instance)
+                    {
+                        Console.WriteLine("PREFIX RemoveModdedBlocks");
+                        var corpBlockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
+
+                        foreach (var a in corpBlockList)
+                        {
+                            var gradeList = m_GradeList.GetValue(a) as Array;
+                            foreach (var b in gradeList)
+                            {
+                                var blockList = (m_BlockList.GetValue(b) as BlockUnlockTable.UnlockData[])
+                                    .Where(ud => (int)ud.m_BlockType < 1000000000).ToArray();
+                                m_BlockList.SetValue(b, blockList);
+                            }
+                        }
+                        return false;
+                    }
+                }
+
+                static class BlockSpec_GetBlockType
+                {
+                    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                    {
+                        var codes = instructions.ToList();
+                        var check = codes.FirstOrDefault(ci => ci.operand is int && (int)ci.operand == 1000000);
+                        if(check != null && check != default(CodeInstruction)) check.operand = 1000000000;
+                        return codes;
+                    }
+                }
+
+                static class RecipeManager_RemoveCustomBlockRecipes
+                {
+                    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                    {
+                        var codes = instructions.ToList();
+                        var check = codes.FirstOrDefault(ci => ci.operand is int && (int)ci.operand == 1000000);
+                        if (check != null && check != default(CodeInstruction)) check.operand = 1000000000;
+                        return codes;
+                    }
+                }
+            }   
         }
            
 
