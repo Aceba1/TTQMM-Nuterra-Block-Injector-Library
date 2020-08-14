@@ -395,6 +395,11 @@ namespace Nuterra.BlockInjector
         internal static Type T_BlockUnlockTable = typeof(BlockUnlockTable),
             CorpBlockData = T_BlockUnlockTable.GetNestedType("CorpBlockData", binding),
             GradeData = T_BlockUnlockTable.GetNestedType("GradeData", binding),
+            
+            T_BlockRewardPoolTable = typeof(BlockRewardPoolTable),
+            CorpRewardTiers = T_BlockRewardPoolTable.GetNestedType("CorpRewardTiers", binding),
+            TierRewardPool = T_BlockRewardPoolTable.GetNestedType("TierRewardPool", binding),
+            
             T_SpriteFetcher = typeof(SpriteFetcher),
             T_UICorpLicense = typeof(UICorpLicense),
             T_ManCustomSkins = typeof(ManCustomSkins),
@@ -405,6 +410,12 @@ namespace Nuterra.BlockInjector
             m_BlockList = GradeData.GetField("m_BlockList", binding),
             m_AdditionalUnlocks = GradeData.GetField("m_AdditionalUnlocks", binding),
             m_GradeList = CorpBlockData.GetField("m_GradeList", binding),
+
+            m_CorpRewardPools = T_BlockRewardPoolTable.GetField("m_CorpRewardPools", binding),
+            CorpRewardTiers_m_Corp = CorpRewardTiers.GetField("m_Corp", binding),
+            m_Tiers = CorpRewardTiers.GetField("m_Tiers", binding),
+            m_RewardPool = TierRewardPool.GetField("m_RewardPool", binding),
+
             m_CorpIcons = T_SpriteFetcher.GetField("m_CorpIcons", binding),
             m_SelectedCorpIcons = T_SpriteFetcher.GetField("m_SelectedCorpIcons", binding),
             m_ModernCorpIcons = T_SpriteFetcher.GetField("m_ModernCorpIcons", binding),
@@ -844,6 +855,34 @@ namespace Nuterra.BlockInjector
             {
                 Timer.AddToLast(" - FAILED: Could not add to block table. Could it be the grade level?");
                 Console.WriteLine("Registering block failed: Could not add to block table. " + E.Message);
+            }
+
+            try
+            {
+                Array corpRewardPools = m_CorpRewardPools.GetValue(ManLicenses.inst.GetRewardPoolTable()) as Array;
+                foreach(var corpRewardPool in corpRewardPools)
+                {
+                    if((FactionSubTypes)CorpRewardTiers_m_Corp.GetValue(corpRewardPool) == block.Faction)
+                    {
+                        var corpRewardTiers = m_Tiers.GetValue(corpRewardPool) as Array;
+                        object corpRewardTier = corpRewardTiers.GetValue(block.Grade);
+                        BlockRewardPoolTable.RewardBlockInfo[] rewardPool = m_RewardPool.GetValue(corpRewardTier) as BlockRewardPoolTable.RewardBlockInfo[];
+
+                        Array.Resize(ref rewardPool, rewardPool.Length + 1);
+                        rewardPool[rewardPool.Length - 1] = new BlockRewardPoolTable.RewardBlockInfo()
+                        {
+                            m_BlockType = (BlockTypes)block.RuntimeID,
+                            m_PrerequisiteBlocks = new BlockTypes[0]
+                        };
+
+                        m_RewardPool.SetValue(corpRewardTier, rewardPool);
+                    }
+                }                
+            }
+            catch (Exception E)
+            {
+                Timer.AddToLast(" - FAILED: Could not add to block reward table. Could it be the grade level?");
+                Console.WriteLine("Registering block failed: Could not add to block reward table. " + E.Message);
             }
         }
 
