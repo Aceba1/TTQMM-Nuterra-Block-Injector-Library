@@ -432,6 +432,10 @@ namespace Nuterra.BlockInjector
 
         internal class Patches
         {
+            static readonly int BASE_ID = 1000000;
+            static readonly int NEW_BASE_ID = 100000000;
+
+
             [HarmonyPatch(typeof(RecipeTable.Recipe.ItemSpec), "GetHashCode")]
             private static class CraftingPatch_FixHashOptimization
             {
@@ -656,6 +660,8 @@ namespace Nuterra.BlockInjector
 
                 private static void Postfix(ref string __result, int itemType, LocalisationEnums.StringBanks stringBank, string defaultString)
                 {
+                    if ((stringBank == LocalisationEnums.StringBanks.BlockNames || stringBank == LocalisationEnums.StringBanks.BlockDescription) && itemType >= NEW_BASE_ID) return;
+
                     if (__result == defaultString)
                     {
                         __result = $"MissingNo.{itemType} <{stringBank.ToString()}>";
@@ -725,11 +731,55 @@ namespace Nuterra.BlockInjector
                             foreach (var b in gradeList)
                             {
                                 var blockList = (m_BlockList.GetValue(b) as BlockUnlockTable.UnlockData[])
-                                    .Where(ud => (int)ud.m_BlockType < 1000000000).ToArray();
+                                    .Where(ud => (int)ud.m_BlockType < NEW_BASE_ID).ToArray();
                                 m_BlockList.SetValue(b, blockList);
                             }
                         }
                         return false;
+                    }
+                }
+
+                [HarmonyPatch(typeof(UIItemDisplay), "Setup", new Type[] { typeof(ItemTypeInfo), typeof(Color), typeof(Color), typeof(string), typeof(Color), typeof(bool), typeof(bool) })]
+                private static class UIItemDisplay_Setup
+                {
+                    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                    {
+                        var codes = instructions.ToList();
+                        ChangeCheck(codes);
+                        return codes;
+                    }
+                }
+
+                [HarmonyPatch(typeof(StringLookup), "GetItemName", new Type[] { typeof(ObjectTypes), typeof(int) })]
+                private static class StringLookup_GetItemName
+                {
+                    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                    {
+                        var codes = instructions.ToList();
+                        ChangeCheck(codes);
+                        return codes;
+                    }
+                }
+
+                [HarmonyPatch(typeof(StringLookup), "GetItemDescription", new Type[] { typeof(ObjectTypes), typeof(int) })]
+                private static class StringLookup_GetItemDescription
+                {
+                    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                    {
+                        var codes = instructions.ToList();
+                        ChangeCheck(codes);
+                        return codes;
+                    }
+                }
+
+                [HarmonyPatch(typeof(ManMods), "AutoAssignIDs")]
+                private static class ManMods_AutoAssignIDs
+                {
+                    static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                    {
+                        var codes = instructions.ToList();
+                        ChangeCheck(codes);
+                        return codes;
                     }
                 }
 
@@ -738,8 +788,7 @@ namespace Nuterra.BlockInjector
                     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
                     {
                         var codes = instructions.ToList();
-                        var check = codes.FirstOrDefault(ci => ci.operand is int && (int)ci.operand == 1000000);
-                        if(check != null && check != default(CodeInstruction)) check.operand = 1000000000;
+                        ChangeCheck(codes);
                         return codes;
                     }
                 }
@@ -749,10 +798,15 @@ namespace Nuterra.BlockInjector
                     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
                     {
                         var codes = instructions.ToList();
-                        var check = codes.FirstOrDefault(ci => ci.operand is int && (int)ci.operand == 1000000);
-                        if (check != null && check != default(CodeInstruction)) check.operand = 1000000000;
+                        ChangeCheck(codes);
                         return codes;
                     }
+                }
+
+                static void ChangeCheck(List<CodeInstruction> codes)
+                {
+                    var check = codes.FirstOrDefault(ci => ci.operand is int && (int)ci.operand == BASE_ID);
+                    if (check != null && check != default(CodeInstruction)) check.operand = NEW_BASE_ID;
                 }
             }   
         }
