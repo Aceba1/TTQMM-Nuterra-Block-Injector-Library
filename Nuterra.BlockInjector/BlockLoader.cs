@@ -367,6 +367,15 @@ namespace Nuterra.BlockInjector
             Patches.OfficialBlocks.Patch(harmony);
             #endregion
 
+            #region Miscellaneous Patches
+            try
+            {
+                harmony.Patch(typeof(ModuleItemConsume).GetMethod("InitRecipeOutput", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.ModuleItemConsume_UnlockDeliveryBlockerRange).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                Console.WriteLine("Patched range of Delivery Blocker");
+            }
+            catch { }
+            #endregion
+
             T_ManCustomSkins.GetMethod("Awake", binding).Invoke(ManCustomSkins.inst, new object[0]);
 
             new GameObject().AddComponent<Timer>();
@@ -819,7 +828,18 @@ namespace Nuterra.BlockInjector
                     var check = codes.FirstOrDefault(ci => ci.operand is int && (int)ci.operand == BASE_ID);
                     if (check != null && check != default(CodeInstruction)) check.operand = NEW_BASE_ID;
                 }
-            }   
+            }
+
+            internal static class ModuleItemConsume_UnlockDeliveryBlockerRange
+            {
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    var codes = instructions.ToList();
+                    var check = codes.FirstOrDefault(ci => ci.opcode == OpCodes.Ldc_R4 && (int)ci.operand == 23);
+                    if (check != null && check != default(CodeInstruction)) check.operand = 512;
+                    return codes;
+                }
+            }
         }
            
 
