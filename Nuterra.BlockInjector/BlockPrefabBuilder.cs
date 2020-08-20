@@ -909,6 +909,20 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        public BlockPrefabBuilder SetDropFromCrates(bool drop)
+        {
+            ThrowIfFinished();
+            _customBlock.DropFromCrates = drop;
+            return this;
+        }
+
+        public BlockPrefabBuilder SetPairedBlock(int block)
+        {
+            ThrowIfFinished();
+            _customBlock.PairedBlock = block;
+            return this;
+        }
+
 
         private void OptimizeCellsForAP()
         {

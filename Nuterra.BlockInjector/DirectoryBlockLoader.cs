@@ -63,6 +63,9 @@ namespace Nuterra.BlockInjector
             public float DetachFragility{ set => Fragility = value; }
             public float? Fragility;
 
+            public bool? DropFromCrates;
+            public int? PairedBlock;
+
             public float Mass;
             public Vector3 CentreOfMass { set => CenterOfMass = value; }
             public Vector3? CenterOfMass;
@@ -489,6 +492,17 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
+                if(jBlock.DropFromCrates.HasValue)
+                {
+                    L("Set DropFromCrates", l);
+                    blockbuilder.SetDropFromCrates(jBlock.DropFromCrates.Value);
+                }
+
+                if (jBlock.PairedBlock.HasValue)
+                {
+                    L("Set PairedBlock", l);
+                    blockbuilder.SetPairedBlock(jBlock.PairedBlock.Value);
+                }
 
 
                 /*Local*/

@@ -857,32 +857,52 @@ namespace Nuterra.BlockInjector
                 Console.WriteLine("Registering block failed: Could not add to block table. " + E.Message);
             }
 
-            try
+            if (block.DropFromCrates)
             {
-                Array corpRewardPools = m_CorpRewardPools.GetValue(ManLicenses.inst.GetRewardPoolTable()) as Array;
-                foreach(var corpRewardPool in corpRewardPools)
+                try
                 {
-                    if((FactionSubTypes)CorpRewardTiers_m_Corp.GetValue(corpRewardPool) == block.Faction)
+                    Array corpRewardPools = m_CorpRewardPools.GetValue(ManLicenses.inst.GetRewardPoolTable()) as Array;
+                    foreach (var corpRewardPool in corpRewardPools)
                     {
-                        var corpRewardTiers = m_Tiers.GetValue(corpRewardPool) as Array;
-                        object corpRewardTier = corpRewardTiers.GetValue(block.Grade);
-                        BlockRewardPoolTable.RewardBlockInfo[] rewardPool = m_RewardPool.GetValue(corpRewardTier) as BlockRewardPoolTable.RewardBlockInfo[];
-
-                        Array.Resize(ref rewardPool, rewardPool.Length + 1);
-                        rewardPool[rewardPool.Length - 1] = new BlockRewardPoolTable.RewardBlockInfo()
+                        if ((FactionSubTypes)CorpRewardTiers_m_Corp.GetValue(corpRewardPool) == block.Faction)
                         {
-                            m_BlockType = (BlockTypes)block.RuntimeID,
-                            m_PrerequisiteBlocks = new BlockTypes[0]
-                        };
+                            var corpRewardTiers = m_Tiers.GetValue(corpRewardPool) as Array;
+                            object corpRewardTier = corpRewardTiers.GetValue(block.Grade);
+                            BlockRewardPoolTable.RewardBlockInfo[] rewardPool = m_RewardPool.GetValue(corpRewardTier) as BlockRewardPoolTable.RewardBlockInfo[];
 
-                        m_RewardPool.SetValue(corpRewardTier, rewardPool);
+                            Array.Resize(ref rewardPool, rewardPool.Length + 1);
+                            rewardPool[rewardPool.Length - 1] = new BlockRewardPoolTable.RewardBlockInfo()
+                            {
+                                m_BlockType = (BlockTypes)block.RuntimeID,
+                                m_PrerequisiteBlocks = new BlockTypes[0]
+                            };
+
+                            m_RewardPool.SetValue(corpRewardTier, rewardPool);
+                        }
                     }
-                }                
-            }
-            catch (Exception E)
-            {
-                Timer.AddToLast(" - FAILED: Could not add to block reward table. Could it be the grade level?");
-                Console.WriteLine("Registering block failed: Could not add to block reward table. " + E.Message);
+                }
+                catch (Exception E)
+                {
+                    Timer.AddToLast(" - FAILED: Could not add to block reward table. Could it be the grade level?");
+                    Console.WriteLine("Registering block failed: Could not add to block reward table. " + E.Message);
+                }
+
+                if(block.PairedBlock != -1)
+                {
+                    var blockID = (BlockTypes)block.RuntimeID;
+                    var pairedID = (BlockTypes)block.PairedBlock;
+                    if (!Globals.inst.m_BlockPairsList.m_BlockPairs.Any(bp => bp.m_Block == blockID || bp.m_Block == pairedID))
+                    {
+                        var arr = Globals.inst.m_BlockPairsList.m_BlockPairs;
+                        Array.Resize(ref arr, arr.Length + 1);
+                        arr[arr.Length - 1] = new BlockPairsList.BlockPairs()
+                        {
+                            m_Block = blockID,
+                            m_PairedBlock = pairedID
+                        };
+                        Globals.inst.m_BlockPairsList.m_BlockPairs = arr;
+                    }
+                }
             }
         }
 

@@ -19,6 +19,8 @@ namespace Nuterra.BlockInjector
         public GameObject Prefab { get; internal set; }
         public Sprite DisplaySprite { get; internal set; }
         public int Grade { get; internal set; }
+        public bool DropFromCrates { get; internal set; } = true;
+        public int PairedBlock { get; internal set; } = -1;
         public void Register()
         {
             BlockLoader.Register(this);
