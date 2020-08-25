@@ -697,7 +697,15 @@ namespace Nuterra.BlockInjector
                         if (!New && !sub.DestroyExistingRenderer)
                         {
                             var ren = childG.GetComponent<Renderer>();
-                            if (ren) mat = ren.material;
+                            if (ren)
+                            {
+                                mat = ren.material;
+
+                                // Resolve unskinnable blocks, hopefully
+                                string check = jBlock.Faction.ToString() + "_Main";
+                                if (mat.name.Contains(check))
+                                    mat = GameObjectJSON.GetObjectFromGameResources<Material>(check);
+                            }
                         }
 
                         bool smissingflag1 = string.IsNullOrWhiteSpace(sub.MeshTextureName),
