@@ -171,9 +171,11 @@ namespace Nuterra.BlockInjector
         static readonly FieldInfo TankBlock_FilledCellsGravityScaleFactors = typeof(TankBlock).GetField("FilledCellsGravityScaleFactors", b);
         private void Initialize(GameObject prefab, bool clearGridInfo)
         {
-            _customBlock = new CustomBlock();
-            //_customBlock.RuntimeID = BlockLoader.GetNextAvailableID();
-            _customBlock.Prefab = prefab;
+            _customBlock = new CustomBlock
+            {
+                //RuntimeID = BlockLoader.GetNextAvailableID();
+                Prefab = prefab
+            };
             _customBlock.Prefab.SetActive(false);
             GameObject.DontDestroyOnLoad(_customBlock.Prefab);
 
@@ -194,7 +196,7 @@ namespace Nuterra.BlockInjector
             Visible_block.SetValue(_visible, TankBlock);
             if (clearGridInfo)
             {
-                TankBlock.attachPoints = new Vector3[] { };
+                TankBlock.attachPoints = Array.Empty<Vector3>();
                 TankBlock.filledCells = new IntVector3[] { new Vector3(0, 0, 0) };
                 TankBlock_FilledCellsGravityScaleFactors.SetValue(TankBlock, new float[] { 1f });
             }
@@ -748,7 +750,7 @@ namespace Nuterra.BlockInjector
             if (Mesh != null)
             {
                 model.AddComponent<MeshFilter>().sharedMesh = Mesh;
-                model.AddComponent<MeshRenderer>().material = Material == null ? GameObjectJSON.MaterialFromShader(Color.white) : Material;
+                model.AddComponent<MeshRenderer>().material = Material ?? GameObjectJSON.MaterialFromShader(Color.white);
             }
             if (CreateBoxCollider)
             {
@@ -777,7 +779,7 @@ namespace Nuterra.BlockInjector
             if (Mesh != null)
             {
                 model.AddComponent<MeshFilter>().sharedMesh = Mesh;
-                model.AddComponent<MeshRenderer>().sharedMaterial = Material == null ? GameObjectJSON.MaterialFromShader() : Material;
+                model.AddComponent<MeshRenderer>().sharedMaterial = Material ?? GameObjectJSON.MaterialFromShader();
             }
             if (ColliderMesh != null)
             {

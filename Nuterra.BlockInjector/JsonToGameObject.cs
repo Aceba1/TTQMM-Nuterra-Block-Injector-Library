@@ -190,7 +190,7 @@ namespace Nuterra.BlockInjector
                 startY = Mathf.RoundToInt(source.height * AreaNormalized.y),
                 extentX = Mathf.RoundToInt(source.width * AreaNormalized.width),
                 extentY = Mathf.RoundToInt(source.height * AreaNormalized.height);
-            int Sizeof = extentX * extentY;
+            //int Sizeof = extentX * extentY;
             Texture2D Result = new Texture2D(extentX, extentY);
             Result.SetPixels(source.GetPixels(startX, startY, extentX, extentY));
             Result.Apply();
@@ -474,8 +474,7 @@ namespace Nuterra.BlockInjector
         static Dictionary<string, Type> stringtypecache = new Dictionary<string, Type>();
         public static Type GetType(string Name)
         {
-            Type type;
-            if (stringtypecache.TryGetValue(Name, out type)) return type;
+            if (stringtypecache.TryGetValue(Name, out Type type)) return type;
             type = Type.GetType(Name, new Func<AssemblyName, Assembly>(AssemblyResolver), new Func<Assembly, string, bool, Type>(TypeResolver), false, true);
             if (type == null)
             {
@@ -690,8 +689,8 @@ namespace Nuterra.BlockInjector
                     else
                     {
                         string typeName = property.Name;
-                        int split = typeName.IndexOf(' '), index;
-                        if (split != -1 && int.TryParse(typeName.Substring(split + 1), out index))
+                        int split = typeName.IndexOf(' ');
+                        if (split != -1 && int.TryParse(typeName.Substring(split + 1), out int index))
                         {
                             typeName = typeName.Substring(0, split);
                         }
@@ -1160,26 +1159,26 @@ namespace Nuterra.BlockInjector
                     var p = t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
                     foreach (var field in f)
                     {
-                        result += $"\n{Indenting} (F).{field.Name} ({field.FieldType.ToString()})";
+                        result += $"\n{Indenting} (F).{field.Name} ({field.FieldType})";
                         try
                         {
-                            result += $" = {Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(comp), Formatting.Indented)}";
+                            result += $" = {JsonConvert.SerializeObject(field.GetValue(comp), Formatting.Indented)}";
                         }
                         catch { }
                     }
                     foreach (var field in p)
                     {
-                        result += $"\n{Indenting} (P).{field.Name} ({field.PropertyType.ToString()})";
+                        result += $"\n{Indenting} (P).{field.Name} ({field.PropertyType})";
                         try
                         {
-                            result += $" = {Newtonsoft.Json.JsonConvert.SerializeObject(field.GetValue(comp, null), Formatting.Indented)}";
+                            result += $" = {JsonConvert.SerializeObject(field.GetValue(comp, null), Formatting.Indented)}";
                         }
                         catch { }
                     }
                 }
                 else
                 {
-                    if (comp is MeshRenderer) result += " : Material (" + ((MeshRenderer)comp).material.name + ")";
+                    if (comp is MeshRenderer renderer) result += " : Material (" + renderer.material.name + ")";
                 }
             }
             for (int i = SearchIn.transform.childCount - 1; i >= 0; i--)

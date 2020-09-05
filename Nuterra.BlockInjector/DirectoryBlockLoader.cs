@@ -136,6 +136,11 @@ namespace Nuterra.BlockInjector
                 public Vector3? SubScale;
                 public Vector3 Rotation { set => SubRotation = value; }
                 public Vector3? SubRotation;
+
+                public struct MaterialControl
+                {
+
+                }
             }
         }
 
@@ -333,7 +338,7 @@ namespace Nuterra.BlockInjector
                     return;
                 }
 
-                string gpr = jBlock.GamePrefabReference == null ? null : jBlock.GamePrefabReference.ToString();
+                string gpr = jBlock.GamePrefabReference?.ToString();
                 if (string.IsNullOrEmpty(gpr))
                 {
                     L("New instance", l);
@@ -568,7 +573,7 @@ namespace Nuterra.BlockInjector
 
                 //Get Mesh
                 Mesh mesh = null;
-                if (jBlock.MeshName != null && jBlock.MeshName != "")
+                if (!string.IsNullOrEmpty(jBlock.MeshName))
                 {
                     L("Get Mesh", l);
                     mesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.MeshName);
@@ -576,7 +581,7 @@ namespace Nuterra.BlockInjector
 
                 //Get Collider
                 Mesh colliderMesh = null;
-                if (jBlock.ColliderMeshName != null && jBlock.ColliderMeshName != "")
+                if (!string.IsNullOrEmpty(jBlock.ColliderMeshName))
                 {
                     L("Get Collider", l);
                     colliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, jBlock.ColliderMeshName);
@@ -677,7 +682,7 @@ namespace Nuterra.BlockInjector
 
                         //-Get Mesh
                         Mesh submesh = null;
-                        if (sub.MeshName != null && sub.MeshName != "")
+                        if (!string.IsNullOrEmpty(sub.MeshName))
                         {
                             L("-Get Mesh", l);
                             submesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.MeshName);
@@ -685,7 +690,7 @@ namespace Nuterra.BlockInjector
 
                         //-Get Collider
                         Mesh subcolliderMesh = null;
-                        if (sub.ColliderMeshName != null && sub.ColliderMeshName != "")
+                        if (!string.IsNullOrEmpty(sub.ColliderMeshName))
                         {
                             L("-Get Collider", l);
                             subcolliderMesh = GameObjectJSON.GetObjectFromUserResources<Mesh>(MeshT, sub.ColliderMeshName);
@@ -719,7 +724,7 @@ namespace Nuterra.BlockInjector
                         }
                         else
                         {
-                            if (sub.MeshMaterialName != null && sub.MeshMaterialName != "")
+                            if (!string.IsNullOrEmpty(sub.MeshMaterialName))
                             {
                                 L("-Get Material", l);
                                 string matName = sub.MeshMaterialName.Replace("Venture_", "VEN_")
@@ -976,8 +981,7 @@ namespace Nuterra.BlockInjector
 
         static int AppendToRecipe(Dictionary<int, int> RecipeBuilder, string Type, int Count)
         {
-            ChunkTypes chunk = ChunkTypes.Null;
-            if (!Enum.TryParse(Type, true, out chunk))
+            if (!Enum.TryParse(Type, true, out ChunkTypes chunk))
             {
                 if (int.TryParse(Type, out int result))
                 {

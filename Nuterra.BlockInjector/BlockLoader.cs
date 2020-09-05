@@ -340,10 +340,7 @@ namespace Nuterra.BlockInjector
         internal static void MakeReady()
         {
             Ready = true;
-            if (PostStartEvent != null)
-            {
-                PostStartEvent();
-            }
+            PostStartEvent?.Invoke();
         }
 
         public static void Register(CustomChunk chunk)
@@ -370,13 +367,13 @@ namespace Nuterra.BlockInjector
             #region Miscellaneous Patches
             try
             {
-                harmony.Patch(typeof(ModuleItemConsume).GetMethod("InitRecipeOutput", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.ModuleItemConsume_UnlockDeliveryBlockerRange).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
-                Console.WriteLine("Patched range of Delivery Blocker");
+                //harmony.Patch(typeof(ModuleItemConsume).GetMethod("InitRecipeOutput", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.ModuleItemConsume_UnlockDeliveryBlockerRange).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                //Console.WriteLine("Patched range of Delivery Blocker");
             }
             catch { }
             #endregion
 
-            T_ManCustomSkins.GetMethod("Awake", binding).Invoke(ManCustomSkins.inst, new object[0]);
+            T_ManCustomSkins.GetMethod("Awake", binding).Invoke(ManCustomSkins.inst, Array.Empty<object>());
 
             new GameObject().AddComponent<Timer>();
             BlockExamples.Load();
@@ -684,7 +681,7 @@ namespace Nuterra.BlockInjector
 
                     if (__result == defaultString)
                     {
-                        __result = $"MissingNo.{itemType} <{stringBank.ToString()}>";
+                        __result = $"MissingNo.{itemType} <{stringBank}>";
                     }
                 }
             }
@@ -740,7 +737,7 @@ namespace Nuterra.BlockInjector
                 [HarmonyPatch(typeof(BlockUnlockTable), "RemoveModdedBlocks")]
                 private static class BlockUnlockTable_RemoveModdedBlocks
                 {
-                    static bool Prefix(ref BlockUnlockTable __instance)
+                    static bool Prefix(/*ref BlockUnlockTable __instance*/)
                     {
                         Console.WriteLine("PREFIX RemoveModdedBlocks");
                         var corpBlockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
@@ -825,7 +822,7 @@ namespace Nuterra.BlockInjector
 
                 static void ChangeCheck(List<CodeInstruction> codes)
                 {
-                    var check = codes.FirstOrDefault(ci => ci.operand is int && (int)ci.operand == BASE_ID);
+                    var check = codes.FirstOrDefault(ci => ci.operand is int i && i == BASE_ID);
                     if (check != null && check != default(CodeInstruction)) check.operand = NEW_BASE_ID;
                 }
             }
@@ -894,7 +891,7 @@ namespace Nuterra.BlockInjector
                             rewardPool[rewardPool.Length - 1] = new BlockRewardPoolTable.RewardBlockInfo()
                             {
                                 m_BlockType = (BlockTypes)block.RuntimeID,
-                                m_PrerequisiteBlocks = new BlockTypes[0]
+                                m_PrerequisiteBlocks = Array.Empty<BlockTypes>()
                             };
 
                             m_RewardPool.SetValue(corpRewardTier, rewardPool);
@@ -933,8 +930,7 @@ namespace Nuterra.BlockInjector
         {
             if (objectType == ObjectTypes.Block)
             {
-                CustomBlock block;
-                if (CustomBlocks.TryGetValue(itemType, out block))
+                if (CustomBlocks.TryGetValue(itemType, out CustomBlock block))
                 {
                     result = block.DisplaySprite;
                     if (result == null && !UnpermitSpriteGeneration.Contains(itemType)) // Create a sprite right now
@@ -957,8 +953,7 @@ namespace Nuterra.BlockInjector
             }
             else if (objectType == ObjectTypes.Chunk)
             {
-                CustomBlock block;
-                if (CustomBlocks.TryGetValue(itemType, out block))
+                if (CustomBlocks.TryGetValue(itemType, out CustomBlock block))
                 {
                     result = block.DisplaySprite;
                     return result != null;
@@ -977,7 +972,7 @@ namespace Nuterra.BlockInjector
                     if (CustomBlocks.TryGetValue(EnumValue, out block))
                     {
                         Result = block.Name;
-                        return Result != null && Result != "";
+                        return !string.IsNullOrEmpty(Result);
                     }
                     break;
 
@@ -985,14 +980,14 @@ namespace Nuterra.BlockInjector
                     if (CustomBlocks.TryGetValue(EnumValue, out block))
                     {
                         Result = block.Description;
-                        return Result != null && Result != "";
+                        return !string.IsNullOrEmpty(Result);
                     }
                     break;
                 case LocalisationEnums.StringBanks.ChunkName:
                     if (CustomChunks.TryGetValue(EnumValue, out chunk))
                     {
                         Result = chunk.Name;
-                        return Result != null && Result != "";
+                        return !string.IsNullOrEmpty(Result);
                     }
                     break;
 
@@ -1000,7 +995,7 @@ namespace Nuterra.BlockInjector
                     if (CustomChunks.TryGetValue(EnumValue, out chunk))
                     {
                         Result = chunk.Description;
-                        return Result != null && Result != "";
+                        return !string.IsNullOrEmpty(Result);
                     }
                     break;
 
@@ -1008,7 +1003,7 @@ namespace Nuterra.BlockInjector
                     if (CustomCorps.TryGetValue(EnumValue, out CustomCorporation corp))
                     {
                         Result = corp.Name;
-                        return Result != null && Result != "";
+                        return !string.IsNullOrEmpty(Result);
                     }
                     break;
             }

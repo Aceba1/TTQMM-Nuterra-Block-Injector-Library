@@ -78,7 +78,7 @@ public class ModuleConsumeEnergyToShell : Module
     public float LowestPermittedEnergy = 50f;
     public float TimeBeforeRetry = 1f;
 
-    public CustomGauge[] _gauges = new CustomGauge[0];
+    public CustomGauge[] _gauges = Array.Empty<CustomGauge>();
 
     public CustomGaugeSerializer CustomGauge
     {
@@ -202,7 +202,7 @@ public class ModuleConsumeResourceToShell : ModuleConsumeResource
 {
     public ModuleWeaponWrapper WeaponWrapper;
 
-    public CustomGauge[] _gauges = new CustomGauge[0];
+    public CustomGauge[] _gauges = Array.Empty<CustomGauge>();
 
     public CustomGaugeSerializer CustomGauge
     { 
@@ -527,7 +527,7 @@ public class ModuleWeaponWrapper : Module, IModuleWeapon
     {
         foreach (var weapon in GetComponents<IModuleWeapon>())
         {
-            if (weapon is ModuleWeaponFlamethrower weaponFlamethrower)
+            if (weapon is ModuleWeaponFlamethrower /*weaponFlamethrower*/)
             {
                 WrapType = WeaponType.Continuous;
                 WrappedModule = weapon;
@@ -612,7 +612,7 @@ public class ModuleConsumeResource : Module
                 _overrideConnections[i] = new ModuleItemHolder.APOverrideCollection { indices = value[i].APIndices };
             }
             _overridePositions[value.Length] = Vector3.one * 100;
-            _overrideConnections[value.Length] = new ModuleItemHolder.APOverrideCollection { indices = new int[0] };
+            _overrideConnections[value.Length] = new ModuleItemHolder.APOverrideCollection { indices = Array.Empty<int>() };
         }
     }
 

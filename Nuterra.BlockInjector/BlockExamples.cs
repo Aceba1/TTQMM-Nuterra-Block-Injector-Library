@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Nuterra.BlockInjector
 {
-    public class BlockExamples
+    public static class BlockExamples
     {
         public static void Load()
         {
