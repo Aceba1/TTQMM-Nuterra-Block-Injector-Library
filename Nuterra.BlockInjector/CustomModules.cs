@@ -217,12 +217,13 @@ public class ModuleHealOverTime : Module
 public class ProjectileDamageOverTime : MonoBehaviour
 {
     public float DamageOverTime = 50f;
-    public int MaxHits = 1;
+    public int MaxHits = 8;
     public ManDamage.DamageType DamageType = ManDamage.DamageType.Standard;
     public bool FriendlyFire = false;
     public bool DamageTouch = true;
     public bool DamageStuck = true;
     int _CurrentHits;
+    Damageable[] _Hits;
     Projectile _Projectile;
     bool _stuck;
     Damageable _stuckOn;
@@ -263,8 +264,18 @@ public class ProjectileDamageOverTime : MonoBehaviour
             if (block != null && block.LastTechTeam == _Projectile.Shooter.Team)
                 return;
         }
-        ManDamage.inst.DealDamage(v, DamageOverTime * Time.fixedDeltaTime, DamageType, this);
+        _Hits[_CurrentHits] = v;
         _CurrentHits++;
+    }
+
+    private void Update()
+    {
+        for (int i = 0; i < _CurrentHits; i++)
+        {
+            var hit = _Hits[i];
+            if (hit != null && hit.enabled)
+                ManDamage.inst.DealDamage(hit, (DamageOverTime * Time.fixedDeltaTime) / _CurrentHits, DamageType, this);
+        }
     }
 
     private void FixedUpdate()
@@ -279,8 +290,8 @@ public class ProjectileDamageOverTime : MonoBehaviour
                 _stuck = true;
             }
             if (_stuckOn == null) return;
+            _Hits[0] = _stuckOn;
             _CurrentHits = 1;
-            ManDamage.inst.DealDamage(_stuckOn, DamageOverTime * Time.fixedDeltaTime, DamageType, this);
         }
         else
         {
@@ -291,6 +302,7 @@ public class ProjectileDamageOverTime : MonoBehaviour
 
     void OnPool()
     {
+        _Hits = new Damageable[MaxHits];
         _Projectile = GetComponent<Projectile>();
     }
 }
