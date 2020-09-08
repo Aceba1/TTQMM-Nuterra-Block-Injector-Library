@@ -371,7 +371,10 @@ namespace Nuterra.BlockInjector
                 //harmony.Patch(typeof(ModuleItemConsume).GetMethod("InitRecipeOutput", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.ModuleItemConsume_UnlockDeliveryBlockerRange).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
                 //Console.WriteLine("Patched range of Delivery Blocker");
             }
-            catch { }
+            catch(Exception E)
+            {
+                Console.WriteLine(E);
+            }
             #endregion
 
             T_ManCustomSkins.GetMethod("Awake", binding).Invoke(ManCustomSkins.inst, Array.Empty<object>());

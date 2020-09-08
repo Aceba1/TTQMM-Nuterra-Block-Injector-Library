@@ -32,7 +32,7 @@ public class SetfuseTimer : MonoBehaviour
 
 public class ModuleRecipeWrapper : ModuleRecipeProvider
 {
-    private RecipeListWrapper _RecipeList;
+    private RecipeListWrapper _RecipeList = null;
     private bool _alreadySet = false;
 
     public string RecipeName
