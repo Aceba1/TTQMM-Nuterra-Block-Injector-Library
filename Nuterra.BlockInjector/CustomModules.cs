@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ModuleDampener : Module
@@ -26,6 +28,52 @@ public class SetfuseTimer : MonoBehaviour
     {
 
     }
+}
+
+public class ModuleRecipeWrapper : ModuleRecipeProvider
+{
+    private RecipeListWrapper _RecipeList;
+    private bool _alreadySet = false;
+
+    public string RecipeName
+    {
+        set
+        {
+            if (_alreadySet) throw new Exception("ModuleRecipeWrapper has already been set, cannot define a new value!");
+            _alreadySet = true;
+            m_RecipeListNames.SetValue(this, new RecipeManager.RecipeNameWrapper[] { new RecipeManager.RecipeNameWrapper { inverted = false, name = value } });
+        }
+    }
+
+
+    public List<RecipeTable.Recipe> Recipes
+    {
+        set
+        {
+            if (_alreadySet) throw new Exception("ModuleRecipeWrapper has already been set, cannot define a new value!");
+            var _recipeList = new RecipeTable.RecipeList()
+            {
+                m_Name = gameObject.name,
+                m_Recipes = value
+            };
+            RecipeListWrapper recipeListWrapper = ScriptableObject.CreateInstance<RecipeListWrapper>();
+            recipeListWrapper.name = _recipeList.m_Name;
+            recipeListWrapper.target = _recipeList;
+            m_RecipeListNames.SetValue(this, Array.Empty<RecipeManager.RecipeNameWrapper>());
+        }
+    }
+
+    /// <summary>
+    /// <see cref="RecipeListWrapper"/>[]
+    /// </summary>
+    private static readonly FieldInfo m_RecipeLists = typeof(ModuleRecipeProvider).GetField("m_RecipeLists", BindingFlags.Instance | BindingFlags.NonPublic);
+    /// <summary>
+    /// <see cref="RecipeManager.RecipeNameWrapper"/>[]
+    /// </summary>
+    private static readonly FieldInfo m_RecipeListNames = typeof(ModuleRecipeProvider).GetField("m_RecipeListNames", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    void PrePool()
+    { m_RecipeLists.SetValue(this, new RecipeListWrapper[] { _RecipeList }); }
 }
 
 public class ModuleStopSpinnersOnDamage : Module
