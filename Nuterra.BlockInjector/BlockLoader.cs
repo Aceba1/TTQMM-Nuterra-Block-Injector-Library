@@ -844,22 +844,31 @@ namespace Nuterra.BlockInjector
                 static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
                 {
                     var codes = instructions.ToList();
+                    //for (int i = 0; i < codes.Count; i++)
+                    //    Console.WriteLine($">{i} {codes[i]}");
                     int stfld = codes.FindIndex(ci => ci.opcode == OpCodes.Stfld);
                     if (stfld != -1)
                     {
                         // load arg 0
                         // load arg 0
                         // call get_gameObject
-                        codes.RemoveRange(3, stfld - 3); // Keep the first 3 ILcodes
-                        codes.Insert(3, new CodeInstruction(OpCodes.Ldc_I4_0));
-                        // load int4 0
-                        codes.Insert(4, new CodeInstruction(OpCodes.Callvirt, 
-                            typeof(GameObject).GetMethod("GetComponentInChildren", BindingFlags.Public | BindingFlags.Instance)
-                            .MakeGenericMethod(typeof(Collider))));
-                        // callvirt GetComponentInChildren<Collider>
+                        codes.RemoveRange(3, stfld - 3); // Keeps the first 3 ILcodes
+                        codes.Insert(3, new CodeInstruction(OpCodes.Call, typeof(Projectile_UnlockColliderQuantity).GetMethod("Projectile_GetCollider", BindingFlags.Public | BindingFlags.Static)));
                     }
-                    Console.WriteLine($"Projectile_UnlockColliderQuantity: Transpiling removed {stfld - 3} IL lines, added 2");
+                    Console.WriteLine($"Projectile_UnlockColliderQuantity: Transpiling removed {stfld - 3} IL lines, added 1");
+                    //for (int i = 0; i < codes.Count; i++)
+                    //    Console.WriteLine($">{i} {codes[i]}");
                     return codes;
+                }
+
+                public static Collider Projectile_GetCollider(GameObject go)
+                {
+                    foreach (var c in go.EnumerateHierarchy())
+                    {
+                        var col = c.GetComponent<Collider>();
+                        if (col != null && !col.isTrigger) return col;
+                    }
+                    return null;
                 }
             }
         }
