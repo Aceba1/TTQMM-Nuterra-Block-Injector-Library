@@ -32,6 +32,7 @@ public class SetfuseTimer : MonoBehaviour
 
 public class ModuleRecipeWrapper : ModuleRecipeProvider
 {
+    [SerializeField]
     private RecipeListWrapper _RecipeList = null;
     private bool _alreadySet = false;
 
@@ -268,19 +269,19 @@ public class ProjectileDamageOverTime : MonoBehaviour
         _CurrentHits++;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
+        if (!enabled)
+        {
+            _CurrentHits = 0;
+            return;
+        }
         for (int i = 0; i < _CurrentHits; i++)
         {
             var hit = _Hits[i];
-            if (hit != null && hit.enabled)
+            if (hit != null)
                 ManDamage.inst.DealDamage(hit, (DamageOverTime * Time.fixedDeltaTime) / _CurrentHits, DamageType, this);
         }
-    }
-
-    private void FixedUpdate()
-    {
-        if (!enabled) return;
         if (DamageStuck && _Projectile.Stuck && transform.parent != null)
         {
             if (!_stuck)
@@ -304,6 +305,8 @@ public class ProjectileDamageOverTime : MonoBehaviour
     {
         _Hits = new Damageable[MaxHits];
         _Projectile = GetComponent<Projectile>();
+        var rbody = GetComponentInChildren<Rigidbody>();
+        if (rbody != null) rbody.detectCollisions = true;
     }
 }
 
