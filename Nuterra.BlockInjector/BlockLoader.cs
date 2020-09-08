@@ -367,6 +367,7 @@ namespace Nuterra.BlockInjector
             #region Miscellaneous Patches
             try
             {
+                harmony.Patch(typeof(Projectile).GetMethod("PrePool", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.Projectile_UnlockColliderQuantity).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
                 //harmony.Patch(typeof(ModuleItemConsume).GetMethod("InitRecipeOutput", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.ModuleItemConsume_UnlockDeliveryBlockerRange).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
                 //Console.WriteLine("Patched range of Delivery Blocker");
             }
@@ -834,6 +835,30 @@ namespace Nuterra.BlockInjector
                     var codes = instructions.ToList();
                     var check = codes.FirstOrDefault(ci => ci.opcode == OpCodes.Ldc_R4 && (int)ci.operand == 23);
                     if (check != null && check != default(CodeInstruction)) check.operand = 512;
+                    return codes;
+                }
+            }
+
+            internal static class Projectile_UnlockColliderQuantity
+            {
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    var codes = instructions.ToList();
+                    int stfld = codes.FindIndex(ci => ci.opcode == OpCodes.Stfld);
+                    if (stfld != -1)
+                    {
+                        // load arg 0
+                        // load arg 0
+                        // call get_gameObject
+                        codes.RemoveRange(3, stfld - 3); // Keep the first 3 ILcodes
+                        codes.Insert(3, new CodeInstruction(OpCodes.Ldc_I4_0));
+                        // load int4 0
+                        codes.Insert(4, new CodeInstruction(OpCodes.Callvirt, 
+                            typeof(GameObject).GetMethod("GetComponentInChildren", BindingFlags.Public | BindingFlags.Instance)
+                            .MakeGenericMethod(typeof(Collider))));
+                        // callvirt GetComponentInChildren<Collider>
+                    }
+                    Console.WriteLine($"Projectile_UnlockColliderQuantity: Transpiling removed {stfld - 3} IL lines, added 2");
                     return codes;
                 }
             }
