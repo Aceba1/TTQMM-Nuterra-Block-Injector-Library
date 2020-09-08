@@ -35,6 +35,41 @@ namespace Nuterra.BlockInjector
             return material;
         }
 
+        public static Material SetMaterialProperties(bool MakeCopy, Material material, string NewShader = null, string[] SetKeywords = null, string[] AddKeywords = null)
+        {
+            if (!string.IsNullOrEmpty(NewShader))
+            {
+                if (MakeCopy) { material = new Material(material); MakeCopy = false; }
+
+                material.shader = Shader.Find(NewShader);
+            }
+
+            Console.WriteLine("Material " + material.name + "; Shader " + material.shader.name + "; Texture Property Names:");
+            foreach (string s in material.GetTexturePropertyNames())
+                Console.WriteLine(s);
+
+            Console.WriteLine("Shader Keywords:");
+            foreach (string s in material.shaderKeywords)
+                Console.WriteLine(s);
+
+            if (SetKeywords != null)
+            {
+                if (MakeCopy) { material = new Material(material); MakeCopy = false; }
+
+                material.shaderKeywords = SetKeywords;
+            }
+            if (AddKeywords != null && AddKeywords.Length != 0)
+            {
+                if (MakeCopy) { material = new Material(material); MakeCopy = false; }
+
+                List<string> keywords = new List<string>(material.shaderKeywords);
+                foreach (var key in AddKeywords)
+                    if (!keywords.Contains(key)) keywords.Add(key);
+                material.shaderKeywords = keywords.ToArray();
+            }
+            return material;
+        }
+
         public static Material SetTexturesToMaterial(bool MakeCopy, Material material, Texture2D Alpha = null, Texture2D MetallicGloss = null, Texture2D Emission = null)
         {
             bool flag1 = Alpha != null, flag2 = MetallicGloss != null, flag3 = Emission != null;

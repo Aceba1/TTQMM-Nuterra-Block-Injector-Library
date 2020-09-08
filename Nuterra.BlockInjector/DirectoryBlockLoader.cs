@@ -137,10 +137,12 @@ namespace Nuterra.BlockInjector
                 public Vector3 Rotation { set => SubRotation = value; }
                 public Vector3? SubRotation;
 
-                public struct MaterialControl
-                {
-
-                }
+                //public struct MaterialControl
+                //{
+                //    public string ShaderName;
+                //    public string[] SetShaderKeywords;
+                //    public string[] AddShaderKeywords;
+                //}
             }
         }
 
