@@ -295,7 +295,10 @@ public class ProjectileDamageOverTime : MonoBehaviour
                         thisDamage *= DetachedMultiplier;
                     else if (block.LastTechTeam == _Projectile.Shooter.Team)
                         thisDamage *= TeamMultiplier;
-                    ManDamage.inst.DealDamage(hit, damage, DamageType, this);
+                    if (thisDamage < 0f)
+                        hit.Repair(thisDamage, true);
+                    else if (thisDamage > 0f)
+                        ManDamage.inst.DealDamage(hit, thisDamage, DamageType, this);
                 }
             }
         }
