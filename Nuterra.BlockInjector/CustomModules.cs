@@ -30,7 +30,7 @@ public class SetfuseTimer : MonoBehaviour
     }
 }
 
-public class ModuleRecipeWrapper : ModuleRecipeProvider
+public class ModuleRecipeWrapper : MonoBehaviour
 {
     [SerializeField]
     private RecipeListWrapper _RecipeList = null;
@@ -221,12 +221,14 @@ public class ProjectileDamageOverTime : MonoBehaviour
     public int MaxHits = 8;
     public ManDamage.DamageType DamageType = ManDamage.DamageType.Standard;
     public bool FriendlyFire = false;
+    public float TeamMultiplier = 1f;
+    public float SceneryMultiplier = 1f;
+    public float DetachedMultiplier = 1f;
     public bool DamageTouch = true;
     public bool DamageStuck = true;
     int _CurrentHits;
     Damageable[] _Hits;
     Projectile _Projectile;
-    bool _stuck;
     Damageable _stuckOn;
 
     private void OnCollisionStay(Collision collision)
@@ -248,7 +250,7 @@ public class ProjectileDamageOverTime : MonoBehaviour
             if (block != null && block.LastTechTeam == _Projectile.Shooter.Team)
                 return;
         }
-        ManDamage.inst.DealDamage(v, DamageOverTime * Time.fixedDeltaTime, DamageType, this);
+        _Hits[_CurrentHits] = v;
         _CurrentHits++;
     }
 
@@ -276,36 +278,51 @@ public class ProjectileDamageOverTime : MonoBehaviour
             _CurrentHits = 0;
             return;
         }
-        for (int i = 0; i < _CurrentHits; i++)
+        if (_CurrentHits != 0) 
         {
-            var hit = _Hits[i];
-            if (hit != null)
-                ManDamage.inst.DealDamage(hit, (DamageOverTime * Time.fixedDeltaTime) / _CurrentHits, DamageType, this);
-        }
-        if (DamageStuck && _Projectile.Stuck && transform.parent != null)
-        {
-            if (!_stuck)
+
+            float damage = DamageOverTime * Time.fixedDeltaTime / _CurrentHits;
+            for (int i = 0; i < _CurrentHits; i++)
             {
-                _stuckOn = transform.parent.GetComponentInParent<Damageable>();
-                if (_stuckOn.Block != null && _stuckOn.Block.LastTechTeam == _Projectile.Shooter.Team)
-                _stuck = true;
+                var hit = _Hits[i];
+                if (hit != null)
+                {
+                    float thisDamage = damage;
+                    TankBlock block = hit.Block;
+                    if (block == null)
+                        thisDamage *= SceneryMultiplier;
+                    else if (block.tank == null)
+                        thisDamage *= DetachedMultiplier;
+                    else if (block.LastTechTeam == _Projectile.Shooter.Team)
+                        thisDamage *= TeamMultiplier;
+                    ManDamage.inst.DealDamage(hit, damage, DamageType, this);
+                }
             }
-            if (_stuckOn == null) return;
-            _Hits[0] = _stuckOn;
-            _CurrentHits = 1;
         }
-        else
+        if (DamageStuck)
         {
-            _CurrentHits = 0;
-            _stuck = false;
+            if (_Projectile.Stuck && transform.parent != null)
+            {
+                if (_stuckOn == null)
+                    _stuckOn = transform.parent.GetComponentInParent<Damageable>();
+                if (_stuckOn != null)
+                {
+                    _Hits[0] = _stuckOn;
+                    _CurrentHits = 1;
+                    return;
+                }
+            }
+            else if (_stuckOn != null)
+                _stuckOn = null;
         }
+        _CurrentHits = 0;
     }
 
     void OnPool()
     {
         _Hits = new Damageable[MaxHits];
         _Projectile = GetComponent<Projectile>();
-        var rbody = GetComponentInChildren<Rigidbody>();
+        var rbody = GetComponent<Rigidbody>();
         if (rbody != null) rbody.detectCollisions = true;
     }
 }
