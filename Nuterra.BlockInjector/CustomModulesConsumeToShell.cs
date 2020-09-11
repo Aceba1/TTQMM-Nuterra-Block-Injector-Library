@@ -178,7 +178,7 @@ public class ModuleConsumeEnergyToShell : Module
         float cost = amount * EnergyCost;
         if (IsContinuous)
             cost *= Time.deltaTime;
-        EnergyStore.AddEnergy(-cost);
+        Energy.ConsumeUpToMax(EnergyRegulator.EnergyType.Electric, cost);
     }
 
     void CheckIfCanFire()
