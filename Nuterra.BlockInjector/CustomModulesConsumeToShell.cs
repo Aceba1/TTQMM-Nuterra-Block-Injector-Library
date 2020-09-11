@@ -137,7 +137,7 @@ public class ModuleConsumeEnergyToShell : Module
         WeaponWrapper = GetComponent<ModuleWeaponWrapper>();
         if (WeaponWrapper == null) WeaponWrapper = gameObject.AddComponent<ModuleWeaponWrapper>();
         EnergyStore = GetComponent<ModuleEnergyStore>();
-        Energy = GetComponent<ModuleEnergy>();
+        //Energy = GetComponent<ModuleEnergy>();
         EnergyStore.m_Capacity = EnergyCapacity;
 
         // Backup fallback
@@ -160,6 +160,12 @@ public class ModuleConsumeEnergyToShell : Module
     {
         //WeaponWrapper = GetComponent<ModuleWeaponWrapper>();
         //if (WeaponWrapper == null) WeaponWrapper = gameObject.AddComponent<ModuleWeaponWrapper>();
+
+        // Just in case...
+        WeaponWrapper = GetComponent<ModuleWeaponWrapper>();
+        EnergyStore = GetComponent<ModuleEnergyStore>();
+        Energy = GetComponent<ModuleEnergy>();
+
         Energy.UpdateConsumeEvent.Subscribe(ConsumeFire);
         WeaponWrapper.CanFireEvent += CheckIfCanFire;
         WeaponWrapper.FireEvent += OnFire;
@@ -179,7 +185,10 @@ public class ModuleConsumeEnergyToShell : Module
         float cost = amount * EnergyCost;
         if (IsContinuous)
             cost *= Time.deltaTime;
+
         _energyToConsume += cost;
+        // Heck it
+        block.tank.EnergyRegulator.Energy(EnergyRegulator.EnergyType.Electric).spareCapacity += cost;
     }
 
     [NonSerialized]
