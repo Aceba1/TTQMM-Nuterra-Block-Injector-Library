@@ -160,6 +160,7 @@ public class ModuleConsumeEnergyToShell : Module
     {
         //WeaponWrapper = GetComponent<ModuleWeaponWrapper>();
         //if (WeaponWrapper == null) WeaponWrapper = gameObject.AddComponent<ModuleWeaponWrapper>();
+        Energy.UpdateConsumeEvent.Subscribe(ConsumeFire);
         WeaponWrapper.CanFireEvent += CheckIfCanFire;
         WeaponWrapper.FireEvent += OnFire;
         WeaponWrapper.LockFiring(this, true);
@@ -178,7 +179,19 @@ public class ModuleConsumeEnergyToShell : Module
         float cost = amount * EnergyCost;
         if (IsContinuous)
             cost *= Time.deltaTime;
-        Energy.ConsumeUpToMax(EnergyRegulator.EnergyType.Electric, cost);
+        _energyToConsume += cost;
+    }
+
+    [NonSerialized]
+    float _energyToConsume;
+
+    void ConsumeFire()
+    {
+        if (_energyToConsume != 0f)
+        {
+            Energy.ConsumeUpToMax(EnergyRegulator.EnergyType.Electric, _energyToConsume);
+            _energyToConsume = 0f;
+        }
     }
 
     void CheckIfCanFire()
