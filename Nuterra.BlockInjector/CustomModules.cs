@@ -221,22 +221,28 @@ public class ModuleHealOverTime : Module
 public class ProjectileDamageOverTime : MonoBehaviour
 {
     public float DamageOverTime = 50f;
-    public int MaxHits = 8;
+    public int MaxHits = 16;
     public ManDamage.DamageType DamageType = ManDamage.DamageType.Standard;
-    public bool FriendlyFire = false;
     public float TeamMultiplier = 1f;
     public float SceneryMultiplier = 1f;
     public float DetachedMultiplier = 1f;
+    public Vector3 OverlapOffset = Vector3.zero;
+    public float OverlapRadius = 0f;
     public bool DamageTouch = true;
     public bool DamageStuck = true;
-    int _CurrentHits;
-    Damageable[] _Hits;
-    Projectile _Projectile;
-    Damageable _stuckOn;
+
+
+    private int _CurrentHits;
+    private Damageable[] _Hits;
+    private Projectile _Projectile;
+    private Damageable _stuckOn;
+    private static int _colliderArraySize = 16;
+    private const int MaxArraySize = 512;
+    private static Collider[] _colliderOverlap = new Collider[_colliderArraySize];
 
     private void OnCollisionStay(Collision collision)
     {
-        if (!enabled || !DamageTouch || _CurrentHits > MaxHits) return;
+        if (!enabled || !DamageTouch || _CurrentHits >= MaxHits) return;
 
         ContactPoint[] contacts = collision.contacts;
         if (contacts.Length == 0)
@@ -247,31 +253,35 @@ public class ProjectileDamageOverTime : MonoBehaviour
         if (v == null) v = contactPoint.thisCollider.GetComponentInParent<Damageable>();
         if (v == null) return;
 
-        if (!FriendlyFire)
-        {
-            TankBlock block = v.Block;
-            if (block != null && block.LastTechTeam == _Projectile.Shooter.Team)
-                return;
-        }
         _Hits[_CurrentHits] = v;
         _CurrentHits++;
     }
 
     private void OnTriggerStay(Collider other)
     {
-        if (!enabled || !DamageTouch || _CurrentHits > MaxHits) return;
+        if (!enabled || !DamageTouch || _CurrentHits >= MaxHits) return;
 
         Damageable v = other.GetComponentInParent<Damageable>();
         if (v == null) return;
 
-        if (!FriendlyFire)
-        {
-            TankBlock block = v.Block;
-            if (block != null && block.LastTechTeam == _Projectile.Shooter.Team)
-                return;
-        }
         _Hits[_CurrentHits] = v;
         _CurrentHits++;
+    }
+
+    private void ProcessDamage(float damage, Damageable hit)
+    {
+        float thisDamage = damage;
+        TankBlock block = hit.Block;
+        if (block == null)
+            thisDamage *= SceneryMultiplier;
+        else if (block.tank == null)
+            thisDamage *= DetachedMultiplier;
+        else if (block.tank.Team == _Projectile.Shooter.Team)
+            thisDamage *= TeamMultiplier;
+        if (thisDamage < 0f && !hit.IsAtFullHealth)
+            hit.Repair(thisDamage, true);
+        else if (thisDamage > 0f)
+            ManDamage.inst.DealDamage(hit, thisDamage, DamageType, _Projectile.Shooter);
     }
 
     private void FixedUpdate()
@@ -283,26 +293,12 @@ public class ProjectileDamageOverTime : MonoBehaviour
         }
         if (_CurrentHits != 0) 
         {
-
             float damage = DamageOverTime * Time.fixedDeltaTime / _CurrentHits;
             for (int i = 0; i < _CurrentHits; i++)
             {
                 var hit = _Hits[i];
                 if (hit != null)
-                {
-                    float thisDamage = damage;
-                    TankBlock block = hit.Block;
-                    if (block == null)
-                        thisDamage *= SceneryMultiplier;
-                    else if (block.tank == null)
-                        thisDamage *= DetachedMultiplier;
-                    else if (block.LastTechTeam == _Projectile.Shooter.Team)
-                        thisDamage *= TeamMultiplier;
-                    if (thisDamage < 0f)
-                        hit.Repair(thisDamage, true);
-                    else if (thisDamage > 0f)
-                        ManDamage.inst.DealDamage(hit, thisDamage, DamageType, this);
-                }
+                    ProcessDamage(damage, hit);
             }
         }
         if (DamageStuck)
@@ -313,8 +309,7 @@ public class ProjectileDamageOverTime : MonoBehaviour
                     _stuckOn = transform.parent.GetComponentInParent<Damageable>();
                 if (_stuckOn != null)
                 {
-                    _Hits[0] = _stuckOn;
-                    _CurrentHits = 1;
+                    ProcessDamage(DamageOverTime * Time.fixedDeltaTime, _stuckOn);
                     return;
                 }
             }
@@ -322,6 +317,35 @@ public class ProjectileDamageOverTime : MonoBehaviour
                 _stuckOn = null;
         }
         _CurrentHits = 0;
+        if (OverlapRadius > 0f)
+        {
+            int c = Physics.OverlapSphereNonAlloc(transform.TransformPoint(OverlapOffset), OverlapRadius, _colliderOverlap);
+
+            if (c == _colliderArraySize) // OverlapSphereNonAlloc only returns the buffer length if it surpasses it
+                if (_colliderArraySize < MaxArraySize)
+                    Array.Resize(ref _colliderOverlap, _colliderArraySize * 2); // Double the 
+                else
+                    Console.WriteLine("ProjectileDamageOverTime: " + gameObject.name +
+                        " is trying to allocate an overlap check beyond " + MaxArraySize + "! How large is the radius!?");
+
+            for (int i = 0; i < c; i++)
+            {
+                var d = _colliderOverlap[i].GetComponentInParent<Damageable>();
+                if (d != null)
+                    _Hits[_CurrentHits++] = d;
+            }
+        }
+    }
+
+    void OnSpawn()
+    {
+
+    }
+
+    void OnRecycle()
+    {
+        _CurrentHits = 0;
+        _stuckOn = null;
     }
 
     void OnPool()
