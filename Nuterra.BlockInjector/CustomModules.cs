@@ -42,7 +42,7 @@ public class ModuleRecipeWrapper : MonoBehaviour
         {
             if (_alreadySet) throw new Exception("ModuleRecipeWrapper has already been set, cannot define a new value!");
             _alreadySet = true;
-            m_RecipeListNames.SetValue(this, new RecipeManager.RecipeNameWrapper[] { new RecipeManager.RecipeNameWrapper { inverted = false, name = value } });
+            m_RecipeListNames.SetValue(GetComponent<ModuleRecipeProvider>(), new RecipeManager.RecipeNameWrapper[] { new RecipeManager.RecipeNameWrapper { inverted = false, name = value } });
         }
     }
 
@@ -52,15 +52,15 @@ public class ModuleRecipeWrapper : MonoBehaviour
         set
         {
             if (_alreadySet) throw new Exception("ModuleRecipeWrapper has already been set, cannot define a new value!");
+            _alreadySet = true;
             var _recipeList = new RecipeTable.RecipeList()
             {
                 m_Name = gameObject.name,
                 m_Recipes = value
             };
-            RecipeListWrapper recipeListWrapper = ScriptableObject.CreateInstance<RecipeListWrapper>();
-            recipeListWrapper.name = _recipeList.m_Name;
-            recipeListWrapper.target = _recipeList;
-            m_RecipeListNames.SetValue(this, Array.Empty<RecipeManager.RecipeNameWrapper>());
+            _RecipeList = ScriptableObject.CreateInstance<RecipeListWrapper>();
+            _RecipeList.name = _recipeList.m_Name;
+            _RecipeList.target = _recipeList;
         }
     }
 
@@ -74,7 +74,10 @@ public class ModuleRecipeWrapper : MonoBehaviour
     private static readonly FieldInfo m_RecipeListNames = typeof(ModuleRecipeProvider).GetField("m_RecipeListNames", BindingFlags.Instance | BindingFlags.NonPublic);
 
     void PrePool()
-    { m_RecipeLists.SetValue(this, new RecipeListWrapper[] { _RecipeList }); }
+    { 
+        if (_RecipeList != null)
+        m_RecipeLists.SetValue(GetComponent<ModuleRecipeProvider>(), new RecipeListWrapper[] { _RecipeList }); 
+    }
 }
 
 public class ModuleStopSpinnersOnDamage : Module
