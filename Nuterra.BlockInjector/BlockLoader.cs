@@ -207,7 +207,7 @@ namespace Nuterra.BlockInjector
                 else
                 {
                     CustomBlocks[runtimeID] = block;
-                    UnpermitSpriteGeneration.Remove(runtimeID);
+                    //UnpermitSpriteGeneration.Remove(runtimeID);
                 }
 
                 int hashCode = ItemTypeInfo.GetHashCode(ObjectTypes.Block, runtimeID);
@@ -453,8 +453,8 @@ namespace Nuterra.BlockInjector
 
         internal class Patches
         {
-            static readonly int BASE_ID = 1000000;
-            static readonly int NEW_BASE_ID = 100000000;
+            public static readonly int BASE_ID = 1000000;
+            public static readonly int NEW_BASE_ID = 100000000;
 
 
             [HarmonyPatch(typeof(RecipeTable.Recipe.ItemSpec), "GetHashCode")]
@@ -908,7 +908,7 @@ namespace Nuterra.BlockInjector
             catch (Exception E)
             {
                 Timer.AddToLast(" - FAILED: Could not add to block table. Could it be the grade level?");
-                Console.WriteLine("Registering block failed: Could not add to block table. " + E.Message);
+                Console.WriteLine("Registering block failed: Could not add to block table. " + E);
             }
 
             if (block.DropFromCrates)
@@ -937,8 +937,8 @@ namespace Nuterra.BlockInjector
                 }
                 catch (Exception E)
                 {
-                    Timer.AddToLast(" - FAILED: Could not add to block reward table. Could it be the grade level?");
-                    Console.WriteLine("Registering block failed: Could not add to block reward table. " + E.Message);
+                    Timer.AddToLast(" - FAILED: Could not add to block reward table.");
+                    Console.WriteLine("Registering block failed: Could not add to block reward table. " + E);
                 }
 
                 if(block.PairedBlock != -1)
@@ -961,7 +961,7 @@ namespace Nuterra.BlockInjector
         }
 
         //static int lastFrameRendered;
-        static List<int> UnpermitSpriteGeneration = new List<int>();
+        //static List<int> UnpermitSpriteGeneration = new List<int>();
         private static MethodInfo RenderSnapshotFromTechDataInternal = typeof(ManScreenshot).GetMethod("RenderSnapshotFromTechDataInternal", BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
         private static bool ResourceLookup_OnSpriteLookup(ObjectTypes objectType, int itemType, ref UnityEngine.Sprite result)
         {
@@ -970,21 +970,21 @@ namespace Nuterra.BlockInjector
                 if (CustomBlocks.TryGetValue(itemType, out CustomBlock block))
                 {
                     result = block.DisplaySprite;
-                    if (result == null && !UnpermitSpriteGeneration.Contains(itemType)) // Create a sprite right now
-                    {
-                        /*try
-                        {
-                            //lastFrameRendered = Time.frameCount;
-                            var b = new TankPreset.BlockSpec() { block = block.Name, m_BlockType = (BlockTypes)block.RuntimeID, m_SkinID = 0, m_VisibleID = -1, orthoRotation = 0, position = IntVector3.zero, saveState = new Dictionary<int, Module.SerialData>(), textSerialData = new List<string>() };
-                            Texture2D image = RenderSnapshotFromTechDataInternal.Invoke(ManScreenshot.inst, new object[] { new TechData() { m_BlockSpecs = new List<TankPreset.BlockSpec> { b } }, new IntVector2(256, 256) }) as Texture2D; // Devs why did you make this private
+                    //if (result == null && !UnpermitSpriteGeneration.Contains(itemType)) // Create a sprite right now
+                    //{
+                    //    /*try
+                    //    {
+                    //        //lastFrameRendered = Time.frameCount;
+                    //        var b = new TankPreset.BlockSpec() { block = block.Name, m_BlockType = (BlockTypes)block.RuntimeID, m_SkinID = 0, m_VisibleID = -1, orthoRotation = 0, position = IntVector3.zero, saveState = new Dictionary<int, Module.SerialData>(), textSerialData = new List<string>() };
+                    //        Texture2D image = RenderSnapshotFromTechDataInternal.Invoke(ManScreenshot.inst, new object[] { new TechData() { m_BlockSpecs = new List<TankPreset.BlockSpec> { b } }, new IntVector2(256, 256) }) as Texture2D; // Devs why did you make this private
 
-                            //float x = image.height / (float)image.width;
-                            //float x = 1f;
-                            result = GameObjectJSON.SpriteFromImage(image);//GameObjectJSON.CropImage(image, new Rect((1f - x) * 0.5f, 0f, x, 1f)));
-                        }
-                        catch { UnpermitSpriteGeneration.Add(itemType); }*/
-                        block.DisplaySprite = result;
-                    }
+                    //        //float x = image.height / (float)image.width;
+                    //        //float x = 1f;
+                    //        result = GameObjectJSON.SpriteFromImage(image);//GameObjectJSON.CropImage(image, new Rect((1f - x) * 0.5f, 0f, x, 1f)));
+                    //    }
+                    //    catch { UnpermitSpriteGeneration.Add(itemType); }*/
+                    //    block.DisplaySprite = result;
+                    //}
                     return result != null;
                 }
             }
