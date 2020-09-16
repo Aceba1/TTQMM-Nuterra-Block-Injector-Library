@@ -214,6 +214,7 @@ namespace Nuterra.BlockInjector
                 spawnManager.VisibleTypeInfo.SetDescriptor<FactionSubTypes>(hashCode, block.Faction);
                 spawnManager.VisibleTypeInfo.SetDescriptor<BlockCategories>(hashCode, block.Category);
                 spawnManager.VisibleTypeInfo.SetDescriptor<BlockRarity>(hashCode, block.Rarity);
+                spawnManager.VisibleTypeInfo.SetDescriptor<ModulePlatformRestrictions.PlatformAvailability>(hashCode, (ModulePlatformRestrictions.PlatformAvailability)(-1));
                 try
                 {
                     if (Overwriting)
@@ -736,6 +737,24 @@ namespace Nuterra.BlockInjector
                         harmony.Patch(RemoveCustomBlockRecipes, null, null, transpiler: new HarmonyMethod(typeof(RecipeManager_RemoveCustomBlockRecipes).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
                         Console.WriteLine("Patched RemoveCustomBlockRecipes");
                     }
+
+                    // Ambiguous match resolution: Try to get the specific method
+                    var AutoAssignIDs = typeof(ManMods).GetMethod("AutoAssignIDs", new Type[] { typeof(ModSessionInfo), typeof(List<string>), typeof(List<string>), typeof(List<string>) });
+                    if (AutoAssignIDs != null)
+                    {
+                        harmony.Patch(AutoAssignIDs, null, null, transpiler: new HarmonyMethod(typeof(ManMods_AutoAssignIDs).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                        Console.WriteLine("Patched AutoAssignIDs");
+                    }
+                    else
+                    {
+                        // Stable solution: Get the available method
+                        AutoAssignIDs = typeof(ManMods).GetMethod("AutoAssignIDs");
+                        if (AutoAssignIDs != null)
+                        {
+                            harmony.Patch(AutoAssignIDs, null, null, transpiler: new HarmonyMethod(typeof(ManMods_AutoAssignIDs).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                            Console.WriteLine("Patched AutoAssignIDs");
+                        }
+                    }
                 }
 
                 [HarmonyPatch(typeof(BlockUnlockTable), "RemoveModdedBlocks")]
@@ -744,16 +763,24 @@ namespace Nuterra.BlockInjector
                     static bool Prefix(/*ref BlockUnlockTable __instance*/)
                     {
                         Console.WriteLine("PREFIX RemoveModdedBlocks");
-                        var corpBlockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
 
-                        foreach (var a in corpBlockList)
+                        if (CheckVersion("1.4.3.2", SKU.DisplayVersion) >= 0)
                         {
-                            var gradeList = m_GradeList.GetValue(a) as Array;
-                            foreach (var b in gradeList)
+                            UnstableSupport_RemoveWhenStable.BlockUnlockTable_RemoveModdedBlocks_Prefix();
+                        }
+                        else
+                        {
+                            var corpBlockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
+
+                            foreach (var a in corpBlockList)
                             {
-                                var blockList = (m_BlockList.GetValue(b) as BlockUnlockTable.UnlockData[])
-                                    .Where(ud => (int)ud.m_BlockType < NEW_BASE_ID).ToArray();
-                                m_BlockList.SetValue(b, blockList);
+                                var gradeList = m_GradeList.GetValue(a) as Array;
+                                foreach (var b in gradeList)
+                                {
+                                    var blockList = (m_BlockList.GetValue(b) as BlockUnlockTable.UnlockData[])
+                                        .Where(ud => (int)ud.m_BlockType < NEW_BASE_ID).ToArray();
+                                    m_BlockList.SetValue(b, blockList);
+                                }
                             }
                         }
                         return false;
@@ -793,7 +820,7 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
-                [HarmonyPatch(typeof(ManMods), "AutoAssignIDs", new Type[] { typeof(ModSessionInfo), typeof(List<string>) })]
+                //[HarmonyPatch(typeof(ManMods), "AutoAssignIDs", new Type[] { typeof(ModSessionInfo), typeof(List<string>), typeof(List<string>), typeof(List<string>) })]
                 private static class ManMods_AutoAssignIDs
                 {
                     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -876,34 +903,56 @@ namespace Nuterra.BlockInjector
             }
         }
            
+        public static int CheckVersion(string baseVersion, string currentCheck)
+        {
+            var cArr = currentCheck.Split('.');
+            var tArr = baseVersion.Split('.');
+            int max = Math.Max(cArr.Length, tArr.Length);
+            for (int i = 0; i < max; i++)
+            {
+                int currVal = 0, baseVal = 0;
+                if (cArr.Length > i) currVal = int.Parse(cArr[i]);
+                if (tArr.Length > i) baseVal = int.Parse(tArr[i]);
+
+                if (currVal == baseVal) continue;
+                if (currVal > baseVal) return 1;
+                return -1;
+            }
+            return 0;
+        }
 
         internal static void FixBlockUnlockTable(CustomBlock block)
         {
             try
             {
                 ManLicenses.inst.DiscoverBlock((BlockTypes)block.RuntimeID);
-                Array blockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
-
-
-                object corpData = blockList.GetValue((int)block.Faction);
-                BlockUnlockTable.UnlockData[] unlocked = m_BlockList.GetValue((m_GradeList.GetValue(corpData) as Array).GetValue(block.Grade)) as BlockUnlockTable.UnlockData[];
-                Array.Resize(ref unlocked, unlocked.Length + 1);
-                unlocked[unlocked.Length - 1] = new BlockUnlockTable.UnlockData
+                if (CheckVersion("1.4.3.2", SKU.DisplayVersion) >= 0)
                 {
-                    m_BlockType = (BlockTypes)block.RuntimeID,
-                    m_BasicBlock = true,
-                    m_DontRewardOnLevelUp = true
-                };
-                m_BlockList
-                    .SetValue(
-                    (m_GradeList.GetValue(corpData) as Array).GetValue(block.Grade),
-                    unlocked);
+                    UnstableSupport_RemoveWhenStable.FixBlockUnlockTable(block);
+                }
+                else
+                {
+                    Array blockList = m_CorpBlockList.GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array;
+                    object corpData = blockList.GetValue((int)block.Faction);
+                    BlockUnlockTable.UnlockData[] unlocked = m_BlockList.GetValue((m_GradeList.GetValue(corpData) as Array).GetValue(block.Grade)) as BlockUnlockTable.UnlockData[];
+                    Array.Resize(ref unlocked, unlocked.Length + 1);
+                    unlocked[unlocked.Length - 1] = new BlockUnlockTable.UnlockData
+                    {
+                        m_BlockType = (BlockTypes)block.RuntimeID,
+                        m_BasicBlock = true,
+                        m_DontRewardOnLevelUp = true
+                    };
+                    m_BlockList
+                        .SetValue(
+                        (m_GradeList.GetValue(corpData) as Array).GetValue(block.Grade),
+                        unlocked);
 
-                ((m_CorpBlockLevelLookup
-                    .GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array)
-                    .GetValue((int)block.Faction) as Dictionary<BlockTypes, int>)
-                    .Add((BlockTypes)block.RuntimeID, block.Grade);
-                ManLicenses.inst.DiscoverBlock((BlockTypes)block.RuntimeID);
+                    ((m_CorpBlockLevelLookup
+                        .GetValue(ManLicenses.inst.GetBlockUnlockTable()) as Array)
+                        .GetValue((int)block.Faction) as Dictionary<BlockTypes, int>)
+                        .Add((BlockTypes)block.RuntimeID, block.Grade);
+                    ManLicenses.inst.DiscoverBlock((BlockTypes)block.RuntimeID);
+                }
             }
             catch (Exception E)
             {

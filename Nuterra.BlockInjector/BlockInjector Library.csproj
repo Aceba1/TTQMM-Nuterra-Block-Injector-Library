@@ -123,6 +123,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="UnstableSupport_RemoveWhenStable.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Block Example.json">
