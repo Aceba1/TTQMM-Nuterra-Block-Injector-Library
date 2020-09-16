@@ -793,7 +793,7 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
-                [HarmonyPatch(typeof(ManMods), "AutoAssignIDs")]
+                [HarmonyPatch(typeof(ManMods), "AutoAssignIDs", new Type[] { typeof(ModSessionInfo), typeof(List<string>) })]
                 private static class ManMods_AutoAssignIDs
                 {
                     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
