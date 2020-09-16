@@ -455,7 +455,7 @@ namespace Nuterra.BlockInjector
         internal class Patches
         {
             public static readonly int BASE_ID = 1000000;
-            public static readonly int NEW_BASE_ID = 100000000;
+            public static readonly int NEW_BASE_ID = BASE_ID; //100000000;
 
 
             [HarmonyPatch(typeof(RecipeTable.Recipe.ItemSpec), "GetHashCode")]
