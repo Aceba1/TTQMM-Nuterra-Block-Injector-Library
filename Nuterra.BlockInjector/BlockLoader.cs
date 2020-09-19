@@ -319,9 +319,13 @@ namespace Nuterra.BlockInjector
         //static readonly MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", binding);
         static readonly FieldInfo BlockPrefabs = typeof(ManSpawn).GetField("m_BlockPrefabs", binding);
         static readonly FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", binding);
+        static readonly FieldInfo RuntimeTankPrefabs = typeof(ManSpawn).GetField("m_TankRuntimePrefabs", binding);
+        static readonly FieldInfo PrefabTank = typeof(ManSpawn).GetNestedType("PrefabPair", binding).GetField("stdPrefab", binding);
         static readonly MethodInfo LookupPool = typeof(ComponentPool).GetMethod("LookupPool", binding);
         static readonly MethodInfo DepoolItems = typeof(ComponentPool).GetMethod("DepoolItems", binding);
         static readonly MethodInfo PrePool = typeof(TankBlock).GetMethod("PrePool", binding);
+
+        public static readonly GameObject TechPrefab = (PrefabTank.GetValue(RuntimeTankPrefabs.GetValue(ManSpawn.inst)) as Transform).gameObject;
 
         private static bool Ready = false;
         private static event Action PostStartEvent;
@@ -344,6 +348,28 @@ namespace Nuterra.BlockInjector
             PostStartEvent?.Invoke();
         }
 
+        private static List<Type> techComponentsToAdd = new List<Type>();
+        public static void AddTechComponentToPrefab<TC>() where TC : TechComponent
+        {
+            techComponentsToAdd.Add(typeof(TC));
+            if (Ready) AppendNewTechComponents();
+        }
+        public static void AddTechComponentToPrefab(Type techComponent)
+        {
+            techComponentsToAdd.Add(techComponent);
+            if (Ready) AppendNewTechComponents();
+        }
+
+        private static void AppendNewTechComponents()
+        {
+            try
+            {
+                foreach (Type tc in techComponentsToAdd) TechPrefab.AddComponent(tc);
+                techComponentsToAdd.Clear();
+            }
+            catch { }
+        }
+
         public static void Register(CustomChunk chunk)
         {
             Console.WriteLine($"Registering chunk: {chunk.GetType()} #{chunk.ChunkID} '{chunk.Name}'");
@@ -360,6 +386,9 @@ namespace Nuterra.BlockInjector
             var harmony = HarmonyInstance.Create("nuterra.block.injector");  
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
+            #region Tech Prefab Patches
+            PostStartEvent += AppendNewTechComponents;
+            #endregion
 
             #region 1.4.0.1+ Patches
             Patches.OfficialBlocks.Patch(harmony);
