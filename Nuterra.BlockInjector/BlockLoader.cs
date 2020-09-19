@@ -387,6 +387,7 @@ namespace Nuterra.BlockInjector
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             #region Tech Prefab Patches
+            AddTechComponentToPrefab<TechPhysicsReset>();
             PostStartEvent += AppendNewTechComponents;
             #endregion
 
