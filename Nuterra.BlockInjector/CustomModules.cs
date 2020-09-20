@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json.Linq;
 
 public class ModuleDampener : Module
 {
@@ -30,6 +31,61 @@ public class SetfuseTimer : MonoBehaviour
     }
 }
 
+public struct RecipeJSON
+{
+    public int? FromBlock;
+    public int? FromChunk;
+    public bool InvertFrom;
+
+    public int? InputBlock;
+    public JToken InputBlocks;
+    public JToken InputChunks;
+
+    public int? OutputBlock;
+    public JToken OutputBlocks;
+    public JToken OutputChunks;
+
+    public int OutputMoney;
+    public int OutputEnergy;
+
+    public bool GetInputs(List<RecipeTable.Recipe.ItemSpec> inputItems) =>
+        InvertFrom ? _GetOutputs(inputItems) : _GetInputs(inputItems);
+
+    public bool GetOutputs(List<RecipeTable.Recipe.ItemSpec> outputItems) =>
+        InvertFrom ? _GetInputs(outputItems) : _GetOutputs(outputItems);
+
+    private bool _GetInputs(List<RecipeTable.Recipe.ItemSpec> items) =>
+        _AddToList(InputBlock, InputBlocks, InputChunks, items);
+
+    private bool _GetOutputs(List<RecipeTable.Recipe.ItemSpec> items) =>
+        _AddToList(OutputBlock, OutputBlocks, OutputChunks, items);
+
+    private bool _AddToList(int? singleBlock, JToken blocks, JToken chunks, List<RecipeTable.Recipe.ItemSpec> items)
+    {
+        bool result = singleBlock.HasValue;
+        if (result)
+            items.Add(new RecipeTable.Recipe.ItemSpec(new ItemTypeInfo(ObjectTypes.Block, singleBlock.Value), 1));
+        result |= _TryMultiType(blocks, ObjectTypes.Block, items);
+        result |= _TryMultiType(chunks, ObjectTypes.Chunk, items);
+        return result;
+    }
+
+    private bool _TryMultiType(JToken multiType, ObjectTypes type, List<RecipeTable.Recipe.ItemSpec> toList)
+    {
+        if (multiType is JObject rObject)
+            foreach (var item in rObject)
+                toList.Add(new RecipeTable.Recipe.ItemSpec(
+                    new ItemTypeInfo(type, int.Parse(item.Key)),
+                        item.Value.ToObject<int>()));
+        else if (multiType is JArray rArray)
+            foreach (var item in rArray)
+                toList.Add(new RecipeTable.Recipe.ItemSpec(
+                    new ItemTypeInfo(type, item.ToObject<int>()), 1));
+        else return false;
+        return true;
+    }
+}
+
 public class ModuleRecipeWrapper : MonoBehaviour
 {
     [SerializeField]
@@ -46,8 +102,69 @@ public class ModuleRecipeWrapper : MonoBehaviour
         }
     }
 
+    public List<RecipeJSON> Recipes
+    {
+        set
+        {
+            if (_alreadySet) throw new Exception("ModuleRecipeWrapper has already been set, cannot define a new value!");
+            _alreadySet = true;
 
-    public List<RecipeTable.Recipe> Recipes
+            var recipes = new List<RecipeTable.Recipe>();
+
+            foreach (var item in value)
+            {
+                var recipe = new RecipeTable.Recipe();
+                var InputItems = new List<RecipeTable.Recipe.ItemSpec>();
+                var OutputItems = new List<RecipeTable.Recipe.ItemSpec>();
+
+                if (item.FromBlock.HasValue)
+                {
+                    var blockRef = RecipeManager.inst.GetRecipeByOutputType(new ItemTypeInfo(ObjectTypes.Block, item.FromBlock.Value));
+                    InputItems.AddRange(blockRef.m_InputItems); OutputItems.AddRange(blockRef.m_OutputItems);
+                    recipe.m_MoneyOutput = blockRef.m_MoneyOutput; recipe.m_EnergyOutput = blockRef.m_EnergyOutput; recipe.m_OutputType = blockRef.m_OutputType;
+                }
+                if (item.FromChunk.HasValue)
+                {
+                    var chunkRef = RecipeManager.inst.GetRecipeByOutputType(new ItemTypeInfo(ObjectTypes.Chunk, item.FromChunk.Value));
+                    InputItems.AddRange(chunkRef.m_InputItems); OutputItems.AddRange(chunkRef.m_OutputItems);
+                    recipe.m_MoneyOutput = chunkRef.m_MoneyOutput; recipe.m_EnergyOutput = chunkRef.m_EnergyOutput; recipe.m_OutputType = chunkRef.m_OutputType;
+                }
+
+                item.GetInputs(InputItems);
+
+                if (item.GetOutputs(OutputItems))
+                {
+                    recipe.m_OutputType = RecipeTable.Recipe.OutputType.Items;
+                }
+                else if (item.OutputEnergy > 0)
+                {
+                    recipe.m_OutputType = RecipeTable.Recipe.OutputType.Energy;
+                    recipe.m_EnergyOutput = item.OutputEnergy;
+                }
+                else if (item.OutputMoney > 0)
+                {
+                    recipe.m_OutputType = RecipeTable.Recipe.OutputType.Money;
+                    recipe.m_MoneyOutput = item.OutputMoney;
+                }
+
+                recipe.m_InputItems = InputItems.ToArray();
+                recipe.m_OutputItems = OutputItems.ToArray();
+
+                recipes.Add(recipe);
+            }
+
+            var _recipeList = new RecipeTable.RecipeList()
+            {
+                m_Name = gameObject.name,
+                m_Recipes = recipes
+            };
+            _RecipeList = ScriptableObject.CreateInstance<RecipeListWrapper>();
+            _RecipeList.name = _recipeList.m_Name;
+            _RecipeList.target = _recipeList;
+        }
+    }
+
+    public List<RecipeTable.Recipe> NativeRecipes
     {
         set
         {
