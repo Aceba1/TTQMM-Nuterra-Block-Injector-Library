@@ -684,7 +684,7 @@ namespace Nuterra.BlockInjector
                     try
                     {
                         var techPrefab = (TankPrefab.GetValue(__instance) as Transform).gameObject;
-                        foreach (Type tc in techComponentsToAdd) Console.WriteLine("Added " + (techPrefab.AddComponent(tc) ? tc.Name : "NOTHING") + " to TechPrefab (Non-MP)");
+                        foreach (Type tc in techComponentsToAdd) Console.WriteLine("Added " + (techPrefab.AddComponent(tc) ? tc.Name : "NOTHING") + " to TechPrefab");
                     }
                     catch (Exception E)
                     {

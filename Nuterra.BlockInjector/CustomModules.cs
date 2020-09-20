@@ -228,14 +228,18 @@ public class ProjectileDamageOverTime : MonoBehaviour
     public float DetachedMultiplier = 1f;
     public Vector3 OverlapOffset = Vector3.zero;
     public float OverlapRadius = 0f;
-    public bool DamageTouch = true;
-    public bool DamageStuck = true;
+    public bool DamageTouch = false;
+    public bool DamageStuck = false;
 
+    public float TeamDamageDelay = 0.1f;
+    public float SelfDamageDelay = 0.1f;
 
     private int _CurrentHits;
     private Damageable[] _Hits;
     private Projectile _Projectile;
     private Damageable _stuckOn;
+    private float _damageTeamTime;
+    private float _damageSelfTime;
     private static int _colliderArraySize = 16;
     private const int MaxArraySize = 512;
     private static Collider[] _colliderOverlap = new Collider[_colliderArraySize];
@@ -273,11 +277,20 @@ public class ProjectileDamageOverTime : MonoBehaviour
         float thisDamage = damage;
         TankBlock block = hit.Block;
         if (block == null)
+        {
             thisDamage *= SceneryMultiplier;
+        }
         else if (block.tank == null)
+        {
             thisDamage *= DetachedMultiplier;
+        }
         else if (block.tank.Team == _Projectile.Shooter.Team)
+        {
+            if (block.tank == _Projectile.Shooter && _damageSelfTime > Time.time) return;
+            if (_damageTeamTime > Time.time) return;
             thisDamage *= TeamMultiplier;
+        }
+
         if (thisDamage < 0f && !hit.IsAtFullHealth)
             hit.Repair(thisDamage, true);
         else if (thisDamage > 0f)
@@ -339,7 +352,8 @@ public class ProjectileDamageOverTime : MonoBehaviour
 
     void OnSpawn()
     {
-
+        _damageSelfTime = Time.time + SelfDamageDelay;
+        _damageTeamTime = Time.time + TeamDamageDelay;
     }
 
     void OnRecycle()
