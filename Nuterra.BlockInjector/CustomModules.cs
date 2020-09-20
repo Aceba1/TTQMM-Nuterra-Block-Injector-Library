@@ -351,6 +351,8 @@ public class ProjectileDamageOverTime : MonoBehaviour
     public float TeamDamageDelay = 0.1f;
     public float SelfDamageDelay = 0.1f;
 
+    public bool DamageOnlyWhileStuck = false;
+
     private int _CurrentHits;
     private Damageable[] _Hits;
     private Projectile _Projectile;
@@ -421,7 +423,7 @@ public class ProjectileDamageOverTime : MonoBehaviour
             _CurrentHits = 0;
             return;
         }
-        if (_CurrentHits != 0) 
+        if (_CurrentHits != 0 && (!DamageOnlyWhileStuck || _stuckOn != null))
         {
             float damage = DamageOverTime * Time.fixedDeltaTime / _CurrentHits;
             for (int i = 0; i < _CurrentHits; i++)
