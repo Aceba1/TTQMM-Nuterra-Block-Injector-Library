@@ -319,13 +319,24 @@ namespace Nuterra.BlockInjector
         //static readonly MethodInfo AddBlockToDictionary = typeof(ManSpawn).GetMethod("AddBlockToDictionary", binding);
         static readonly FieldInfo BlockPrefabs = typeof(ManSpawn).GetField("m_BlockPrefabs", binding);
         static readonly FieldInfo BlockPriceLookup = typeof(RecipeManager).GetField("m_BlockPriceLookup", binding);
+        static readonly FieldInfo TankPrefab = typeof(ManSpawn).GetField("m_TankPrefab", binding);
         static readonly FieldInfo RuntimeTankPrefabs = typeof(ManSpawn).GetField("m_TankRuntimePrefabs", binding);
-        static readonly FieldInfo PrefabTank = typeof(ManSpawn).GetNestedType("PrefabPair", binding).GetField("stdPrefab", binding);
+        static readonly FieldInfo RuntimePrefabTank = typeof(ManSpawn).GetNestedType("PrefabPair", binding).GetField("stdPrefab", binding);
         static readonly MethodInfo LookupPool = typeof(ComponentPool).GetMethod("LookupPool", binding);
         static readonly MethodInfo DepoolItems = typeof(ComponentPool).GetMethod("DepoolItems", binding);
         static readonly MethodInfo PrePool = typeof(TankBlock).GetMethod("PrePool", binding);
 
-        public static readonly GameObject TechPrefab = (PrefabTank.GetValue(RuntimeTankPrefabs.GetValue(ManSpawn.inst)) as Transform).gameObject;
+        //private static GameObject _techPrefab;
+        //public static GameObject TechPrefab
+        //{
+        //    get
+        //    {
+        //        if (_techPrefab == null)
+        //            techPrefab = (TankPrefab.GetValue(ManSpawn.inst) as Transform).gameObject;
+        //            _techPrefab = (RuntimePrefabTank.GetValue(RuntimeTankPrefabs.GetValue(ManSpawn.inst)) as Transform).gameObject;
+        //        return _techPrefab;
+        //    }
+        //}
 
         private static bool Ready = false;
         private static event Action PostStartEvent;
@@ -351,23 +362,13 @@ namespace Nuterra.BlockInjector
         private static List<Type> techComponentsToAdd = new List<Type>();
         public static void AddTechComponentToPrefab<TC>() where TC : TechComponent
         {
+            if (Ready) throw new Exception("AddTechComponentToPrefab: Method is being called too late!");
             techComponentsToAdd.Add(typeof(TC));
-            if (Ready) AppendNewTechComponents();
         }
         public static void AddTechComponentToPrefab(Type techComponent)
         {
+            if (Ready) throw new Exception("AddTechComponentToPrefab: Method is being called too late!");
             techComponentsToAdd.Add(techComponent);
-            if (Ready) AppendNewTechComponents();
-        }
-
-        private static void AppendNewTechComponents()
-        {
-            try
-            {
-                foreach (Type tc in techComponentsToAdd) TechPrefab.AddComponent(tc);
-                techComponentsToAdd.Clear();
-            }
-            catch { }
         }
 
         public static void Register(CustomChunk chunk)
@@ -388,7 +389,6 @@ namespace Nuterra.BlockInjector
 
             #region Tech Prefab Patches
             AddTechComponentToPrefab<TechPhysicsReset>();
-            PostStartEvent += AppendNewTechComponents;
             #endregion
 
             #region 1.4.0.1+ Patches
@@ -675,6 +675,23 @@ namespace Nuterra.BlockInjector
                 }
             }
 #endif
+
+            [HarmonyPatch(typeof(ManSpawn), "Start")]
+            private static class TankPrefabPatch
+            {
+                private static void Prefix(ref ManSpawn __instance)
+                {
+                    try
+                    {
+                        var techPrefab = (TankPrefab.GetValue(__instance) as Transform).gameObject;
+                        foreach (Type tc in techComponentsToAdd) Console.WriteLine("Added " + (techPrefab.AddComponent(tc) ? tc.Name : "NOTHING") + " to TechPrefab (Non-MP)");
+                    }
+                    catch (Exception E)
+                    {
+                        Console.WriteLine("TankPrefabPatch FAILED: " + E);
+                    }
+                }
+            }
 
             static Type BTT = typeof(BlockTypes);
 
