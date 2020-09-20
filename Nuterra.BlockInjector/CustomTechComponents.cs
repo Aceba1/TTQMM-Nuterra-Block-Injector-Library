@@ -29,11 +29,14 @@ public class TechPhysicsReset : TechComponent
     {
         private static void Prefix(Tank __instance)
         {
-            __instance.GetComponent<TechPhysicsReset>().PreResetPhysicsEvent.Send();
+            var v = __instance.GetComponent<TechPhysicsReset>();
+            if (v == null) Console.WriteLine("Could not find TechPhysicsReset in " + __instance.name + "!");
+            else v.PreResetPhysicsEvent.Send();
         }
         private static void Postfix(Tank __instance)
         {
-            __instance.GetComponent<TechPhysicsReset>().PostResetPhysicsEvent.Send();
+            var v = __instance.GetComponent<TechPhysicsReset>();
+            v?.PostResetPhysicsEvent.Send();
         }
     }
 }
