@@ -48,16 +48,10 @@ public struct RecipeJSON
     public int OutputMoney;
     public int OutputEnergy;
 
-    public bool GetInputs(List<RecipeTable.Recipe.ItemSpec> inputItems) =>
-        InvertFrom ? _GetOutputs(inputItems) : _GetInputs(inputItems);
-
-    public bool GetOutputs(List<RecipeTable.Recipe.ItemSpec> outputItems) =>
-        InvertFrom ? _GetInputs(outputItems) : _GetOutputs(outputItems);
-
-    private bool _GetInputs(List<RecipeTable.Recipe.ItemSpec> items) =>
+    public bool GetInputs(List<RecipeTable.Recipe.ItemSpec> items) =>
         _AddToList(InputBlock, InputBlocks, InputChunks, items);
 
-    private bool _GetOutputs(List<RecipeTable.Recipe.ItemSpec> items) =>
+    public bool GetOutputs(List<RecipeTable.Recipe.ItemSpec> items) =>
         _AddToList(OutputBlock, OutputBlocks, OutputChunks, items);
 
     private bool _AddToList(int? singleBlock, JToken blocks, JToken chunks, List<RecipeTable.Recipe.ItemSpec> items)
@@ -120,13 +114,23 @@ public class ModuleRecipeWrapper : MonoBehaviour
                 if (item.FromBlock.HasValue)
                 {
                     var blockRef = RecipeManager.inst.GetRecipeByOutputType(new ItemTypeInfo(ObjectTypes.Block, item.FromBlock.Value));
-                    InputItems.AddRange(blockRef.m_InputItems); OutputItems.AddRange(blockRef.m_OutputItems);
+                    
+                    if (item.InvertFrom)
+                    { InputItems.AddRange(blockRef.m_InputItems); OutputItems.AddRange(blockRef.m_OutputItems); }
+                    else
+                    { InputItems.AddRange(blockRef.m_OutputItems); OutputItems.AddRange(blockRef.m_InputItems); }
+
                     recipe.m_MoneyOutput = blockRef.m_MoneyOutput; recipe.m_EnergyOutput = blockRef.m_EnergyOutput; recipe.m_OutputType = blockRef.m_OutputType;
                 }
                 if (item.FromChunk.HasValue)
                 {
                     var chunkRef = RecipeManager.inst.GetRecipeByOutputType(new ItemTypeInfo(ObjectTypes.Chunk, item.FromChunk.Value));
-                    InputItems.AddRange(chunkRef.m_InputItems); OutputItems.AddRange(chunkRef.m_OutputItems);
+
+                    if (item.InvertFrom)
+                    { InputItems.AddRange(chunkRef.m_InputItems); OutputItems.AddRange(chunkRef.m_OutputItems); }
+                    else
+                    { InputItems.AddRange(chunkRef.m_OutputItems); OutputItems.AddRange(chunkRef.m_InputItems); }
+
                     recipe.m_MoneyOutput = chunkRef.m_MoneyOutput; recipe.m_EnergyOutput = chunkRef.m_EnergyOutput; recipe.m_OutputType = chunkRef.m_OutputType;
                 }
 
@@ -348,8 +352,8 @@ public class ProjectileDamageOverTime : MonoBehaviour
     public bool DamageTouch = false;
     public bool DamageStuck = false;
 
-    public float TeamDamageDelay = 0.1f;
-    public float SelfDamageDelay = 0.1f;
+    public float TeamDamageDelay = 0f;
+    public float SelfDamageDelay = 0f;
 
     public bool DamageOnlyWhileStuck = false;
 
