@@ -351,6 +351,8 @@ public class ProjectileDamageOverTime : MonoBehaviour
     public float OverlapRadius = 0f;
     public bool DamageTouch = false;
     public bool DamageStuck = false;
+    public ParticleSystem PlayOnStuck;
+    public GameObject ShowOnStuck;
 
     public float TeamDamageDelay = 0f;
     public float SelfDamageDelay = 0f;
@@ -361,6 +363,7 @@ public class ProjectileDamageOverTime : MonoBehaviour
     private Damageable[] _Hits;
     private Projectile _Projectile;
     private Damageable _stuckOn;
+    private bool _hasStuck;
     private float _damageTeamTime;
     private float _damageSelfTime;
     private static int _colliderArraySize = 16;
@@ -427,7 +430,24 @@ public class ProjectileDamageOverTime : MonoBehaviour
             _CurrentHits = 0;
             return;
         }
-        if (_CurrentHits != 0 && (!DamageOnlyWhileStuck || _stuckOn != null))
+
+        if (_Projectile.Stuck != _hasStuck)
+        {
+            _hasStuck = _Projectile.Stuck;
+            if (_hasStuck)
+            {
+                PlayOnStuck?.Play();
+                ShowOnStuck?.SetActive(true);
+            }
+            else
+            {
+
+                PlayOnStuck?.Stop();
+                ShowOnStuck?.SetActive(false);
+            }
+        }
+
+        if (_CurrentHits != 0 && (!DamageOnlyWhileStuck || _Projectile.Stuck))
         {
             float damage = DamageOverTime * Time.fixedDeltaTime / _CurrentHits;
             for (int i = 0; i < _CurrentHits; i++)
@@ -483,6 +503,10 @@ public class ProjectileDamageOverTime : MonoBehaviour
     {
         _CurrentHits = 0;
         _stuckOn = null;
+        _hasStuck = false;
+        PlayOnStuck?.Stop();
+        PlayOnStuck?.Clear();
+        ShowOnStuck?.SetActive(false);
     }
 
     void OnPool()
