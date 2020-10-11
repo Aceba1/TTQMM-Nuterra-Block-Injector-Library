@@ -399,6 +399,8 @@ namespace Nuterra.BlockInjector
             try
             {
                 harmony.Patch(typeof(Projectile).GetMethod("PrePool", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.Projectile_UnlockColliderQuantity).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                //harmony.Patch(typeof(ModuleItemConsume).GetMethod("OnPool", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.ModuleItemConsume_CrashWrapper).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
+                
                 //harmony.Patch(typeof(ModuleItemConsume).GetMethod("InitRecipeOutput", BindingFlags.NonPublic | BindingFlags.Instance), null, null, transpiler: new HarmonyMethod(typeof(Patches.ModuleItemConsume_UnlockDeliveryBlockerRange).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
                 //Console.WriteLine("Patched range of Delivery Blocker");
             }
@@ -912,6 +914,17 @@ namespace Nuterra.BlockInjector
                     var codes = instructions.ToList();
                     var check = codes.FirstOrDefault(ci => ci.opcode == OpCodes.Ldc_R4 && (int)ci.operand == 23);
                     if (check != null && check != default(CodeInstruction)) check.operand = 512;
+                    return codes;
+                }
+            }
+
+            internal static class ModuleItemConsume_CrashWrapper
+            {
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    var codes = instructions.ToList();
+                    //var check = codes.FirstOrDefault(ci => ci.opcode == OpCodes.Ldc_R4 && (int)ci.operand == 23);
+                    //if (check != null && check != default(CodeInstruction)) check.operand = 512;
                     return codes;
                 }
             }
