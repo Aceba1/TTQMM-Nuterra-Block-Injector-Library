@@ -75,6 +75,9 @@ public struct RecipeJSON
             foreach (var item in rArray)
                 toList.Add(new RecipeTable.Recipe.ItemSpec(
                     new ItemTypeInfo(type, item.ToObject<int>()), 1));
+        else if (multiType is JValue rValue)
+            toList.Add(new RecipeTable.Recipe.ItemSpec(
+                new ItemTypeInfo(type, rValue.ToObject<int>()), 1));
         else return false;
         return true;
     }
@@ -115,7 +118,7 @@ public class ModuleRecipeWrapper : MonoBehaviour
                 {
                     var blockRef = RecipeManager.inst.GetRecipeByOutputType(new ItemTypeInfo(ObjectTypes.Block, item.FromBlock.Value));
                     
-                    if (item.InvertFrom)
+                    if (!item.InvertFrom)
                     { InputItems.AddRange(blockRef.m_InputItems); OutputItems.AddRange(blockRef.m_OutputItems); }
                     else
                     { InputItems.AddRange(blockRef.m_OutputItems); OutputItems.AddRange(blockRef.m_InputItems); }
@@ -126,7 +129,7 @@ public class ModuleRecipeWrapper : MonoBehaviour
                 {
                     var chunkRef = RecipeManager.inst.GetRecipeByOutputType(new ItemTypeInfo(ObjectTypes.Chunk, item.FromChunk.Value));
 
-                    if (item.InvertFrom)
+                    if (!item.InvertFrom)
                     { InputItems.AddRange(chunkRef.m_InputItems); OutputItems.AddRange(chunkRef.m_OutputItems); }
                     else
                     { InputItems.AddRange(chunkRef.m_OutputItems); OutputItems.AddRange(chunkRef.m_InputItems); }
