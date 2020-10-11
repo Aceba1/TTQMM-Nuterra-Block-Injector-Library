@@ -22,6 +22,7 @@ namespace Nuterra.BlockInjector
         static Type t_comp = typeof(UnityEngine.Component);
         static Type t_go = typeof(UnityEngine.GameObject);
         static Type t_tr = typeof(UnityEngine.Transform);
+        static Type t_jt = typeof(JToken);
         public static Material MaterialFromShader(string ShaderName = "StandardTankBlock")
         {
             var shader = GetObjectFromGameResources<Shader>(t_shader, ShaderName, true);
@@ -949,7 +950,7 @@ namespace Nuterra.BlockInjector
         }
 
         static Type t_ilist = typeof(IList);
-        private static IList MakeJSONArray(object originalArray, Type ArrayType, JArray Deserialize, string Spacing, bool Wipe)
+        private static object MakeJSONArray(object originalArray, Type ArrayType, JArray Deserialize, string Spacing, bool Wipe)
         {
             IList newList;
             Type itemType;
@@ -957,15 +958,42 @@ namespace Nuterra.BlockInjector
             //{
             IList sourceList = Wipe ? null : originalArray as IList;
 
+
+            if (ArrayType == t_jt)
+                return Deserialize;
+
             if (ArrayType.IsGenericType) itemType = ArrayType.GetGenericArguments()[0];
             else itemType = ArrayType.GetElementType();
 
             int newCount = Deserialize.Count;
-            newList = Activator.CreateInstance(ArrayType, newCount) as IList; // newCount here tells fixed arrays how many items to have. List<> arrays get starting capacity, but is empty.
-            if (newCount != newList.Count) // Must be a List<>, which means it can be expanded with the following...
+            try
             {
-                object def = itemType.IsClass ? null : Activator.CreateInstance(itemType); // Get default (Avoid creation if not needed)
-                for (int i = 0; i < newCount; i++) newList.Add(def); // Populate empty list from 0 to length
+                newList = Activator.CreateInstance(ArrayType, newCount) as IList; // newCount here tells fixed arrays how many items to have. List<> arrays get starting capacity, but is empty.
+                if (newList == null) throw new InvalidCastException("'" + ArrayType.Name + "' is not of type IList");
+            }
+            catch (Exception E) // Its not a list!?
+            {
+                Console.WriteLine($"Could not parse array! <{ArrayType.Name}> ({itemType.Name}[]> : Array type could not be instantiated!\n{E.Message}");
+                return null;
+            }
+            if (newCount != newList.Count) // Must be a List<> then, which means it can be expanded with the following...
+            {
+                try
+                {
+                    object def = itemType.IsClass ? null : Activator.CreateInstance(itemType); // Get default (Avoid creation if not needed)
+                    for (int i = 0; i < newCount; i++) newList.Add(def); // Populate empty list from 0 to length
+                }
+                catch // Activator failed! 
+                {
+                    try
+                    {
+                        for (int i = 0; i < newCount; i++) newList.Add(Deserialize[i].ToObject(itemType)); // Pray
+                    }
+                    catch (Exception E)
+                    {
+                        Console.WriteLine($"Could not parse array! <{ArrayType.Name}> ({itemType.Name}[]> : Unable to initialize and populate parsed list!\n{E.Message}");
+                    }
+                }
             }
 
             for (int i = 0; i < newCount; i++) // Populate!
