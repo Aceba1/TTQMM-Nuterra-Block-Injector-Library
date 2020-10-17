@@ -487,7 +487,7 @@ public class ProjectileDamageOverTime : MonoBehaviour
                     Console.WriteLine("ProjectileDamageOverTime: " + gameObject.name +
                         " is trying to allocate an overlap check beyond " + MaxArraySize + "! How large is the radius!?");
 
-            for (int i = 0; i < c; i++)
+            for (int i = 0; i < c && _CurrentHits < MaxHits; i++)
             {
                 var d = _colliderOverlap[i].GetComponentInParent<Damageable>();
                 if (d != null)
