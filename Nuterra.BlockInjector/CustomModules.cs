@@ -409,20 +409,24 @@ public class ProjectileDamageOverTime : MonoBehaviour
         {
             thisDamage *= SceneryMultiplier;
         }
-        else if (block.tank == null)
+        else
         {
-            thisDamage *= DetachedMultiplier;
-        }
-        else if (block.tank.Team == _Projectile.Shooter.Team)
-        {
-            if (block.tank == _Projectile.Shooter && _damageSelfTime > Time.time) return;
-            if (_damageTeamTime > Time.time) return;
-            thisDamage *= TeamMultiplier;
+            if (block.damage.AboutToDie) return;
+            if (block.tank == null)
+            {
+                thisDamage *= DetachedMultiplier;
+            }
+            else if (block.tank.Team == _Projectile.Shooter.Team)
+            {
+                if (block.tank == _Projectile.Shooter && _damageSelfTime > Time.time) return;
+                if (_damageTeamTime > Time.time) return;
+                thisDamage *= TeamMultiplier;
+            }
         }
 
         if (thisDamage < 0f && !hit.IsAtFullHealth)
             hit.Repair(thisDamage, true);
-        else if (thisDamage > 0f)
+        else if (thisDamage > 0f && hit.Health > 0f)
             ManDamage.inst.DealDamage(hit, thisDamage, DamageType, _Projectile.Shooter);
     }
 
