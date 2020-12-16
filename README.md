@@ -16,7 +16,7 @@ For making blocks with a TTMM mod, take a look at the [`BlockExamples.cs`](https
 To make blocks:
 - Take a look at the [`Example.json`](https://github.com/Aceba1/TTQMM-Nuterra-Block-Injector-Library/blob/master/Nuterra.BlockInjector/Block%20Example.json) file.
 - Copy and paste this into your `Custom Blocks` folder, within the game's installation path
-- You can find a collection of blocks / examples this [forum page](https://forum.terratechgame.com/index.php?threads/custom-blocks.17452/)
+- You can find a collection of blocks/examples in this [forum page](https://forum.terratechgame.com/index.php?threads/custom-blocks.17452/)
 
 Recommended text editor: [Visual Studio Code](https://code.visualstudio.com/) <br>
 Recommended 3D modeller: [Blender](https://www.blender.org/)
