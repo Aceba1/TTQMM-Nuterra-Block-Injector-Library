@@ -78,6 +78,8 @@ namespace Nuterra.BlockInjector
             public string[][] CellMap;
             public Vector3[] APs;
 
+            public string RotationGroup;
+
             public Vector3 PrefabOffset { set => ReferenceOffset = value; }
             public Vector3 PrefabPosition { set => ReferenceOffset = value; }
             public Vector3? ReferenceOffset;
@@ -879,6 +881,11 @@ namespace Nuterra.BlockInjector
                 {
                     L("Set APs", l);
                     blockbuilder.SetAPsManual(jBlock.APs);
+                }
+
+                if(jBlock.RotationGroup != "")
+                {
+                    blockbuilder.SetRotationGroupName(jBlock.RotationGroup);
                 }
 
                 //Set Mass

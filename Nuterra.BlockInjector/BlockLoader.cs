@@ -128,6 +128,7 @@ namespace Nuterra.BlockInjector
                 }
                 else
                 {
+                    var temp = RunningCoroutine;
                     do
                     {
                         RunningCoroutine = coroutine.MoveNext();
@@ -142,6 +143,7 @@ namespace Nuterra.BlockInjector
                             {
                                 LockLinear = 0;
                                 AcceptOverwrite = true;
+                                ((BlockRotationTable)m_BlockRotationTable.GetValue(ManTechBuilder.inst)).InitRuntime();
                             }
                         }
                     }
@@ -217,6 +219,8 @@ namespace Nuterra.BlockInjector
                 spawnManager.VisibleTypeInfo.SetDescriptor<ModulePlatformRestrictions.PlatformAvailability>(hashCode, (ModulePlatformRestrictions.PlatformAvailability)(-1));
                 try
                 {
+                    var rotationTable = (BlockRotationTable)m_BlockRotationTable.GetValue(ManTechBuilder.inst);
+
                     if (Overwriting)
                     {
                         var prefabs = (BlockPrefabs.GetValue(ManSpawn.inst) as Dictionary<int, Transform>);
@@ -226,12 +230,26 @@ namespace Nuterra.BlockInjector
                         GameObject.Destroy(previous.gameObject);
                         prefabs[runtimeID] = block.Prefab.transform;
 
+                        if (block.RotationGroupName != "")
+                        {
+                            var pair = rotationTable.m_BlockRotationGroupIndex.Find(e => e.blockType == runtimeID);
+                            pair.groupName = block.RotationGroupName;
+                        }
                     }
                     else
                     {
                         ManSpawn.inst.AddBlockToDictionary(block.Prefab);
 
                         (LoadedActiveBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)runtimeID);
+
+                        if (block.RotationGroupName != "")
+                        {
+                            rotationTable.m_BlockRotationGroupIndex.Add(new BlockRotationTable.GroupIndexLookup
+                            {
+                                blockType = runtimeID,
+                                groupName = block.RotationGroupName
+                            });
+                        }
                     }
 
                     var m_BlockPriceLookup = BlockPriceLookup.GetValue(RecipeManager.inst) as Dictionary<int, int>;
@@ -384,7 +402,7 @@ namespace Nuterra.BlockInjector
         public static void PostModsLoaded()
         {
             if (Input.GetKey(KeyCode.T)) CapInjectedID++; // Debug test, offset everything by 1
-            var harmony = HarmonyInstance.Create("nuterra.block.injector");  
+            var harmony = HarmonyInstance.Create("nuterra.block.injector");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             #region Tech Prefab Patches
@@ -474,7 +492,9 @@ namespace Nuterra.BlockInjector
             m_Icon = T_UICorpToggle.GetField("m_Icon", binding),
             m_SelectedIcon = T_UICorpToggle.GetField("m_SelectedIcon", binding),
             m_TooltipComponent = T_UICorpToggle.GetField("m_TooltipComponent", binding),
-            inst = T_ManPurchases.GetField("inst", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            inst = T_ManPurchases.GetField("inst", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy),
+
+            m_BlockRotationTable = typeof(ManTechBuilder).GetField("m_BlockRotationTable", binding);
 
         static FactionSubTypes last = FactionSubTypes.BF;
         internal static readonly int CapVanillaID = EnumNamesIterator<BlockTypes>.Names.Length;
@@ -869,7 +889,7 @@ namespace Nuterra.BlockInjector
                     }
                 }
 
-                //[HarmonyPatch(typeof(ManMods), "AutoAssignIDs", new Type[] { typeof(ModSessionInfo), typeof(List<string>), typeof(List<string>), typeof(List<string>) })]
+                [HarmonyPatch(typeof(ManMods), "AutoAssignIDs", new Type[] { typeof(Dictionary<int, string>), typeof(List<string>), typeof(int), typeof(int) })]
                 private static class ManMods_AutoAssignIDs
                 {
                     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)

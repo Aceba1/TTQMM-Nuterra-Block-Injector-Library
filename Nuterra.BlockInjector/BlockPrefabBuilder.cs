@@ -925,6 +925,13 @@ namespace Nuterra.BlockInjector
             return this;
         }
 
+        public BlockPrefabBuilder SetRotationGroupName(string name)
+        {
+            ThrowIfFinished();
+            _customBlock.RotationGroupName = name;
+            return this;
+        }
+
 
         private void OptimizeCellsForAP()
         {

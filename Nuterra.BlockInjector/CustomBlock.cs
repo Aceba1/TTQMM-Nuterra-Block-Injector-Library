@@ -21,6 +21,7 @@ namespace Nuterra.BlockInjector
         public int Grade { get; internal set; }
         public bool DropFromCrates { get; internal set; } = true;
         public int PairedBlock { get; internal set; } = -1;
+        public string RotationGroupName { get; internal set; }
         public void Register()
         {
             BlockLoader.Register(this);
@@ -50,7 +51,7 @@ namespace Nuterra.BlockInjector
         public bool HasInjectedCenterOfMass;
         public Vector3 InjectedCenterOfMass;
         public BlockPrefabBuilder.EmissionMode EmissionMode;
-        
+
         internal uint reparse_version_cache;
 
         private bool rbodyExists = false;
@@ -70,7 +71,7 @@ namespace Nuterra.BlockInjector
 
         public void UpdateEmission()
         {
-            switch(EmissionMode)
+            switch (EmissionMode)
             {
                 case BlockPrefabBuilder.EmissionMode.Active:
                     SetEmissionOn(); return;
