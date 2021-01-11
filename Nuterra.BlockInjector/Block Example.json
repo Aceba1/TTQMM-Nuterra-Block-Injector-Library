@@ -105,6 +105,11 @@
         }
     ],
 
+    //"RotationGroup": "" //No need for default, can take several values (see below)
+    /* Rotaion groups are: "default", "GSOFan", "GSOBlockLong", "GSOArmourSmall", "GSORadar", "GSODrill", "GSOAnchor", "GSOLaserForward", "GSOStripLight", "GSOBattery", "GSOBlock", "GSOHalfBlock", "GSODispenser", "GSORemoteCharger", "GSOMediumTractor",
+    "GSOWheel", "GCGirder", "VENShield", "SPEJet", "SPETailWing", "SPEFan", "SPERotorSm", "SPEBracket", "SPECBracketSeat", "SPEBlockSphere", "GSOFabricator", "HEMissile", "GSOScrapper", "GSOGenerator", "EXPCap", "EXPBall", "EXPHoop", "GCBumperCross",
+    "GCBumperStraight", "GCWheel_Stupid_588", "HE_Wheel_Single", "BF Wheels", "BF_Block_Smooth_111", "BF_Streamline_112" */
+
     // Delete /* and */ if using
 
     //OPTIONAL

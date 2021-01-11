@@ -49,6 +49,7 @@ namespace Nuterra.BlockInjector
                     {
                         blocks.Clear();
                         UnityEngine.GameObject.Destroy(this.gameObject);
+                        ((BlockRotationTable)m_BlockRotationTable.GetValue(ManTechBuilder.inst)).InitRuntime();
                     }
                 }
                 else if (blocks.Count > 1)
@@ -143,7 +144,6 @@ namespace Nuterra.BlockInjector
                             {
                                 LockLinear = 0;
                                 AcceptOverwrite = true;
-                                ((BlockRotationTable)m_BlockRotationTable.GetValue(ManTechBuilder.inst)).InitRuntime();
                             }
                         }
                     }
@@ -230,7 +230,7 @@ namespace Nuterra.BlockInjector
                         GameObject.Destroy(previous.gameObject);
                         prefabs[runtimeID] = block.Prefab.transform;
 
-                        if (block.RotationGroupName != "")
+                        if (!string.IsNullOrEmpty(block.RotationGroupName))
                         {
                             var pair = rotationTable.m_BlockRotationGroupIndex.Find(e => e.blockType == runtimeID);
                             pair.groupName = block.RotationGroupName;
@@ -242,7 +242,7 @@ namespace Nuterra.BlockInjector
 
                         (LoadedActiveBlocks.GetValue(ManSpawn.inst) as List<BlockTypes>).Add((BlockTypes)runtimeID);
 
-                        if (block.RotationGroupName != "")
+                        if (!string.IsNullOrEmpty(block.RotationGroupName))
                         {
                             rotationTable.m_BlockRotationGroupIndex.Add(new BlockRotationTable.GroupIndexLookup
                             {
@@ -496,7 +496,7 @@ namespace Nuterra.BlockInjector
 
             m_BlockRotationTable = typeof(ManTechBuilder).GetField("m_BlockRotationTable", binding);
 
-        static FactionSubTypes last = FactionSubTypes.BF;
+        //static FactionSubTypes last = FactionSubTypes.BF;
         internal static readonly int CapVanillaID = EnumNamesIterator<BlockTypes>.Names.Length;
         internal static int CapInjectedID = CapVanillaID;
 
@@ -808,7 +808,7 @@ namespace Nuterra.BlockInjector
                     }
 
                     // Ambiguous match resolution: Try to get the specific method
-                    var AutoAssignIDs = typeof(ManMods).GetMethod("AutoAssignIDs", new Type[] { typeof(ModSessionInfo), typeof(List<string>), typeof(List<string>), typeof(List<string>) });
+                    /*var AutoAssignIDs = typeof(ManMods).GetMethod("AutoAssignIDs", new Type[] { typeof(ModSessionInfo), typeof(List<string>), typeof(List<string>), typeof(List<string>) });
                     if (AutoAssignIDs != null)
                     {
                         harmony.Patch(AutoAssignIDs, null, null, transpiler: new HarmonyMethod(typeof(ManMods_AutoAssignIDs).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
@@ -823,7 +823,7 @@ namespace Nuterra.BlockInjector
                             harmony.Patch(AutoAssignIDs, null, null, transpiler: new HarmonyMethod(typeof(ManMods_AutoAssignIDs).GetMethod("Transpiler", BindingFlags.Static | BindingFlags.NonPublic)));
                             Console.WriteLine("Patched AutoAssignIDs");
                         }
-                    }
+                    }*/
                 }
 
                 [HarmonyPatch(typeof(BlockUnlockTable), "RemoveModdedBlocks")]

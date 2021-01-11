@@ -883,7 +883,7 @@ namespace Nuterra.BlockInjector
                     blockbuilder.SetAPsManual(jBlock.APs);
                 }
 
-                if(jBlock.RotationGroup != "")
+                if(!string.IsNullOrEmpty(jBlock.RotationGroup))
                 {
                     blockbuilder.SetRotationGroupName(jBlock.RotationGroup);
                 }
