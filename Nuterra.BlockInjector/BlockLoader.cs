@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using Harmony;
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
@@ -402,7 +402,7 @@ namespace Nuterra.BlockInjector
         public static void PostModsLoaded()
         {
             if (Input.GetKey(KeyCode.T)) CapInjectedID++; // Debug test, offset everything by 1
-            var harmony = HarmonyInstance.Create("nuterra.block.injector");
+            var harmony = new Harmony("nuterra.block.injector");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             #region Tech Prefab Patches
@@ -791,7 +791,7 @@ namespace Nuterra.BlockInjector
  
             internal static class OfficialBlocks
             {
-                public static void Patch(HarmonyInstance harmony)
+                public static void Patch(Harmony harmony)
                 {
                     var GetBlockType = typeof(TankPreset.BlockSpec).GetMethod("GetBlockType");
                     if (GetBlockType != null)
