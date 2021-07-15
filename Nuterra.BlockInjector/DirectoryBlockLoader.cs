@@ -6,7 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using Harmony;
+using HarmonyLib;
 
 namespace Nuterra.BlockInjector
 {
